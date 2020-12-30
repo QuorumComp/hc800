@@ -1,0 +1,3 @@
+[submodule "spinal/rc800"]
+	path = spinal/rc800
+	url = https://github.com/QuorumComp/rc800.git

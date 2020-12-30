@@ -1,0 +1,8 @@
+	IFND	MAIN_I_INCLUDED_
+
+MAIN_I_INCLUDED_ = 1
+
+	GLOBAL	Main
+	GLOBAL	VideoIsVBlankEdge
+
+	ENDC

@@ -1,0 +1,103 @@
+<?xml version="1.0"?>
+<BillOfMaterials Version="1" Minor="2">
+  <IPInstance name="AttributeMemory">
+    <FileSets>
+      <FileSet generator="apply_current_project_options_generator">
+        <File name="./apply_current_project_options_generator.xlog" type="ignore" timestamp="Fri Apr 24 13:34:41 GMT 2020" checksum="0xFFFFFFFF"></File>
+      </FileSet>
+      <FileSet generator="model_parameter_resolution_generator">
+        <File name="./summary.log" type="unknown" timestamp="Fri Apr 24 13:32:32 GMT 2020" checksum="0x63EE88FF"></File>
+      </FileSet>
+      <FileSet generator="ip_xco_generator">
+        <File name="./AttributeMemory.xco" type="xco" timestamp="Fri Apr 24 13:32:33 GMT 2020" checksum="0x6C80EA93"></File>
+      </FileSet>
+      <FileSet generator="associated_files_generator">
+        <File name="./AttributeMemory/blk_mem_gen_v7_3_readme.txt" type="ignore" timestamp="Sun Oct 13 18:11:47 GMT 2013" checksum="0xF95F2A26"></File>
+        <File name="./AttributeMemory/doc/blk_mem_gen_v7_3_vinfo.html" type="ignore" timestamp="Sun Oct 13 18:11:47 GMT 2013" checksum="0x702C7FA8"></File>
+        <File name="./AttributeMemory/doc/pg058-blk-mem-gen.pdf" type="ignore" timestamp="Sun Oct 13 18:11:47 GMT 2013" checksum="0xC1E42F23"></File>
+      </FileSet>
+      <FileSet generator="ejava_generator">
+        <File name="./AttributeMemory/example_design/AttributeMemory_exdes.ucf" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x8915DFA1"></File>
+        <File name="./AttributeMemory/example_design/AttributeMemory_exdes.vhd" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0xFE7A6305"></File>
+        <File name="./AttributeMemory/example_design/AttributeMemory_exdes.xdc" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x78E2D49A"></File>
+        <File name="./AttributeMemory/example_design/AttributeMemory_prod.vhd" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x366147F3"></File>
+        <File name="./AttributeMemory/implement/implement.bat" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x0E5CDADA"></File>
+        <File name="./AttributeMemory/implement/implement.sh" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0xF53C52A6"></File>
+        <File name="./AttributeMemory/implement/planAhead_ise.bat" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x7D5D1DF2"></File>
+        <File name="./AttributeMemory/implement/planAhead_ise.sh" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x56382358"></File>
+        <File name="./AttributeMemory/implement/planAhead_ise.tcl" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0xEE449A88"></File>
+        <File name="./AttributeMemory/implement/xst.prj" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x37D5B80C"></File>
+        <File name="./AttributeMemory/implement/xst.scr" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0xE0A9E932"></File>
+        <File name="./AttributeMemory/simulation/AttributeMemory_synth.vhd" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0xE22438AC"></File>
+        <File name="./AttributeMemory/simulation/AttributeMemory_tb.vhd" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x543B30B2"></File>
+        <File name="./AttributeMemory/simulation/addr_gen.vhd" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x0500E48D"></File>
+        <File name="./AttributeMemory/simulation/bmg_stim_gen.vhd" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0xB640745B"></File>
+        <File name="./AttributeMemory/simulation/bmg_tb_pkg.vhd" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0xE0D93E5B"></File>
+        <File name="./AttributeMemory/simulation/checker.vhd" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x3EC35020"></File>
+        <File name="./AttributeMemory/simulation/data_gen.vhd" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0xD9F7C4A0"></File>
+        <File name="./AttributeMemory/simulation/functional/simcmds.tcl" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x2A7D4F87"></File>
+        <File name="./AttributeMemory/simulation/functional/simulate_isim.bat" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0xD689968F"></File>
+        <File name="./AttributeMemory/simulation/functional/simulate_mti.bat" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x86EA5D67"></File>
+        <File name="./AttributeMemory/simulation/functional/simulate_mti.do" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0xBABFFF3B"></File>
+        <File name="./AttributeMemory/simulation/functional/simulate_mti.sh" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x86EA5D67"></File>
+        <File name="./AttributeMemory/simulation/functional/simulate_ncsim.sh" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0xB2F7FDA1"></File>
+        <File name="./AttributeMemory/simulation/functional/simulate_vcs.sh" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x307BF28D"></File>
+        <File name="./AttributeMemory/simulation/functional/ucli_commands.key" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0xA323DE97"></File>
+        <File name="./AttributeMemory/simulation/functional/vcs_session.tcl" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x7213B320"></File>
+        <File name="./AttributeMemory/simulation/functional/wave_mti.do" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0xE9B36BCF"></File>
+        <File name="./AttributeMemory/simulation/functional/wave_ncsim.sv" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x7C9AD0E1"></File>
+        <File name="./AttributeMemory/simulation/random.vhd" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x2939160A"></File>
+        <File name="./AttributeMemory/simulation/timing/simcmds.tcl" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x2A7D4F87"></File>
+        <File name="./AttributeMemory/simulation/timing/simulate_isim.bat" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x95D8E233"></File>
+        <File name="./AttributeMemory/simulation/timing/simulate_mti.bat" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x86EA5D67"></File>
+        <File name="./AttributeMemory/simulation/timing/simulate_mti.do" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0xEADC9A0D"></File>
+        <File name="./AttributeMemory/simulation/timing/simulate_mti.sh" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x86EA5D67"></File>
+        <File name="./AttributeMemory/simulation/timing/simulate_ncsim.sh" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x433BEA8D"></File>
+        <File name="./AttributeMemory/simulation/timing/simulate_vcs.sh" type="ignore" timestamp="Fri Apr 24 13:32:35 GMT 2020" checksum="0x79ED1AB5"></File>
+        <File name="./AttributeMemory/simulation/timing/ucli_commands.key" type="ignore" timestamp="Fri Apr 24 13:32:35 GMT 2020" checksum="0xA323DE97"></File>
+        <File name="./AttributeMemory/simulation/timing/vcs_session.tcl" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x00FF297A"></File>
+        <File name="./AttributeMemory/simulation/timing/wave_mti.do" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x79DAE70A"></File>
+        <File name="./AttributeMemory/simulation/timing/wave_ncsim.sv" type="ignore" timestamp="Fri Apr 24 13:32:36 GMT 2020" checksum="0x4C6D516A"></File>
+      </FileSet>
+      <FileSet generator="ngc_netlist_generator">
+        <File name="./AttributeMemory.ngc" type="ngc" timestamp="Fri Apr 24 13:33:47 GMT 2020" checksum="0x8CCCC2D7"></File>
+      </FileSet>
+      <FileSet generator="obfuscate_netlist_generator">
+        <File name="./obfuscate_netlist_generator.xlog" type="ignore" timestamp="Fri Apr 24 13:34:43 GMT 2020" checksum="0xFFFFFFFF"></File>
+      </FileSet>
+      <FileSet generator="padded_implementation_netlist_generator">
+        <File name="./padded_implementation_netlist_generator.xlog" type="ignore" timestamp="Fri Apr 24 13:34:43 GMT 2020" checksum="0xFFFFFFFF"></File>
+      </FileSet>
+      <FileSet generator="instantiation_template_generator">
+        <File name="./AttributeMemory.veo" type="veo" timestamp="Fri Apr 24 13:33:51 GMT 2020" checksum="0xD6B320E7"></File>
+      </FileSet>
+      <FileSet generator="structural_simulation_model_generator">
+        <File name="./AttributeMemory.v" type="verilog" timestamp="Fri Apr 24 13:33:53 GMT 2020" checksum="0xAE46BDC2"></File>
+      </FileSet>
+      <FileSet generator="all_documents_generator">
+        <File name="./AttributeMemory/doc/blk_mem_gen_v7_3_vinfo.html" type="ignore" timestamp="Fri Apr 24 13:33:55 GMT 2020" checksum="0x702C7FA8"></File>
+      </FileSet>
+      <FileSet generator="asy_generator">
+        <File name="./AttributeMemory.asy" type="asy" timestamp="Fri Apr 24 13:34:01 GMT 2020" checksum="0xC78C79B1"></File>
+        <File name="./summary.log" type="unknown" timestamp="Fri Apr 24 13:34:01 GMT 2020" checksum="0x63EE88FF"></File>
+      </FileSet>
+      <FileSet generator="xmdf_generator">
+        <File name="./AttributeMemory_xmdf.tcl" type="tclXmdf" timestamp="Fri Apr 24 13:34:03 GMT 2020" checksum="0x0116C5A9"></File>
+      </FileSet>
+      <FileSet generator="synthesis_ise_generator">
+        <File name="./AttributeMemory.gise" type="ignore" timestamp="Fri Apr 24 13:34:22 GMT 2020" checksum="0xB0FCAD30"></File>
+        <File name="./AttributeMemory.xise" type="ignore" timestamp="Fri Apr 24 13:34:22 GMT 2020" checksum="0xD206B701"></File>
+      </FileSet>
+      <FileSet generator="ise_generator">
+        <File name="./AttributeMemory.gise" type="ignore" timestamp="Fri Apr 24 13:34:32 GMT 2020" checksum="0xA54EA01E"></File>
+        <File name="./AttributeMemory.xise" type="ignore" timestamp="Fri Apr 24 13:34:32 GMT 2020" checksum="0x4959D6D1"></File>
+      </FileSet>
+      <FileSet generator="deliver_readme_generator">
+        <File name="./deliver_readme_generator.xlog" type="ignore" timestamp="Fri Apr 24 13:34:43 GMT 2020" checksum="0xFFFFFFFF"></File>
+      </FileSet>
+      <FileSet generator="flist_generator">
+        <File name="./AttributeMemory_flist.txt" type="ignore" timestamp="Fri Apr 24 13:34:35 GMT 2020" checksum="0xF040C2B3"></File>
+      </FileSet>
+    </FileSets>
+  </IPInstance>
+</BillOfMaterials>

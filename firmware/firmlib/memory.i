@@ -1,0 +1,10 @@
+	IFND	MEMORY_I_INCLUDED_
+
+MEMORY_I_INCLUDED_ = 1
+
+	GLOBAL	SetMemory
+	GLOBAL	SetMemoryWords
+	GLOBAL	CopyCode
+
+
+	ENDC

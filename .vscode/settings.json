@@ -1,0 +1,18 @@
+{
+    "editor.insertSpaces": false,
+    "files.associations": {
+        "*.i": "asm.rc8",
+        "*.rc8": "asm.rc8",
+        "*.asm": "asm.rc8"
+    },
+    "[asm.rc8]": {
+        "editor.tabSize": 8,
+        "editor.insertSpaces": false
+    },
+    "files.exclude": {
+        "**/*.obj": true
+    },
+    "files.watcherExclude": {
+        "**/target": true
+    }
+}

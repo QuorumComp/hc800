@@ -1,0 +1,103 @@
+<?xml version="1.0"?>
+<BillOfMaterials Version="1" Minor="2">
+  <IPInstance name="PaletteMemory">
+    <FileSets>
+      <FileSet generator="apply_current_project_options_generator">
+        <File name="./apply_current_project_options_generator.xlog" type="ignore" timestamp="Fri Apr 24 14:39:01 GMT 2020" checksum="0xFFFFFFFF"></File>
+      </FileSet>
+      <FileSet generator="model_parameter_resolution_generator">
+        <File name="./summary.log" type="unknown" timestamp="Fri Apr 24 14:37:06 GMT 2020" checksum="0x3A18A2D6"></File>
+      </FileSet>
+      <FileSet generator="ip_xco_generator">
+        <File name="./PaletteMemory.xco" type="xco" timestamp="Fri Apr 24 14:37:07 GMT 2020" checksum="0x8382CEDC"></File>
+      </FileSet>
+      <FileSet generator="associated_files_generator">
+        <File name="./PaletteMemory/blk_mem_gen_v7_3_readme.txt" type="ignore" timestamp="Sun Oct 13 18:11:47 GMT 2013" checksum="0xF95F2A26"></File>
+        <File name="./PaletteMemory/doc/blk_mem_gen_v7_3_vinfo.html" type="ignore" timestamp="Sun Oct 13 18:11:47 GMT 2013" checksum="0x702C7FA8"></File>
+        <File name="./PaletteMemory/doc/pg058-blk-mem-gen.pdf" type="ignore" timestamp="Sun Oct 13 18:11:47 GMT 2013" checksum="0xC1E42F23"></File>
+      </FileSet>
+      <FileSet generator="ejava_generator">
+        <File name="./PaletteMemory/example_design/PaletteMemory_exdes.ucf" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0x8915DFA1"></File>
+        <File name="./PaletteMemory/example_design/PaletteMemory_exdes.vhd" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0x30E7320E"></File>
+        <File name="./PaletteMemory/example_design/PaletteMemory_exdes.xdc" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0x78E2D49A"></File>
+        <File name="./PaletteMemory/example_design/PaletteMemory_prod.vhd" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0xF6E3D339"></File>
+        <File name="./PaletteMemory/implement/implement.bat" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0xC0B75570"></File>
+        <File name="./PaletteMemory/implement/implement.sh" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0xA0A71E5D"></File>
+        <File name="./PaletteMemory/implement/planAhead_ise.bat" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0xCADFE28C"></File>
+        <File name="./PaletteMemory/implement/planAhead_ise.sh" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0x5605F6F0"></File>
+        <File name="./PaletteMemory/implement/planAhead_ise.tcl" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0x97A6A60E"></File>
+        <File name="./PaletteMemory/implement/xst.prj" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0x863F1054"></File>
+        <File name="./PaletteMemory/implement/xst.scr" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0xE6CE8386"></File>
+        <File name="./PaletteMemory/simulation/PaletteMemory_synth.vhd" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0xBB399849"></File>
+        <File name="./PaletteMemory/simulation/PaletteMemory_tb.vhd" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0xF0B1AC12"></File>
+        <File name="./PaletteMemory/simulation/addr_gen.vhd" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0x0500E48D"></File>
+        <File name="./PaletteMemory/simulation/bmg_stim_gen.vhd" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0xEB676035"></File>
+        <File name="./PaletteMemory/simulation/bmg_tb_pkg.vhd" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0xE0D93E5B"></File>
+        <File name="./PaletteMemory/simulation/checker.vhd" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0x3EC35020"></File>
+        <File name="./PaletteMemory/simulation/data_gen.vhd" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0xD9F7C4A0"></File>
+        <File name="./PaletteMemory/simulation/functional/simcmds.tcl" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0x6AA2343B"></File>
+        <File name="./PaletteMemory/simulation/functional/simulate_isim.bat" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0xC2C8AFFF"></File>
+        <File name="./PaletteMemory/simulation/functional/simulate_mti.bat" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0x86EA5D67"></File>
+        <File name="./PaletteMemory/simulation/functional/simulate_mti.do" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0xC59AF48D"></File>
+        <File name="./PaletteMemory/simulation/functional/simulate_mti.sh" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0x86EA5D67"></File>
+        <File name="./PaletteMemory/simulation/functional/simulate_ncsim.sh" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0x2C59631A"></File>
+        <File name="./PaletteMemory/simulation/functional/simulate_vcs.sh" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0x17B97AD0"></File>
+        <File name="./PaletteMemory/simulation/functional/ucli_commands.key" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0xC304F3FE"></File>
+        <File name="./PaletteMemory/simulation/functional/vcs_session.tcl" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0xDDEC2471"></File>
+        <File name="./PaletteMemory/simulation/functional/wave_mti.do" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0x2342E4F6"></File>
+        <File name="./PaletteMemory/simulation/functional/wave_ncsim.sv" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0x92462CE4"></File>
+        <File name="./PaletteMemory/simulation/random.vhd" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0x2939160A"></File>
+        <File name="./PaletteMemory/simulation/timing/simcmds.tcl" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0x6AA2343B"></File>
+        <File name="./PaletteMemory/simulation/timing/simulate_isim.bat" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0x62A07E34"></File>
+        <File name="./PaletteMemory/simulation/timing/simulate_mti.bat" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0x86EA5D67"></File>
+        <File name="./PaletteMemory/simulation/timing/simulate_mti.do" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0xDCD5104C"></File>
+        <File name="./PaletteMemory/simulation/timing/simulate_mti.sh" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0x86EA5D67"></File>
+        <File name="./PaletteMemory/simulation/timing/simulate_ncsim.sh" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0xE83A769F"></File>
+        <File name="./PaletteMemory/simulation/timing/simulate_vcs.sh" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0x83399D1A"></File>
+        <File name="./PaletteMemory/simulation/timing/ucli_commands.key" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0xC304F3FE"></File>
+        <File name="./PaletteMemory/simulation/timing/vcs_session.tcl" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0x61D16B7A"></File>
+        <File name="./PaletteMemory/simulation/timing/wave_mti.do" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0xE3A04EF0"></File>
+        <File name="./PaletteMemory/simulation/timing/wave_ncsim.sv" type="ignore" timestamp="Fri Apr 24 14:37:09 GMT 2020" checksum="0x74276F8D"></File>
+      </FileSet>
+      <FileSet generator="ngc_netlist_generator">
+        <File name="./PaletteMemory.ngc" type="ngc" timestamp="Fri Apr 24 14:38:10 GMT 2020" checksum="0xB0CB3516"></File>
+      </FileSet>
+      <FileSet generator="obfuscate_netlist_generator">
+        <File name="./obfuscate_netlist_generator.xlog" type="ignore" timestamp="Fri Apr 24 14:39:02 GMT 2020" checksum="0xFFFFFFFF"></File>
+      </FileSet>
+      <FileSet generator="padded_implementation_netlist_generator">
+        <File name="./padded_implementation_netlist_generator.xlog" type="ignore" timestamp="Fri Apr 24 14:39:02 GMT 2020" checksum="0xFFFFFFFF"></File>
+      </FileSet>
+      <FileSet generator="instantiation_template_generator">
+        <File name="./PaletteMemory.veo" type="veo" timestamp="Fri Apr 24 14:38:14 GMT 2020" checksum="0x33DCBD50"></File>
+      </FileSet>
+      <FileSet generator="structural_simulation_model_generator">
+        <File name="./PaletteMemory.v" type="verilog" timestamp="Fri Apr 24 14:38:15 GMT 2020" checksum="0x3F28E76F"></File>
+      </FileSet>
+      <FileSet generator="all_documents_generator">
+        <File name="./PaletteMemory/doc/blk_mem_gen_v7_3_vinfo.html" type="ignore" timestamp="Fri Apr 24 14:38:17 GMT 2020" checksum="0x702C7FA8"></File>
+      </FileSet>
+      <FileSet generator="asy_generator">
+        <File name="./PaletteMemory.asy" type="asy" timestamp="Fri Apr 24 14:38:23 GMT 2020" checksum="0xE39EB456"></File>
+        <File name="./summary.log" type="unknown" timestamp="Fri Apr 24 14:38:23 GMT 2020" checksum="0x3A18A2D6"></File>
+      </FileSet>
+      <FileSet generator="xmdf_generator">
+        <File name="./PaletteMemory_xmdf.tcl" type="tclXmdf" timestamp="Fri Apr 24 14:38:25 GMT 2020" checksum="0x2A784189"></File>
+      </FileSet>
+      <FileSet generator="synthesis_ise_generator">
+        <File name="./PaletteMemory.gise" type="ignore" timestamp="Fri Apr 24 14:38:43 GMT 2020" checksum="0xEF4F2D37"></File>
+        <File name="./PaletteMemory.xise" type="ignore" timestamp="Fri Apr 24 14:38:43 GMT 2020" checksum="0x8C87EF0D"></File>
+      </FileSet>
+      <FileSet generator="ise_generator">
+        <File name="./PaletteMemory.gise" type="ignore" timestamp="Fri Apr 24 14:38:53 GMT 2020" checksum="0x35BC5865"></File>
+        <File name="./PaletteMemory.xise" type="ignore" timestamp="Fri Apr 24 14:38:52 GMT 2020" checksum="0x78A271B8"></File>
+      </FileSet>
+      <FileSet generator="deliver_readme_generator">
+        <File name="./deliver_readme_generator.xlog" type="ignore" timestamp="Fri Apr 24 14:39:03 GMT 2020" checksum="0xFFFFFFFF"></File>
+      </FileSet>
+      <FileSet generator="flist_generator">
+        <File name="./PaletteMemory_flist.txt" type="ignore" timestamp="Fri Apr 24 14:38:55 GMT 2020" checksum="0x4F272D4E"></File>
+      </FileSet>
+    </FileSets>
+  </IPInstance>
+</BillOfMaterials>

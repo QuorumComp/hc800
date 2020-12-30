@@ -1,0 +1,11 @@
+	IFND	VIDEO_I_INCLUDED_
+
+VIDEO_I_INCLUDED_ = 1
+
+	GLOBAL	TextHexByteOut
+	GLOBAL	TextHexWordOut
+	GLOBAL	TextNewline
+	GLOBAL	TextCodeStringOut
+	GLOBAL	TextDigitOut
+
+	ENDC

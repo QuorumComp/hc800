@@ -1,0 +1,9 @@
+{
+    "[scala]": {
+        "editor.tabSize": 4,
+        "editor.insertSpaces": false
+    },
+    "files.watcherExclude": {
+        "**/target": true
+    }
+}
