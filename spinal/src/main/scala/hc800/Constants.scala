@@ -5,9 +5,9 @@ import spinal.lib._
 
 
 object Constants {
-    val baseFrequency = 6750000 Hz
-    val firstCycle = 1
-    val totalVideolines = 240
-    val totalHiresPixels = 720
-    val lastScanline = 255
+	val baseFrequency = 6750000 Hz
+	val firstCycle = 1
+	val totalVideolines = 240
+	val totalHiresPixels = 720
+	val lastScanline = 255
 }

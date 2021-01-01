@@ -7,10 +7,13 @@ root = true
 charset = utf-8
 indent_style = tab
 indent_size = 4
+end_of_line = lf
 
 [*.{asm,rc8}]
 indent_style = tab
 indent_size = 8
+end_of_line = lf
 
 [Makefile]
 indent_style = tab
+end_of_line = lf
