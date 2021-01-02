@@ -4,7 +4,7 @@
 		INCLUDE	"nexys3.i"
 		INCLUDE	"rc800.i"
 		INCLUDE	"uart.i"
-		INCLUDE	"video.i"
+		INCLUDE	"text.i"
 
 CFG_VIDEO	EQU	$03
 CFG_LOAD	EQU	$02

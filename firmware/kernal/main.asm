@@ -10,7 +10,7 @@
 		INCLUDE	"string.i"
 		INCLUDE	"syscall.i"
 		INCLUDE	"uart.i"
-		INCLUDE "video.i"
+		INCLUDE "text.i"
 
 PALETTE_BASE	EQU	$8000
 
@@ -41,7 +41,7 @@ Main:
 		ld	f,0
 		ld	c,4
 		ls	ft,c
-		jal	TextDecimalWordOut
+		jal	StreamDecimalWordOut
 		MPrintString " KiB\n"
 
 		jal	EnableVBlank

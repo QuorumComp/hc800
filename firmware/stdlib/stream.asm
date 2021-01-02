@@ -1,4 +1,7 @@
+		INCLUDE	"math.i"
+
 		INCLUDE	"syscall.i"
+
 		INCLUDE	"stream.i"
 		INCLUDE	"string.i"
 
@@ -114,5 +117,48 @@ StreamDigitOut:
 		popa
 		j	(hl)
 
+
+
+; -- Print value as decimal
+; --
+; -- Inputs:
+; --   ft - value to print
+		SECTION	"StreamDecimalWordOut",CODE
+StreamDecimalWordOut:
+		pusha
+
+		ld	de,ft
+		tst	de
+		j/z	.print_zero
+
+		ld	ft,de
+		jal	.recurse
+		j	.exit
+
+.print_zero	ld	t,0
+		jal	StreamDigitOut
+
+.exit		popa
+		j	(hl)
+
+.recurse
+		pusha
+
+		ld	de,ft
+		tst	de
+		j/z	.recurse_done
+
+		ld	ft,10
+		push	de
+		ld	de,0
+		jal	UnsignedDivide
+
+		jal	.recurse
+
+		ld	ft,de
+		jal	StreamDigitOut
+
+.recurse_done	popa
+		j	(hl)
 
 

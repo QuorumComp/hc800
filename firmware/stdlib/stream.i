@@ -7,6 +7,7 @@ STREAM_I_INCLUDED_ = 1
 	GLOBAL	StreamDigitOut
 	GLOBAL	StreamHexByteOut
 	GLOBAL	StreamHexWordOut
+	GLOBAL	StreamDecimalWordOut
 
 ; -- Print a string
 ; -- Usage: MPrintString <"My string">

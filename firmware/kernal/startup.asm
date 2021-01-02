@@ -3,7 +3,7 @@
 		INCLUDE	"hc800.i"
 		INCLUDE "memory.i"
 		INCLUDE "nexys3.i"
-		INCLUDE "video.i"
+		INCLUDE "text.i"
 		INCLUDE	"main.i"
 
 		IMPORT	VBlankHandler

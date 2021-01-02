@@ -1,4 +1,4 @@
-SRCS = commands.asm memory.asm nexys3.asm uart.asm
+SRCS = commands.asm math.asm memory.asm nexys3.asm uart.asm
 ASMFLAGS = -g -el -z0
 TARGET = firm.lib
 

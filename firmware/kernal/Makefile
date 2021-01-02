@@ -1,7 +1,7 @@
 COMMON = ../common/
 STD = ../stdlib/
 FIRM = ../firmlib/
-SRCS = startup.asm editor.asm keyboard.asm main.asm math.asm syscall.asm video.asm video_common.asm
+SRCS = startup.asm editor.asm keyboard.asm main.asm syscall.asm text.asm
 LIBS = $(STD)std.lib $(FIRM)firm.lib
 
 ASMFLAGS = -g -el -z0 -i$(COMMON) -i$(STD) -i$(FIRM)

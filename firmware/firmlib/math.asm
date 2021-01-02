@@ -1,8 +1,6 @@
 		INCLUDE	"hc800.i"
 		INCLUDE	"math.i"
 
-		SECTION	"Math",CODE
-
 ; --
 ; -- Multiply two integers
 ; --
@@ -13,7 +11,7 @@
 ; -- Outputs:
 ; --   de:ft - 32 bit result
 ; --
-
+		SECTION	"SignedMultiply",CODE
 SignedMultiply:
 		push	bc
 
@@ -113,6 +111,7 @@ DIVIDE:		MACRO
 ; --   ft - quotient
 ; --   de - remainder
 ; --
+		SECTION	"UnsignedDivide",CODE
 UnsignedDivide:
 		DIVIDE	MATH_OP_UNSIGNED_DIV
 
@@ -127,5 +126,6 @@ UnsignedDivide:
 ; --   ft - quotient
 ; --   de - remainder
 ; --
+		SECTION	"SignedDivide",CODE
 SignedDivide:
 		DIVIDE	MATH_OP_SIGNED_DIV

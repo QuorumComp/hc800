@@ -1,6 +1,7 @@
-COMMON = ../kernal/
+KERNAL = ../kernal/
+LOWLEVEL = ../firmlib/
 SRCS = stream.asm string.asm
-ASMFLAGS = -g -el -z0 -i$(COMMON)
+ASMFLAGS = -g -el -z0 -i$(KERNAL) -i$(LOWLEVEL)
 TARGET = std.lib
 
 ASM = motorrc8

@@ -6,7 +6,7 @@
 		INCLUDE	"nexys3.i"
 		INCLUDE	"rc800.i"
 		INCLUDE	"string.i"
-		INCLUDE	"video.i"
+		INCLUDE	"text.i"
 
 		IMPORT	ResetWhenCombo
 

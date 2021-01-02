@@ -1,6 +1,4 @@
-	IFND	VIDEO_EXT_I_INCLUDED_
-
-	INCLUDE	"video_common.i"
+	IFND	TEXT_I_INCLUDED_
 
 FLASH:		MACRO
 		pusha
@@ -24,6 +22,23 @@ VATTR_ITALIC	EQU	$08
 VATTR_BOLD	EQU	$04
 VATTR_UNDERLINE	EQU	$02
 
+CHARS_PER_LINE	EQU	90
+LINES_ON_SCREEN	EQU	30
+
+ATTRIBUTES_BASE	EQU	$C000
+
+		RSRESET
+csr_X:		RB	1
+csr_Y:		RB	1
+csr_Attribute:	RB	1
+csr_SIZEOF:	RB	0
+
+	GLOBAL	TextInitialize
+	GLOBAL	TextClearScreen
+	GLOBAL	TextMoveCursor
+	GLOBAL	TextSetAttributes
+	GLOBAL	TextSetWideChar
+	GLOBAL	TextWideCharOut
 	GLOBAL	TextDeleteCharacterAtCursor
 	GLOBAL	TextDeleteCharacter
 	GLOBAL	TextInsertEmptyCharacter
@@ -34,9 +49,10 @@ VATTR_UNDERLINE	EQU	$02
 	GLOBAL	TextGetCursor
 	GLOBAL	TextSetCursor
 	GLOBAL	TextSetAttributesAtCursor
-	GLOBAL	TextPushAttributes
-	GLOBAL	TextPopAttributes
-	GLOBAL	TextDecimalWordOut
 	GLOBAL	TextGetAttributePointer
+
+	GLOBAL	VideoCursor
+
+
 
 	ENDC
