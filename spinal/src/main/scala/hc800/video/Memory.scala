@@ -1,4 +1,4 @@
-package hc800.chipset
+package hc800.video
 
 import hc800.Bus
 import hc800.ReadOnlyBus

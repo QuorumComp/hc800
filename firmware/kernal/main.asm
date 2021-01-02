@@ -299,7 +299,7 @@ DrawBox:
 EnableVBlank:
 		pusha
 
-		ld	b,IO_CHIPSET_BASE
+		ld	b,IO_ICTRL_BASE
 		ld	c,IO_CHP_ICTRL_ENABLE
 		ld	t,$7F
 		lio	(bc),t

@@ -184,7 +184,7 @@ EmptyReceiveBuffer:
 VideoIsVBlankEdge:
 		push	bc-hl
 
-		ld	b,IO_CHIPSET_BASE
+		ld	b,IO_ICTRL_BASE
 		ld	c,IO_CHP_ICTRL_REQUEST
 		lio	t,(bc)
 		ld	f,IO_INT_VBLANK

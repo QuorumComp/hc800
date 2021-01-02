@@ -2,29 +2,24 @@
 
 | Address | Size | Content    |
 |---------|------|------------|
-| $00xx   | 256  | Chipset    |
+| $00xx   | 16   | Interrupt controller |
 | $010x   | 16   | MMU        |
 | $020x   | 16   | Multiplier |
 | $030x   | 16   | Keyboard   |
 | $040x   | 16   | UART       |
+| $050x   | 16   | Display controller |
 | $7FFx   | 16   | Board ID   |
 | $8000   | $8000 | Board specific functions |
 
 
-## Chipset
-| Address | Size | Content              |
-|---------|------|----------------------|
-| $00     | 4    | Interrupt controller |
-| $10     | 16   | Display controller   |
-
-### Interrupt controller
+## Interrupt controller
 | Address | Content                | Function |
 |---------|------------------------|---|
-| $00     | Enable interrupt mask  | Which interrupt source that will request an interrupt |
+| $00     | Enable interrupt mask  | Which interrupt source that can request an interrupt |
 | $01     | Request interrupt mask | Interrupt sources that are requesting interrupt |
 | $02     | Handle interrupt mask  | Interrupt sources that should be handled, effectively AND of Enable and Request masks |
 
-#### Interrupt mask
+### Interrupt mask
 | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
 |---|---|---|---|---|---|---|---|
 |Set/clear. When 1, remaining one bits will be set. When 0, remaining one bits will be cleared.||||||Horizontal blanking start|Vertical blanking start |

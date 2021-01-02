@@ -1,4 +1,4 @@
-package hc800.chipset
+package hc800.video
 
 import spinal.core._
 import spinal.lib._

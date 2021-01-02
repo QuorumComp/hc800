@@ -1,9 +1,7 @@
-package hc800.chipset
+package hc800
 
 import spinal.core._
 import spinal.lib._
-
-import hc800.Bus
 
 case class InterruptController() extends Component {
 	import InterruptController._

@@ -16,8 +16,8 @@ csr_SIZEOF:	RB	0
 TextInitialize:
 		pusha
 
-		ld	b,IO_CHIPSET_BASE
-		ld	c,IO_CHP_PLANE0_CONTROL
+		ld	b,IO_VIDEO_BASE
+		ld	c,IO_VID_PLANE0_CONTROL
 		ld	t,IO_PLANE_CTRL_TEXT|IO_PLANE_CTRL_HIRES|IO_PLANE_CTRL_ENABLE
 		lio	(bc),t
 

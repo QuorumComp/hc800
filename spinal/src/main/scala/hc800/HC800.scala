@@ -4,11 +4,8 @@ import spinal.core._
 import spinal.lib._
 import spinal.core.sim._
 
-import chipset.Chipset
-import chipset.SpinalAttributeMemory
-import chipset.SpinalPaletteMemory
-import nexys3.Nexys3
-import java.awt.image.Kernel
+import hc800.video._
+import hc800.nexys3.Nexys3
 import hc800.keyboard.Keyboard
 
 
@@ -104,11 +101,12 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 	}
 
 	val ioMap = new {
-		val chipset  = M"00000000--------"
+		val intCtrl  = M"000000000000----"
 		val mmu      = M"000000010000----"
 		val math     = M"000000100000----"
 		val keyboard = M"000000110000----"
 		val uart     = M"000001000000----"
+		val graphics = M"000001010000----"
 		val id       = M"011111111111----"
 		val board    = M"1---------------"
 	}
@@ -190,11 +188,12 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 		// I/O bus enables
 		val mmuEnable      = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.mmu))
 		val boardIdEnable  = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.id))
-		val chipsetEnable  = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.chipset))
+		val graphicsEnable = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.graphics))
 		val keyboardEnable = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.keyboard))
 		val boardEnable    = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.board))
 		val mathEnable     = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.math))
 		val uartEnable     = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.uart))
+		val intCtrlEnable  = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.intCtrl))
 
 		val dataFromMaster = (cpuArea.cpuBus.dataFromMaster | cpuArea.ioBus.dataFromMaster)
 
@@ -202,9 +201,9 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 		val source = mainArea.cpuBusMaster ? MMU.MapSource.cpu | chipSource
 
 		val chipMemBus = ReadOnlyBus(addressWidth = 16)
-		val chipRegBus = Bus(addressWidth = 8)
-		val attributeMemBus = Bus(addressWidth = hc800.chipset.AttributeMemory.byteWidth)
-		val paletteMemBus = Bus(addressWidth = hc800.chipset.PaletteMemory.byteWidth)
+		val chipRegBus = Bus(addressWidth = 4)
+		val attributeMemBus = Bus(addressWidth = hc800.video.AttributeMemory.byteWidth)
+		val paletteMemBus = Bus(addressWidth = hc800.video.PaletteMemory.byteWidth)
 		
 		val machineBus = Bus(addressWidth = 22)
 		machineBus.enable := (mainArea.cpuBusMaster ? cpuArea.cpuBus.enable | mainArea.chipsetBusMaster)
@@ -249,12 +248,23 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 			else if (boardIsMist) mkMistKeyboard()
 			else new hc800.keyboard.NullKeyboard()
 
+		val interruptController = new InterruptController()
 		val math = new Math()
 		val bootROM = new BootROM()
 		val kernal = new RAM(size = 16384)
 		val font = new Font()
 		val uart = new UART()
 		val nexys3 = new Nexys3()
+
+		val hBlanking = Bool()
+		val vBlanking = Bool()
+
+		interruptController.io.inRequest := B(7 bits,
+			0 -> vBlanking,
+			1 -> hBlanking,
+			default -> False)
+
+		interruptController.io.outRequest <> cpuArea.irq
 
 		nexys3.io.segments <> io.seg
 		nexys3.io.anode    <> io.an
@@ -277,12 +287,13 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 
 		val ioDataIn =
 			cpuArea.ioBus.wireClient(nexys3.io.bus, boardEnable) |
-			cpuArea.ioBus.wireClient(chipRegBus, chipsetEnable) |
+			cpuArea.ioBus.wireClient(chipRegBus, graphicsEnable) |
 			cpuArea.ioBus.wireClient(mmu.io.regBus, mmuEnable) |
 			cpuArea.ioBus.wireClient(boardId.io, boardIdEnable) |
 			cpuArea.ioBus.wireClient(keyboard.io.bus, keyboardEnable) |
 			cpuArea.ioBus.wireClient(math.io, mathEnable) |
-			cpuArea.ioBus.wireClient(uart.io.bus, uartEnable)
+			cpuArea.ioBus.wireClient(uart.io.bus, uartEnable) |
+			cpuArea.ioBus.wireClient(interruptController.io.regBus, intCtrlEnable)
 
 		val delayIoDataIn = Delay(ioDataIn, 1)
 		cpuArea.ioBus.dataToMaster := delayIoDataIn
@@ -302,7 +313,7 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 	)
 
 	val chipsetArea = new ClockingArea(chipsetDomain) {
-		val chipset = new Chipset(scanDoubleDomain)
+		val chipset = new VideoGenerator(scanDoubleDomain)
 
 		io.red   <> chipset.io.red
 		io.green <> chipset.io.green
@@ -317,12 +328,13 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 		io.dblVSync <> chipset.io.dblVSync
 		io.dblBlank <> chipset.io.dblBlank
 
-		cpuArea.irq <> chipset.io.interruptRequest
-
 		chipset.io.memBus <> memoryArea.chipMemBus
 
 		chipset.io.memBusCycle <> mainArea.cycleCounter
 		memoryArea.chipSource := chipset.io.memBusSource
+
+		chipset.io.vBlanking <> memoryArea.vBlanking
+		chipset.io.hBlanking <> memoryArea.hBlanking
 
 		val chipsetMemoryArea = new ClockingArea(memoryDomain) {
 			chipset.io.regBus <> memoryArea.chipRegBus
