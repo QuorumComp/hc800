@@ -1,10 +1,8 @@
-package hc800.nexys3
+package hc800
 
 import spinal.core._
 import spinal.lib._
 import spinal.lib.com.uart._
-
-import hc800.Bus
 
 class UART extends Component {
 	import UART._

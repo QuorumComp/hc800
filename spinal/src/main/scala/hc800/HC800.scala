@@ -108,6 +108,7 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 		val mmu      = M"000000010000----"
 		val math     = M"000000100000----"
 		val keyboard = M"000000110000----"
+		val uart     = M"000001000000----"
 		val id       = M"011111111111----"
 		val board    = M"1---------------"
 	}
@@ -193,6 +194,7 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 		val keyboardEnable = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.keyboard))
 		val boardEnable    = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.board))
 		val mathEnable     = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.math))
+		val uartEnable     = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.uart))
 
 		val dataFromMaster = (cpuArea.cpuBus.dataFromMaster | cpuArea.ioBus.dataFromMaster)
 
@@ -251,14 +253,15 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 		val bootROM = new BootROM()
 		val kernal = new RAM(size = 16384)
 		val font = new Font()
+		val uart = new UART()
 		val nexys3 = new Nexys3()
 
 		nexys3.io.segments <> io.seg
 		nexys3.io.anode    <> io.an
 		nexys3.io.buttons  <> io.btn
 
-		nexys3.io.uart.txd <> io.txd
-		nexys3.io.uart.rxd <> io.rxd
+		uart.io.uart.txd <> io.txd
+		uart.io.uart.rxd <> io.rxd
 
 		val memDataIn =
 			machineBus.wireClient(bootROM.io.bus, bootEnable) |
@@ -278,7 +281,8 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 			cpuArea.ioBus.wireClient(mmu.io.regBus, mmuEnable) |
 			cpuArea.ioBus.wireClient(boardId.io, boardIdEnable) |
 			cpuArea.ioBus.wireClient(keyboard.io.bus, keyboardEnable) |
-			cpuArea.ioBus.wireClient(math.io, mathEnable)
+			cpuArea.ioBus.wireClient(math.io, mathEnable) |
+			cpuArea.ioBus.wireClient(uart.io.bus, uartEnable)
 
 		val delayIoDataIn = Delay(ioDataIn, 1)
 		cpuArea.ioBus.dataToMaster := delayIoDataIn

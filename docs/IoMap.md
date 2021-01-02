@@ -6,6 +6,7 @@
 | $010x   | 16   | MMU        |
 | $020x   | 16   | Multiplier |
 | $030x   | 16   | Keyboard   |
+| $040x   | 16   | UART       |
 | $7FFx   | 16   | Board ID   |
 | $8000   | $8000 | Board specific functions |
 
@@ -81,7 +82,6 @@ The system banks are in effect when handling interrupts and the SYS instruction.
 | $00     | Data    |
 | $01     | Status  |
 
-
 ## Board ID
 | Address | Content                 |
 |---------|-------------------------|
@@ -102,6 +102,17 @@ The string's first byte contains a start bit and the string length. If bit seven
 
 To read the string reliably, the register should be read until a byte with the seventh bit set is retrieved, and then reading the number of characters indicated by bits six though zero.
 
+## UART
+| Address | Content |
+|---------|---------|
+| 0       | Data    |
+| 1       | Status  |
+
+### Status
+| Bit | Content |
+|-----|---------|
+| 0   | Byte available to read |
+| 1   | Write allowed          | 
 
 # Nexys 3 I/O
 | Address | Size | Content         |
@@ -115,15 +126,3 @@ To read the string reliably, the register should be read until a byte with the s
 |---------|-------------------|
 | 0       | Low byte of value |
 | 1       | High byte of value |
-
-## UART
-| Address | Content |
-|---------|---------|
-| 0       | Data    |
-| 1       | Status  |
-
-### Status
-| Bit | Content |
-|-----|---------|
-| 0   | Byte available to read |
-| 1   | Write allowed          | 
