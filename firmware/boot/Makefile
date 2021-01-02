@@ -1,5 +1,5 @@
 FIRMLIB = ../firmlib/
-SRCS = startup.asm main.asm video.asm
+SRCS = startup.asm main.asm text.asm
 
 ASMFLAGS = -g -el -z0 -DBOOT -i$(FIRMLIB)
 TARGET = boot.bin

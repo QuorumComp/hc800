@@ -4,26 +4,12 @@
 		INCLUDE	"main.i"
 		INCLUDE	"memory.i"
 		INCLUDE	"uart.i"
-		INCLUDE "video.i"
-		INCLUDE "video_common.i"
+		INCLUDE "text.i"
 
 MPrintString:	MACRO
 		j	.skip\@
 .string\@	DB	\1
 .skip\@		pusha
-		ld	t,.skip\@-.string\@
-		ld	bc,.string\@
-		jal	TextCodeStringOut
-		popa
-		ENDM
-
-MPrintStringAt:	MACRO
-		j	.skip\@
-.string\@	DB	\3
-.skip\@		pusha
-		ld	b,\1
-		ld	c,\2
-		jal	TextSetCursor
 		ld	t,.skip\@-.string\@
 		ld	bc,.string\@
 		jal	TextCodeStringOut
@@ -62,12 +48,15 @@ LoadKernal:
 		push	bc-hl
 
 		MPrintString "Loading kernal"
-
-		MLoadFile "kernal.bin",$4000
+		ld	t,.kernal_length
+		ld	bc,.kernal_name
+		ld	de,$4000
+		jal	ComLoadFile
 
 		MPrintString <", ">
 
 		push	ft
+		MPrintString "$"
 		ld	ft,bc
 		jal	TextHexWordOut
 		MPrintString " bytes loaded."
@@ -80,6 +69,9 @@ LoadKernal:
 .done		MNewline
 		pop	bc-hl
 		j	(hl)
+
+.kernal_name	DB	"kernal.bin"
+.kernal_length	EQU	@-.kernal_name
 
 ; --
 ; -- Check if kernal is a valid kernal
@@ -138,26 +130,27 @@ WaitUart:
 
 
 ; --
-; -- Show spinner
+; -- Show spinner.
 ; --
-Spin:		pusha
-		pop	bc
+; -- Inputs:
+; --   bc - spinner value
+; --
+; -- Outputs:
+; --   bc - new spinner value
+; --
+Spin:		push	ft/de/hl
 
-		ld	t,c
-		add	t,1
-		and	t,3
-		ld	c,t
+		ld	ft,bc
+		add	c,1
 		push	bc
 
-		ld	ft,.spin
-		add	ft,bc
+		and	t,3
+		add	ft,.spin
 		lco	t,(ft)
 		ld	f,0
 		jal	TextWideCharOut
 
-		ld	b,-1
-		ld	c,0
-		jal	TextMoveCursor
+		jal	TextMoveCursorBack
 
 		popa
 		j	(hl)

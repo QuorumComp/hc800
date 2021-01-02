@@ -1,7 +1,7 @@
 		INCLUDE	"rc800.i"
 		INCLUDE	"hc800.i"
 		INCLUDE "memory.i"
-		INCLUDE "video_common.i"
+		INCLUDE "text.i"
 		INCLUDE	"main.i"
 
 PALETTE_BASE	EQU	$8000

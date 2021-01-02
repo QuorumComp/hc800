@@ -20,8 +20,8 @@ UartByteIn:
 		jal	UartCanRead
 		j/ne	.done
 
-		ld	b,IO_NEXYS3_BASE
-		ld	c,IO_NEXYS3_UART_DATA
+		ld	b,IO_UART_BASE
+		ld	c,IO_UART_DATA
 		lio	t,(bc)
 
 .done		pop	bc/hl
@@ -64,8 +64,8 @@ UartByteInSync:
 UartCanRead:
 		push	bc
 
-		ld	b,IO_NEXYS3_BASE
-		ld	c,IO_NEXYS3_UART_STATUS
+		ld	b,IO_UART_BASE
+		ld	c,IO_UART_STATUS
 		lio	t,(bc)
 		not	t
 		and	t,IO_UART_STATUS_READ
@@ -127,8 +127,8 @@ UartByteOutSync:
 
 		jal	UartWaitWrite
 
-		ld	b,IO_NEXYS3_BASE
-		ld	c,IO_NEXYS3_UART_DATA
+		ld	b,IO_UART_BASE
+		ld	c,IO_UART_DATA
 		lio	(bc),t
 
 		popa
@@ -142,8 +142,8 @@ UartByteOutSync:
 UartWaitWrite:
 		pusha
 
-		ld	b,IO_NEXYS3_BASE
-		ld	c,IO_NEXYS3_UART_STATUS
+		ld	b,IO_UART_BASE
+		ld	c,IO_UART_STATUS
 .wait		lio	t,(bc)
 		and	t,IO_UART_STATUS_WRITE
 		cmp	t,0

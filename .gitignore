@@ -89,3 +89,4 @@ mist/*.bak
 mist/incremental_db/
 mist/output_files/
 mist/simulation/modelsim/
+.bsp/

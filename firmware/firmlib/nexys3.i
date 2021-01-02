@@ -5,16 +5,6 @@ NEXYS3_I_INCLUDED_ = 1
 	GLOBAL	CheckButtons
 	GLOBAL	SetHexSegments
 
-
-SetHex:		MACRO
-		pusha
-		ld	ft,\1
-		jal	SetHexSegments
-		popa
-		ENDM
-
-
-
 IO_NEXYS3_BASE		EQU	$80
 
 ; 7 segment displays
@@ -31,14 +21,5 @@ IO_BUTTON_UP		EQU	$02
 IO_BUTTON_LEFT		EQU	$04
 IO_BUTTON_DOWN		EQU	$08
 IO_BUTTON_RIGHT		EQU	$10
-
-; UART
-
-IO_NEXYS3_UART_DATA	EQU	$20
-IO_NEXYS3_UART_STATUS	EQU	$21
-
-IO_UART_STATUS_READ	EQU	$01
-IO_UART_STATUS_WRITE	EQU	$02
-
 
 	ENDC

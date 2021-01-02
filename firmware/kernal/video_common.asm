@@ -179,10 +179,9 @@ TextGetCursorAttributePointer:
 TextSetWideChar:
 		pusha
 
-		push	ft
-		jal	TextGetCursorAttributePointer
 		ld	de,ft
-		pop	ft
+		jal	TextGetCursorAttributePointer
+		exg	de,ft
 
 		; de = attributes address
 

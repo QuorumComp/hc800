@@ -8,15 +8,6 @@ ERROR_NOT_AVAILABLE	RB	1
 ERROR_PROTOCOL		EQU	$FE
 ERROR_TIMEOUT		EQU	$FF
 
-MLoadFile:	MACRO
-		j	.skip\@
-.string\@	DB	\1
-.skip\@		ld	t,.skip\@-.string\@
-		ld	bc,.string\@
-		ld	de,\2
-		jal	ComLoadFile
-		ENDM
-
 MDebugPrint:	MACRO
 		pusha
 		j	.skip\@

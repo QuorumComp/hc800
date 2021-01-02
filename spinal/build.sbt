@@ -12,8 +12,6 @@ lazy val hc800 = (project in file("."))
 
 		scalaVersion := "2.12.11",
 
-		EclipseKeys.withSource := true,
-
   		libraryDependencies ++= Seq(
 			"com.github.spinalhdl" % "spinalhdl-core_2.12" % spinalVersion,
 			"com.github.spinalhdl" % "spinalhdl-lib_2.12" % spinalVersion,

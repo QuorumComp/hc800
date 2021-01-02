@@ -89,10 +89,7 @@ StringAppendChar:
 DigitToAscii:
 		cmp	t,10
 		j/ltu	.decimal
-		ld	f,'A'-10
-		j	.next
-.decimal	ld	f,'0'
-.next		add	t,f
-
+		add	t,'A'-10
 		j	(hl)
-
+.decimal	add	t,'0'
+		j	(hl)

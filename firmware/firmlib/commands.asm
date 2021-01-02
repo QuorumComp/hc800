@@ -6,10 +6,6 @@ COMMAND_LOAD_FILE	EQU	1
 COMMAND_REQUEST_CHAR	EQU	2
 COMMAND_PRINT_CHAR	EQU	3
 
-		SECTION	"Commands",CODE
-
-		IFND	BOOT
-
 ; -- Print value as hexadecimal
 ; --
 ; -- Inputs:
@@ -18,15 +14,12 @@ COMMAND_PRINT_CHAR	EQU	3
 ComPrintHexByte:
 		pusha
 
-		ld	d,t
-
 		ld	f,0
-		ld	e,4
-		rs	ft,e
+		rs	ft,4
 		jal	ComPrintDigit
 
-		ld	t,$F
-		and	t,d
+		ld	t,d
+		and	t,$F
 		jal	ComPrintDigit
 
 		popa
@@ -41,7 +34,7 @@ ComPrintHexByte:
 ComPrintDigit:
 		pusha
 
-		jal	digitToAscii
+		jal	comDigitToAscii
 		jal	ComPrintChar
 
 		popa
@@ -56,12 +49,12 @@ ComPrintDigit:
 ; -- Outputs:
 ; --    f - "eq" condition if success
 ; --
-		SECTION	"PrintChar",CODE
+		SECTION	"ComPrintChar",CODE
 ComPrintChar:
 		pusha
 
 		ld	t,COMMAND_PRINT_CHAR
-		jal	sendCommand
+		jal	comSendCommand
 
 		pop	ft
 		jal	UartByteOutSync
@@ -78,12 +71,12 @@ ComPrintChar:
 ; --    f - "eq" condition if success
 ; --    t - character
 ; --
-		SECTION "RequestChar",CODE
+		SECTION "ComRequestChar",CODE
 ComRequestChar:
 		push	bc-hl
 
 		ld	t,COMMAND_REQUEST_CHAR
-		jal	sendCommand
+		jal	comSendCommand
 
 		jal	ComSyncResponse
 		j/ne	.done
@@ -92,8 +85,6 @@ ComRequestChar:
 
 .done		pop	bc-hl
 		j	(hl)
-
-		ENDC
 
 ; --
 ; -- Load file into memory
@@ -108,7 +99,7 @@ ComRequestChar:
 ; --    f - "z" condition if success
 ; --   bc - bytes read
 ; --
-		SECTION "LoadFile",CODE
+		SECTION "ComLoadFile",CODE
 ComLoadFile:
 		push	hl
 
@@ -116,8 +107,8 @@ ComLoadFile:
 		jal	ComIdentify
 		pop	ft
 
-		jal	ComSendLoadFile
-		jal	ComReadFile
+		jal	comSendLoadFile
+		jal	comReadFile
 
 		pop	hl
 		j	(hl)
@@ -129,12 +120,12 @@ ComLoadFile:
 ; --    t - error code, 0 is success
 ; --    f - "eq" condition if success
 ; --
-		SECTION "Identify",CODE
+		SECTION "ComIdentify",CODE
 ComIdentify:
 		push	bc-hl
 
-		jal	sendIdentify
-		jal	readIdentify
+		jal	comSendIdentify
+		jal	comReadIdentify
 
 		pop	bc-hl
 		j	(hl)
@@ -146,11 +137,12 @@ ComIdentify:
 ; -- Inputs:
 ; --   bc - file name (Pascal string, data segment)
 ; --
-		SECTION "SendLoadFileString",CODE
-ComSendLoadFileString:	pusha
+		SECTION "ComSendLoadFileString",CODE
+ComSendLoadFileString:
+		pusha
 
 		ld	t,COMMAND_LOAD_FILE
-		jal	sendCommand
+		jal	comSendCommand
 
 		ld	t,(bc)
 		add	bc,1
@@ -171,6 +163,35 @@ ComSendLoadFileString:	pusha
 		j	(hl)
 
 ; --
+; -- Read protocol response, return error code
+; --
+; -- Outputs:
+; --	f - "eq" condition if success
+; --    t - error code, 0 = success
+; --
+		SECTION "ComSyncResponse",CODE
+ComSyncResponse:
+		push	bc-hl
+
+		jal	UartByteInSync
+		j/ne	.timeout
+
+		cmp	t,'!'
+		j/ne	.protocol_error
+
+		jal	UartByteInSync
+		j	.done
+
+.protocol_error	ld	t,ERROR_PROTOCOL
+		j	.done	
+
+.timeout	ld	t,ERROR_TIMEOUT
+
+.done		cmp	t,0
+		pop	bc-hl
+		j	(hl)
+
+; --
 ; -- Internal functions
 ; --
 
@@ -185,8 +206,8 @@ ComSendLoadFileString:	pusha
 ; --    f - "eq" condition if success
 ; --   bc - bytes read
 ; --
-		SECTION "ReadFile",CODE
-ComReadFile:
+		SECTION "ComReadFile",CODE
+comReadFile:
 		push	de-hl
 
 		jal	ComSyncResponse
@@ -229,13 +250,13 @@ ComReadFile:
 ; --    t - file name length
 ; --   bc - file name (code segment)
 ; --
-		SECTION "SendLoadFile",CODE
-ComSendLoadFile:
+		SECTION "ComSendLoadFile",CODE
+comSendLoadFile:
 		pusha
 
 		push	ft
 		ld	t,COMMAND_LOAD_FILE
-		jal	sendCommand
+		jal	comSendCommand
 		pop	ft
 
 		; t - already filename length
@@ -255,40 +276,11 @@ ComSendLoadFile:
 		popa
 		j	(hl)
 
-; --
-; -- Read protocol response, return error code
-; --
-; -- Outputs:
-; --	f - "eq" condition if success
-; --    t - error code, 0 = success
-; --
-		SECTION "SyncResponse",CODE
-ComSyncResponse:
-		push	bc-hl
-
-		jal	UartByteInSync
-		j/ne	.timeout
-
-		cmp	t,'!'
-		j/ne	.protocol_error
-
-		jal	UartByteInSync
-		j	.done
-
-.protocol_error	ld	t,ERROR_PROTOCOL
-		j	.done	
-
-.timeout	ld	t,ERROR_TIMEOUT
-
-.done		cmp	t,0
-		pop	bc-hl
-		j	(hl)
-
 ; -- Outputs:
 ; --    t - error code, 0 = success
 ; --    f - "eq" if success
 		SECTION "ReadIdentify",CODE
-readIdentify:
+comReadIdentify:
 		push	bc-hl
 
 		jal	ComSyncResponse
@@ -315,11 +307,11 @@ readIdentify:
 
 
 		SECTION "SendIdentify",CODE
-sendIdentify:
+comSendIdentify:
 		pusha
 
 		ld	t,COMMAND_IDENTIFY
-		jal	sendCommand
+		jal	comSendCommand
 
 		ld	ft,$1234
 		jal	UartWordOutSync
@@ -335,7 +327,7 @@ sendIdentify:
 ; --    t - command
 ; --
 		SECTION "SendCommand",CODE
-sendCommand:
+comSendCommand:
 		pusha
 
 		ld	f,'?'
@@ -355,14 +347,12 @@ sendCommand:
 ; -- Outputs:
 ; --    t - character
 ; --
-		SECTION	"DigitToAscii",CODE
-digitToAscii:
+		SECTION	"comDigitToAscii",CODE
+comDigitToAscii:
 		cmp	t,10
 		j/ltu	.decimal
-		ld	f,'A'-10
-		j	.next
-.decimal	ld	f,'0'
-.next		add	t,f
-
+		add	t,'A'-10
+		j	(hl)
+.decimal	add	t,'0'
 		j	(hl)
 

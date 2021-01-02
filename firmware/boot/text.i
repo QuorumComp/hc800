@@ -1,0 +1,19 @@
+	IFND	TEXT_I_INCLUDED_
+
+TEXT_I_INCLUDED_ = 1
+
+CHARS_PER_LINE	EQU	90
+LINES_ON_SCREEN	EQU	30
+
+ATTRIBUTES_BASE	EQU	$C000
+
+	GLOBAL	TextInitialize
+	GLOBAL	TextHexWordOut
+	GLOBAL	TextNewline
+	GLOBAL	TextCodeStringOut
+	GLOBAL	TextMoveCursorBack
+	GLOBAL	TextMoveCursorForward
+	GLOBAL	TextWideCharOut
+
+
+	ENDC
