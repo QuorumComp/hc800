@@ -6,11 +6,11 @@
 
 		INCLUDE	"stdlib/stream.i"
 		INCLUDE	"stdlib/string.i"
+		INCLUDE	"stdlib/syscall.i"
 
 		INCLUDE	"editor.i"
 		INCLUDE	"keyboard.i"
 		INCLUDE	"main.i"
-		INCLUDE	"syscall.i"
 		INCLUDE "text.i"
 
 PALETTE_BASE	EQU	$8000
@@ -18,8 +18,6 @@ PALETTE_BASE	EQU	$8000
 		SECTION	"Main",CODE
 Main:
 		di
-
-		MDebugPrint <"Kernal main\n">
 
 		jal	InitializePalette
 		jal	KeyboardInitialize

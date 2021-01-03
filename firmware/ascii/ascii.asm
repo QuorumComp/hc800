@@ -1,6 +1,5 @@
-		INCLUDE	"kernal/syscall.i"
-
 		INCLUDE	"stdlib/stream.i"
+		INCLUDE	"stdlib/syscall.i"
 
 		SECTION	"Code",CODE
 
