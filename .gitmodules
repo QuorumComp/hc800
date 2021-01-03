@@ -6,3 +6,7 @@
 	path = firmware/lowlevel
 	url = https://github.com/QuorumComp/hc800-lowlevel.git
 	branch = main
+[submodule "firmware/stdlib"]
+	path = firmware/stdlib
+	url = https://github.com/QuorumComp/hc800-stdlib.git
+	branch = main
