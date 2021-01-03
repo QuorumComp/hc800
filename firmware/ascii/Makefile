@@ -1,7 +1,6 @@
-COMMON = ../kernal/
 STD = ../stdlib/
 SRCS = ascii.asm
-ASMFLAGS = -g -el -z0 -i$(COMMON) -i$(STD)
+ASMFLAGS = -g -el -z0 -i../
 TARGET = ascii.com
 
 ASM = motorrc8

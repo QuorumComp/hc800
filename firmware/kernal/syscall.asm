@@ -1,9 +1,10 @@
-		INCLUDE	"commands.i"
+		INCLUDE	"lowlevel/commands.i"
+		INCLUDE	"lowlevel/hc800.i"
+		INCLUDE	"lowlevel/nexys3.i"
+		INCLUDE	"lowlevel/rc800.i"
+		INCLUDE	"lowlevel/uart.i"
+
 		INCLUDE	"editor.i"
-		INCLUDE	"hc800.i"
-		INCLUDE	"nexys3.i"
-		INCLUDE	"rc800.i"
-		INCLUDE	"uart.i"
 		INCLUDE	"text.i"
 
 CFG_VIDEO	EQU	$03

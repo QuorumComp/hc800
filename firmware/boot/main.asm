@@ -1,9 +1,9 @@
-		INCLUDE	"hc800.i"
+		INCLUDE	"lowlevel/hc800.i"
+		INCLUDE	"lowlevel/commands.i"
+		INCLUDE	"lowlevel/memory.i"
+		INCLUDE	"lowlevel/uart.i"
 
-		INCLUDE	"commands.i"
 		INCLUDE	"main.i"
-		INCLUDE	"memory.i"
-		INCLUDE	"uart.i"
 		INCLUDE "text.i"
 
 MPrintString:	MACRO

@@ -1,6 +1,6 @@
-		INCLUDE	"commands.i"
-		INCLUDE	"hc800.i"
-		INCLUDE	"memory.i"
+		INCLUDE	"lowlevel/commands.i"
+		INCLUDE	"lowlevel/hc800.i"
+		INCLUDE	"lowlevel/memory.i"
 
 		INCLUDE	"text.i"
 

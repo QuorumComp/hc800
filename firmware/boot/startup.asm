@@ -1,6 +1,7 @@
-		INCLUDE	"rc800.i"
-		INCLUDE	"hc800.i"
-		INCLUDE "memory.i"
+		INCLUDE	"lowlevel/rc800.i"
+		INCLUDE	"lowlevel/hc800.i"
+		INCLUDE "lowlevel/memory.i"
+		
 		INCLUDE "text.i"
 		INCLUDE	"main.i"
 

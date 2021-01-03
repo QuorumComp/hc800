@@ -1,10 +1,11 @@
-		INCLUDE	"hc800.i"
-		INCLUDE	"memory.i"
+		INCLUDE	"lowlevel/hc800.i"
+		INCLUDE	"lowlevel/memory.i"
+		INCLUDE	"lowlevel/math.i"
 
-		INCLUDE	"math.i"
+		INCLUDE	"stdlib/stream.i"
+
 		INCLUDE	"text.i"
 
-		INCLUDE	"stream.i"
 
 ; --
 ; -- Initialize text mode

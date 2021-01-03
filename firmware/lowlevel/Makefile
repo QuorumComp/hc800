@@ -1,6 +1,6 @@
 SRCS = commands.asm math.asm memory.asm nexys3.asm uart.asm
 ASMFLAGS = -g -el -z0
-TARGET = firm.lib
+TARGET = lowlevel.lib
 
 ASM = motorrc8
 LIB = xlib

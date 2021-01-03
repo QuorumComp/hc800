@@ -1,6 +1,6 @@
-		INCLUDE	"math.i"
+		INCLUDE	"lowlevel/math.i"
 
-		INCLUDE	"syscall.i"
+		INCLUDE	"kernal/syscall.i"
 
 		INCLUDE	"stream.i"
 		INCLUDE	"string.i"

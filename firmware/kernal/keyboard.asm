@@ -1,8 +1,10 @@
+		INCLUDE	"lowlevel/hc800.i"
+		INCLUDE	"lowlevel/memory.i"
+		INCLUDE	"lowlevel/rc800.i"
+
+		INCLUDE	"stdlib/stream.i"
+
 		INCLUDE	"keyboard.i"
-		INCLUDE	"memory.i"
-		INCLUDE	"hc800.i"
-		INCLUDE	"rc800.i"
-		INCLUDE	"stream.i"
 
 MATRIX_SIZE	EQU	128/8
 

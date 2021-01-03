@@ -6,7 +6,7 @@ TARGETS = \
 	ascii/ascii.com \
 	monitor/monitor.com
 
-LIBS = stdlib/std.lib firmlib/firm.lib
+LIBS = stdlib/std.lib lowlevel/lowlevel.lib
 
 CLEAN = $(addsuffix .clean,$(dir $(TARGETS) $(LIBS)))
 

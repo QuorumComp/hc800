@@ -1,15 +1,16 @@
-		INCLUDE	"main.i"
+		INCLUDE	"lowlevel/hc800.i"
+		INCLUDE	"lowlevel/math.i"
+		INCLUDE	"lowlevel/memory.i"
+		INCLUDE	"lowlevel/nexys3.i"
+		INCLUDE	"lowlevel/uart.i"
+
+		INCLUDE	"stdlib/stream.i"
+		INCLUDE	"stdlib/string.i"
 
 		INCLUDE	"editor.i"
-		INCLUDE	"hc800.i"
 		INCLUDE	"keyboard.i"
-		INCLUDE	"math.i"
-		INCLUDE	"memory.i"
-		INCLUDE	"nexys3.i"
-		INCLUDE	"stream.i"
-		INCLUDE	"string.i"
+		INCLUDE	"main.i"
 		INCLUDE	"syscall.i"
-		INCLUDE	"uart.i"
 		INCLUDE "text.i"
 
 PALETTE_BASE	EQU	$8000

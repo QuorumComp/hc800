@@ -1,10 +1,9 @@
-COMMON = ../common/
 STD = ../stdlib/
-FIRM = ../firmlib/
+LOWLEVEL = ../lowlevel/
 SRCS = startup.asm editor.asm keyboard.asm main.asm syscall.asm text.asm
-LIBS = $(STD)std.lib $(FIRM)firm.lib
+LIBS = $(STD)std.lib $(LOWLEVEL)lowlevel.lib
 
-ASMFLAGS = -g -el -z0 -i$(COMMON) -i$(STD) -i$(FIRM)
+ASMFLAGS = -g -el -z0 -i../
 TARGET = kernal.bin
 
 ASM = motorrc8
