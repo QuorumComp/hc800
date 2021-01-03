@@ -2,3 +2,7 @@
 	path = spinal/rc800
 	url = https://github.com/QuorumComp/rc800.git
 	branch = main
+[submodule "firmware/lowlevel"]
+	path = firmware/lowlevel
+	url = https://github.com/QuorumComp/hc800-lowlevel.git
+	branch = main
