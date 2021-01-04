@@ -90,3 +90,6 @@ mist/incremental_db/
 mist/output_files/
 mist/simulation/modelsim/
 .bsp/
+spinal/null/
+spinal/simWorkspace/
+spinal/tmp/

@@ -367,6 +367,6 @@ object HC800TopLevel {
 	def main(args: Array[String]) {
 		generate("../specnext/hc800_zxnext.v", BoardId.Board.zxNext.position, Vendor.Xilinx)
 		generate("../mist/hc800_mist.v", BoardId.Board.mist.position, Vendor.Altera)
-		generate("hc800_nexys3.v", BoardId.Board.nexys3.position, Vendor.Xilinx)
+		//generate("hc800_nexys3.v", BoardId.Board.nexys3.position, Vendor.Xilinx)
 	}
 }
