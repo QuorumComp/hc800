@@ -137,14 +137,14 @@ executeCommandLine:
 		jal	readFile
 		j/ne	.error
 
-		MDebugPrint <"- setClientBanks\n">
+		;MDebugPrint <"- setClientBanks\n">
 		jal	setClientBanks
 
 		pop	bc-de
 
 		; top of hl stack is return address
 
-		MDebugPrint <"- jump\n">
+		;MDebugPrint <"- jump\n">
 
 		ld	hl,0
 		push	hl	;push HL for reti pop
