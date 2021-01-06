@@ -121,7 +121,7 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 	}
 
 	//  |-----|     |-----|     |-----|     |-----|       Lores pixels
-	//  |-----|     |-----|-----|-----|     |-----|-----| Chipset memory access
+	//  |-----|     |-----|-----|-----|     |-----|-----| Graphics memory access
 	//        |-----|                 |-----|             CPU memory access
 	//  |-----|     |-----|     |-----|     |-----|       CPU active
 	//	+--+  +--+  +--+  +--+  +--+  +--+  +--+  +--+  +
