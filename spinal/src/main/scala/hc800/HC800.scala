@@ -106,7 +106,7 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 		val math     = M"000000100000----"
 		val keyboard = M"000000110000----"
 		val uart     = M"000001000000----"
-		val graphics = M"000001010000----"
+		val graphics = M"00000101--------"
 		val id       = M"011111111111----"
 		val board    = M"1---------------"
 	}
@@ -150,7 +150,7 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 		val chipsetBusMaster = !cpuBusMaster
 	}
 
-	val chipsetDomain = mainDomain
+	val graphicsDomain = mainDomain
 
 	val cpuDomain = ClockDomain.external(
 		name = "cpu",
@@ -201,7 +201,7 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 		val source = mainArea.cpuBusMaster ? MMU.MapSource.cpu | chipSource
 
 		val chipMemBus = ReadOnlyBus(addressWidth = 16)
-		val chipRegBus = Bus(addressWidth = 4)
+		val graphicsRegBus = Bus(addressWidth = 8)
 		val attributeMemBus = Bus(addressWidth = hc800.video.AttributeMemory.byteWidth)
 		val paletteMemBus = Bus(addressWidth = hc800.video.PaletteMemory.byteWidth)
 		
@@ -287,7 +287,7 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 
 		val ioDataIn =
 			cpuArea.ioBus.wireClient(nexys3.io.bus, boardEnable) |
-			cpuArea.ioBus.wireClient(chipRegBus, graphicsEnable) |
+			cpuArea.ioBus.wireClient(graphicsRegBus, graphicsEnable) |
 			cpuArea.ioBus.wireClient(mmu.io.regBus, mmuEnable) |
 			cpuArea.ioBus.wireClient(boardId.io, boardIdEnable) |
 			cpuArea.ioBus.wireClient(keyboard.io.bus, keyboardEnable) |
@@ -312,40 +312,40 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 		)
 	)
 
-	val chipsetArea = new ClockingArea(chipsetDomain) {
-		val chipset = new VideoGenerator(scanDoubleDomain)
+	val graphicsArea = new ClockingArea(graphicsDomain) {
+		val videoGenerator = new VideoGenerator(scanDoubleDomain)
 
-		io.red   <> chipset.io.red
-		io.green <> chipset.io.green
-		io.blue  <> chipset.io.blue
-		io.hsync <> chipset.io.hSync
-		io.vsync <> chipset.io.vSync
+		io.red   <> videoGenerator.io.red
+		io.green <> videoGenerator.io.green
+		io.blue  <> videoGenerator.io.blue
+		io.hsync <> videoGenerator.io.hSync
+		io.vsync <> videoGenerator.io.vSync
 
-		io.dblRed   <> chipset.io.dblRed
-		io.dblGreen <> chipset.io.dblGreen
-		io.dblBlue  <> chipset.io.dblBlue
-		io.dblHSync <> chipset.io.dblHSync
-		io.dblVSync <> chipset.io.dblVSync
-		io.dblBlank <> chipset.io.dblBlank
+		io.dblRed   <> videoGenerator.io.dblRed
+		io.dblGreen <> videoGenerator.io.dblGreen
+		io.dblBlue  <> videoGenerator.io.dblBlue
+		io.dblHSync <> videoGenerator.io.dblHSync
+		io.dblVSync <> videoGenerator.io.dblVSync
+		io.dblBlank <> videoGenerator.io.dblBlank
 
-		chipset.io.memBus <> memoryArea.chipMemBus
+		videoGenerator.io.memBus <> memoryArea.chipMemBus
 
-		chipset.io.memBusCycle <> mainArea.cycleCounter
-		memoryArea.chipSource := chipset.io.memBusSource
+		videoGenerator.io.memBusCycle <> mainArea.cycleCounter
+		memoryArea.chipSource := videoGenerator.io.memBusSource
 
-		chipset.io.vBlanking <> memoryArea.vBlanking
-		chipset.io.hBlanking <> memoryArea.hBlanking
+		videoGenerator.io.vBlanking <> memoryArea.vBlanking
+		videoGenerator.io.hBlanking <> memoryArea.hBlanking
 
-		val chipsetMemoryArea = new ClockingArea(memoryDomain) {
-			chipset.io.regBus <> memoryArea.chipRegBus
+		val graphicsMemoryArea = new ClockingArea(memoryDomain) {
+			videoGenerator.io.regBus <> memoryArea.graphicsRegBus
 
 			val attrMemory = new SpinalAttributeMemory()
 			attrMemory.io.byteBus <> memoryArea.attributeMemBus
-			attrMemory.io.wideBus <> chipset.io.attrBus
+			attrMemory.io.wideBus <> videoGenerator.io.attrBus
 
 			val paletteMemory = new SpinalPaletteMemory() //256
 			paletteMemory.io.byteBus <> memoryArea.paletteMemBus
-			paletteMemory.io.wideBus <> chipset.io.paletteBus
+			paletteMemory.io.wideBus <> videoGenerator.io.paletteBus
 		}
 	}
 }

@@ -17,8 +17,13 @@ TextInitialize:
 		pusha
 
 		ld	b,IO_VIDEO_BASE
+
+		ld	c,IO_VIDEO_CONTROL
+		ld	t,IO_VID_CTRL_P0EN
+		lio	(bc),t
+
 		ld	c,IO_VID_PLANE0_CONTROL
-		ld	t,IO_PLANE_CTRL_TEXT|IO_PLANE_CTRL_HIRES|IO_PLANE_CTRL_ENABLE
+		ld	t,IO_PLANE_CTRL_TEXT|IO_PLANE_CTRL_HIRES
 		lio	(bc),t
 
 		jal	TextClearScreen

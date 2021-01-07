@@ -11,8 +11,8 @@ import hc800.Constants
 
 object VideoGenerator {
 	object Register extends SpinalEnum(defaultEncoding = binarySequential) {
-		val plane0Control,
-			plane1Control,
+		val control,
+			unused01,
 			unused02,
 			unused03,
 			unused04,
@@ -57,7 +57,7 @@ class VideoGenerator(scanDoubleDomain: ClockDomain) extends Component {
 		val memBusSource   = out (MMU.MapSource())
 		val memBusCycle    = in  UInt(4 bits)
 
-		val regBus = slave(Bus(addressWidth = Register.craft().getBitsWidth))
+		val regBus = slave(Bus(addressWidth = 8))
 	}
 
 	private val hDisp      = Constants.totalHiresPixels
@@ -148,24 +148,19 @@ class VideoGenerator(scanDoubleDomain: ClockDomain) extends Component {
 	}
 
 	val plane0Enable = Reg(Bool()) init(True)
-	val plane0Hires  = Reg(Bool()) init(False)
-	val plane0TextMode = Reg(Bool()) init(False)
-	val plane0PaletteHigh = Reg(Bits(2 bits)) init(0)
+	val plane1Enable = Reg(Bool()) init(False)
 	val frameEnable  = Reg(Bool()) init(False)
 
-	val videoTileMode = new VideoTileMode()
-	videoTileMode.io.charGenAddress <> U(0)
-	videoTileMode.io.vSync <> native.vSync
-	videoTileMode.io.hSync <> native.hSync
-	videoTileMode.io.pixelEnable <> native.pixelEnable
-	videoTileMode.io.hPos <> native.hPos
-	videoTileMode.io.vPos <> native.vPos
-	videoTileMode.io.hires <> plane0Hires
-	videoTileMode.io.textModeEnable <> plane0TextMode
-	videoTileMode.io.paletteHigh <> plane0PaletteHigh
-	videoTileMode.io.attrBus <> io.attrBus
-	videoTileMode.io.memBus <> io.memBus
-	videoTileMode.io.memBusCycle <> io.memBusCycle
+	val plane0 = new VideoTileMode()
+	plane0.io.charGenAddress <> U(0)
+	plane0.io.vSync <> native.vSync
+	plane0.io.hSync <> native.hSync
+	plane0.io.pixelEnable <> native.pixelEnable
+	plane0.io.hPos <> native.hPos
+	plane0.io.vPos <> native.vPos
+	plane0.io.attrBus <> io.attrBus
+	plane0.io.memBus <> io.memBus
+	plane0.io.memBusCycle <> io.memBusCycle
 	io.memBusSource := MMU.MapSource.chipsetCharGen
 
 	val frameMode = new VideoFrame()
@@ -176,7 +171,7 @@ class VideoGenerator(scanDoubleDomain: ClockDomain) extends Component {
 	io.paletteBus.enable := True
 	io.paletteBus.address :=
 		(frameEnable && (frameMode.io.indexedColor =/= U(0))) ? frameMode.io.indexedColor |
-		videoTileMode.io.indexedColor
+		plane0.io.indexedColor
 
 	when (native.pixelEnableOut) {
 		io.red   := io.paletteBus.dataToMaster(14 downto 10).asUInt
@@ -191,15 +186,19 @@ class VideoGenerator(scanDoubleDomain: ClockDomain) extends Component {
 
 	// --- Register interface ---
 
-	when (io.regBus.enable && io.regBus.write) {
+	val controlBusEnable = io.regBus.enable && (io.regBus.address === M"0000----")
+	val plane0BusEnable  = io.regBus.enable && (io.regBus.address === M"0001----")
+	val plane1BusEnable  = io.regBus.enable && (io.regBus.address === M"0010----")
+
+	val controlBus = Bus(addressWidth = Register.craft().getBitsWidth)
+
+	when (controlBus.enable && controlBus.write) {
 		val reg = Register()
-		reg.assignFromBits(io.regBus.address.asBits)
+		reg.assignFromBits(io.regBus.address.resize(controlBus.addressWidth).asBits)
 		switch (reg) {
-			is (Register.plane0Control) {
-				plane0PaletteHigh := io.regBus.dataFromMaster(5 downto 4)
-				plane0TextMode    := io.regBus.dataFromMaster(2)
-				plane0Hires       := io.regBus.dataFromMaster(1)
-				plane0Enable      := io.regBus.dataFromMaster(0)
+			is (Register.control) {
+				plane1Enable := io.regBus.dataFromMaster(1)
+				plane0Enable := io.regBus.dataFromMaster(0)
 			}
 			is (Register.debug) {
 				frameEnable := io.regBus.dataFromMaster(0)
@@ -207,19 +206,20 @@ class VideoGenerator(scanDoubleDomain: ClockDomain) extends Component {
 		}
 	}
 
-	val regDataOut = Reg(Bits(8 bits))
-	io.regBus.dataToMaster := regDataOut
-
-	when (io.regBus.enable && !io.regBus.write) {
+	when (controlBus.enable && !controlBus.write) {
 		val reg = Register()
-		reg.assignFromBits(io.regBus.address.asBits)
-		regDataOut := reg.mux (
-			Register.plane0Control -> B(plane0PaletteHigh ## False ## plane0TextMode ## plane0Hires ## plane0Enable).resize(8 bits),
-			Register.plane1Control -> B(0),
-			Register.debug         -> B(frameEnable).resize(8 bits),
-			default                -> B(0)
+		reg.assignFromBits(controlBus.address.asBits)
+		controlBus.dataToMaster := reg.mux (
+			Register.control -> B(plane1Enable ## plane0Enable).resize(8 bits),
+			Register.debug   -> B(frameEnable).resize(8 bits),
+			default          -> B(0)
 		)
-	}.otherwise {
-		regDataOut := 0
+	} otherwise {
+		controlBus.dataToMaster := 0
 	}
+
+	io.regBus.dataToMaster := 
+		io.regBus.wireClient(controlBus, controlBusEnable) |
+		io.regBus.wireClient(plane0.io.regBus, plane0BusEnable)
+
 }

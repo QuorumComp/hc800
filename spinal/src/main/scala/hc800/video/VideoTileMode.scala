@@ -4,10 +4,35 @@ import spinal.core._
 import spinal.lib._
 
 import hc800.Constants
+import hc800.Bus
 import hc800.ReadOnlyBus
 
 
+object VideoTileMode {
+	object Register extends SpinalEnum(defaultEncoding = binarySequential) {
+		val	control,
+			hPosL,
+			hPosH,
+			vPosL,
+			vPosH,
+			unused05,
+			unused06,
+			unused07,
+			unused08,
+			unused09,
+			unused0A,
+			unused0B,
+			unused0C,
+			unused0D,
+			unused0E,
+			unused0F = newElement()
+	}
+}
+
+
 class VideoTileMode extends Component {
+	import VideoTileMode._
+
 	val io = new Bundle {
 		val charGenAddress = in UInt(16 bits)
 
@@ -20,15 +45,17 @@ class VideoTileMode extends Component {
 		val hPos = in UInt(11 bits)
 		val vPos = in UInt(9 bits)
 
-		val hires = in Bool
-		val textModeEnable = in Bool
-		val paletteHigh = in Bits(2 bits)
-
 		val indexedColor = out UInt(8 bits)
 
 		val attrBus = master(ReadOnlyBus(addressWidth = 12, dataWidth = 16))
 		val memBus = master(ReadOnlyBus(addressWidth = 16))
+
+		val regBus = slave(Bus(addressWidth = Register.craft().getBitsWidth))
 	}
+
+	val hires = Reg(Bool)
+	val textMode = Reg(Bool)
+	val paletteHigh = Reg(Bits(2 bits))
 
 	val hsyncEdge = io.hSync.rise(False)
 
@@ -37,7 +64,7 @@ class VideoTileMode extends Component {
 	when (hsyncEdge) {
 		attrLine := io.vPos + 1
 	}
-	val nextAttrChar = (io.hires ? io.hPos(9 downto 3) | io.hPos(9 downto 4).resize(7 bits)) + 1
+	val nextAttrChar = (hires ? io.hPos(9 downto 3) | io.hPos(9 downto 4).resize(7 bits)) + 1
 	val horizontalOffScreen : Bool = io.hPos > Constants.totalHiresPixels;
 	val attrChar = horizontalOffScreen ? U(0) | nextAttrChar
 
@@ -56,7 +83,7 @@ class VideoTileMode extends Component {
 	val colorXor = Bits(4 bits)
 	val palette = UInt(2 bits)
 
-	when (io.textModeEnable) {
+	when (textMode) {
 		colorXor := attributes(7 downto 4)
 		palette := 0
 
@@ -72,12 +99,12 @@ class VideoTileMode extends Component {
 	}
 
 
-	val newCharDataReady = io.hires ? io.hPos(2 downto 0).andR | io.hPos(3 downto 0).andR
-	val shiftCharData = io.hires ? True | io.hPos(0)
+	val newCharDataReady = hires ? io.hPos(2 downto 0).andR | io.hPos(3 downto 0).andR
+	val shiftCharData = hires ? True | io.hPos(0)
 	var charDataSpill = Reg(Bits(3 bits)) init(0)
 
 	when (newCharDataReady) {
-		when (io.textModeEnable) {
+		when (textMode) {
 			val italic = nextAttributes(3)
 			val bold = nextAttributes(2)
 			val underline = nextAttributes(1)
@@ -110,15 +137,15 @@ class VideoTileMode extends Component {
 	val pixelData = charData(7)
 
 	io.indexedColor := io.pixelEnable.mux (
-		False -> (io.paletteHigh ## palette ## U(0, 4 bits)),
-		True -> (io.paletteHigh ## palette ## ((U(0, 3 bits) ## pixelData) ^ colorXor))
+		False -> (paletteHigh ## palette ## U(0, 4 bits)),
+		True ->  (paletteHigh ## palette ## ((U(0, 3 bits) ## pixelData) ^ colorXor))
 	).asUInt
 
 	io.memBus.enable  := False
 	io.memBus.address := U(0)
 
-	val setupMainBus = io.hires ? (io.memBusCycle(2 downto 0) === 2) | (io.memBusCycle === 2)
-	val fetchMainBus = io.hires ? (io.memBusCycle(2 downto 0) === 4) | (io.memBusCycle === 4)
+	val setupMainBus = hires ? (io.memBusCycle(2 downto 0) === 2) | (io.memBusCycle === 2)
+	val fetchMainBus = hires ? (io.memBusCycle(2 downto 0) === 4) | (io.memBusCycle === 4)
 
 	when (setupMainBus) {
 		val attributes = io.attrBus.dataToMaster
@@ -126,7 +153,7 @@ class VideoTileMode extends Component {
 
 		val tile = Bits(11 bits)
 
-		when (io.textModeEnable) {
+		when (textMode) {
 			tile := attributes(8 downto 0).resize(11 bits)
 		}.otherwise {
 			tile := attributes(10 downto 0)
@@ -142,5 +169,27 @@ class VideoTileMode extends Component {
 		io.memBus.address := U(0)
 	}
  
+	when (io.regBus.enable && io.regBus.write) {
+		val reg = Register()
+		reg.assignFromBits(io.regBus.address.asBits)
+		switch (reg) {
+			is (Register.control) {
+				paletteHigh := io.regBus.dataFromMaster(5 downto 4)
+				textMode    := io.regBus.dataFromMaster(2)
+				hires       := io.regBus.dataFromMaster(1)
+			}
+		}
+	}
+
+	when (io.regBus.enable && !io.regBus.write) {
+		val reg = Register()
+		reg.assignFromBits(io.regBus.address.asBits)
+		io.regBus.dataToMaster := reg.mux (
+			Register.control -> B(paletteHigh ## False ## textMode ## hires ## True).resize(8 bits),
+			default          -> B(0)
+		)
+	} otherwise {
+		io.regBus.dataToMaster := 0
+	}
 }
 
