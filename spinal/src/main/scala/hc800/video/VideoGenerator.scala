@@ -83,6 +83,7 @@ class VideoGenerator(scanDoubleDomain: ClockDomain) extends Component {
 		sync.io.vEnd       := vTotal-1
 
 		val hSync = sync.io.hSync
+		val hBlanking = sync.io.hBlanking
 		val vSync = sync.io.vSync
 		val pixelEnable = sync.io.pixelEnable
 		val hPos = sync.io.hPos
@@ -151,10 +152,11 @@ class VideoGenerator(scanDoubleDomain: ClockDomain) extends Component {
 	val plane1Enable = Reg(Bool()) init(False)
 	val frameEnable  = Reg(Bool()) init(False)
 
-	val plane0 = new VideoTileMode()
+	val plane0 = new VideoTileMode(secondPlane = false, hTotal = hTotal)
 	plane0.io.charGenAddress <> U(0)
 	plane0.io.vSync <> native.vSync
 	plane0.io.hSync <> native.hSync
+	plane0.io.hBlank <> native.hBlanking
 	plane0.io.pixelEnable <> native.pixelEnable
 	plane0.io.hPos <> native.hPos
 	plane0.io.vPos <> native.vPos

@@ -13,9 +13,9 @@
 | Lores pixel                  | x |   | x |   | x |   | x |   | x |   |  x |    |  x |    |  x |    |
 | CPU mem                      |   | x |   |   |   | x |   |   |   | x |    |    |    |  x |    |    |
 | Lores P0 mem, 2 color        | x |   |   |   |   |   |   |   |   |   |    |    |    |    |    |    |
-| Lores P1 mem, 2 color        |   |   |   |   |   |   |   |   | x |   |    |    |    |    |    |    |
+| Lores P1 mem, 2 color        |   |   | x |   |   |   |   |   |   |   |    |    |    |    |    |    |
 | Lores P0 mem, 4 color        | x |   |   |   |   |   |   |   | x |   |    |    |    |    |    |    |
-| Lores P1 mem, 4 color        |   |   |   |   | x |   |   |   |   |   |    |    |  x |    |    |    |
+| Lores P1 mem, 4 color        |   |   | x |   |   |   |   |   |   |   | x  |    |    |    |    |    |
 | Lores P0 mem, 16 color       | x |   |   |   | x |   |   |   | x |   |    |    |  x |    |    |    |
 | Lores P1 mem, 16 color       |   |   | x |   |   |   | x |   |   |   | x  |    |    |    | x  |    |
 | Lores mem, 256 color         | x |   | x |   | x |   | x |   | x |   | x  |    |  x |    | x  |    |

@@ -27,10 +27,17 @@ object VideoTileMode {
 			unused0E,
 			unused0F = newElement()
 	}
+
+	object Depth extends SpinalEnum(defaultEncoding = binarySequential) {
+		val	colors2,
+			colors4,
+			colors16,
+			colors256 = newElement()
+	}
 }
 
 
-class VideoTileMode extends Component {
+class VideoTileMode(secondPlane: Boolean, hTotal: Int) extends Component {
 	import VideoTileMode._
 
 	val io = new Bundle {
@@ -40,6 +47,7 @@ class VideoTileMode extends Component {
 
 		val vSync = in Bool
 		val hSync = in Bool
+		val hBlank = in Bool
 		val pixelEnable = in Bool
 
 		val hPos = in UInt(11 bits)
@@ -53,20 +61,48 @@ class VideoTileMode extends Component {
 		val regBus = slave(Bus(addressWidth = Register.craft().getBitsWidth))
 	}
 
-	val hires = Reg(Bool)
-	val textMode = Reg(Bool)
+	val hires = Reg(Bool) init(False)
+	val textMode = Reg(Bool) init(True)
+	val depth = Reg(Depth()) init(Depth.colors2)
 	val paletteHigh = Reg(Bits(2 bits))
 
 	val hsyncEdge = io.hSync.rise(False)
+
+	//
+	// Shift and Fetch masks
+	//
+
+	def secondPlaneFetch(mask: Bits): Bits =
+		if (secondPlane) mask.rotateRight(2) else mask
+
+	val shiftMask = hires ? B"1111111111111111" | B"0101010101010101"
+	val fetchMask = secondPlaneFetch((hires ## depth).mux (
+		B"000" -> B"1000000000000000",
+		B"001" -> B"1000000010000000",
+		B"010" -> B"1000100010001000",
+		B"011" -> B"1010101010101010",
+		B"100" -> B"1000000010000000",
+		B"101" -> B"1000100010001000",
+		B"110" -> B"1010101010101010",
+		B"111" -> B"0000000000000000"))
+
+	val readyMask = fetchMask.rotateRight(2)
+
+	val maskIndex = ~io.memBusCycle
+	val dataShift = shiftMask(maskIndex)
+	val dataFetch = fetchMask(maskIndex)
+	val dataReady = readyMask(maskIndex)
+
 
 	// Attribute address
 	val attrLine = Reg(UInt(9 bits))
 	when (hsyncEdge) {
 		attrLine := io.vPos + 1
 	}
-	val nextAttrChar = (hires ? io.hPos(9 downto 3) | io.hPos(9 downto 4).resize(7 bits)) + 1
-	val horizontalOffScreen : Bool = io.hPos > Constants.totalHiresPixels;
-	val attrChar = horizontalOffScreen ? U(0) | nextAttrChar
+	val nextHPos = (io.hBlank ? (io.hPos - hTotal) | io.hPos)
+	val nextAttrChar = (hires ? nextHPos(9 downto 3) | nextHPos(9 downto 4).resize(7 bits)) + 2
+	//val horizontalOffScreen : Bool = io.hPos > Constants.totalHiresPixels;
+	val attrChar = nextAttrChar
 
 	io.attrBus.address := (attrLine(7 downto 3) ## attrChar).resize(12 bits).asUInt
 	io.attrBus.enable := True
@@ -76,6 +112,10 @@ class VideoTileMode extends Component {
 	val nextCharData = Reg(Bits(8 bits)) init(0)
 	val nextAttributes = Reg(Bits(8 bits)) init(0)
 	val attributes = Reg(Bits(8 bits)) init(0)
+
+	//
+	// Attribute extraction
+	//
 
 	val flipx = Bool()
 	val flipy = Bool()
@@ -100,7 +140,6 @@ class VideoTileMode extends Component {
 
 
 	val newCharDataReady = hires ? io.hPos(2 downto 0).andR | io.hPos(3 downto 0).andR
-	val shiftCharData = hires ? True | io.hPos(0)
 	var charDataSpill = Reg(Bits(3 bits)) init(0)
 
 	when (newCharDataReady) {
@@ -121,8 +160,7 @@ class VideoTileMode extends Component {
 			}.otherwise {
 				italicCharData := boldCharData ## B"00"
 			}
-			val spill = horizontalOffScreen ? B(0, 3 bits) | charDataSpill;
-			val finalCharData = (spill | italicCharData(10 downto 8)) ## italicCharData(7 downto 0)
+			val finalCharData = (charDataSpill | italicCharData(10 downto 8)) ## italicCharData(7 downto 0)
 			charDataSpill := finalCharData(2 downto 0).asBits
 			charData := finalCharData(10 downto 3)
 		}.otherwise {
@@ -130,7 +168,7 @@ class VideoTileMode extends Component {
 		}
 
 		attributes := nextAttributes
-	}.elsewhen (shiftCharData) {
+	}.elsewhen (dataShift) {
 		charData := charData |<< 1
 	}
 
@@ -141,13 +179,14 @@ class VideoTileMode extends Component {
 		True ->  (paletteHigh ## palette ## ((U(0, 3 bits) ## pixelData) ^ colorXor))
 	).asUInt
 
+	//
+	// Pixel data fetch
+	//
+
 	io.memBus.enable  := False
 	io.memBus.address := U(0)
 
-	val setupMainBus = hires ? (io.memBusCycle(2 downto 0) === 2) | (io.memBusCycle === 2)
-	val fetchMainBus = hires ? (io.memBusCycle(2 downto 0) === 4) | (io.memBusCycle === 4)
-
-	when (setupMainBus) {
+	when (dataFetch) {
 		val attributes = io.attrBus.dataToMaster
 		nextAttributes := attributes(15 downto 8)
 
@@ -163,17 +202,22 @@ class VideoTileMode extends Component {
 		io.memBus.address := charAddress
 	}
 	
-	when (fetchMainBus) {
+	when (dataReady) {
 		nextCharData := io.memBus.dataToMaster
 		io.memBus.enable  := False
 		io.memBus.address := U(0)
 	}
  
+	//
+	// Register interface
+	//
+
 	when (io.regBus.enable && io.regBus.write) {
 		val reg = Register()
 		reg.assignFromBits(io.regBus.address.asBits)
 		switch (reg) {
 			is (Register.control) {
+				depth       := io.regBus.dataFromMaster(7 downto 6) as Depth()
 				paletteHigh := io.regBus.dataFromMaster(5 downto 4)
 				textMode    := io.regBus.dataFromMaster(2)
 				hires       := io.regBus.dataFromMaster(1)
@@ -185,7 +229,7 @@ class VideoTileMode extends Component {
 		val reg = Register()
 		reg.assignFromBits(io.regBus.address.asBits)
 		io.regBus.dataToMaster := reg.mux (
-			Register.control -> B(paletteHigh ## False ## textMode ## hires ## True).resize(8 bits),
+			Register.control -> B(depth ## paletteHigh ## False ## textMode ## hires ## True).resize(8 bits),
 			default          -> B(0)
 		)
 	} otherwise {
