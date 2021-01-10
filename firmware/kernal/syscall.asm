@@ -4,6 +4,8 @@
 		INCLUDE	"lowlevel/rc800.i"
 		INCLUDE	"lowlevel/uart.i"
 
+		INCLUDE	"kernal/keyboard.i"
+
 		INCLUDE	"editor.i"
 		INCLUDE	"text.i"
 
@@ -44,6 +46,7 @@ KVector:	MACRO
 		KVector	executeCommandLine
 		KVector	exit
 		KVector debugCharOut
+		KVector charIn
 
 
 		SECTION "DebugCharOut",CODE
@@ -66,6 +69,13 @@ charOut:
 
 		RESTORE_MMU_CFG
 		popa
+		reti
+
+
+		SECTION "CharIn",CODE
+charIn:
+		jal	KeyboardRead
+		pop	hl
 		reti
 
 

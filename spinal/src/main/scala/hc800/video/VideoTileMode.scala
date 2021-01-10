@@ -68,6 +68,8 @@ class VideoTileMode(secondPlane: Boolean, hTotal: Int) extends Component {
 
 	val hsyncEdge = io.hSync.rise(False)
 
+	val hScrollPos = Reg(UInt(10 bits)) init(0)
+
 	//
 	// Shift and Fetch masks
 	//
@@ -93,25 +95,35 @@ class VideoTileMode(secondPlane: Boolean, hTotal: Int) extends Component {
 	val dataFetch = fetchMask(maskIndex)
 	val dataReady = readyMask(maskIndex)
 
+	//
+	// Attribute fetch
+	//
 
-	// Attribute address
 	val attrLine = Reg(UInt(9 bits))
 	when (hsyncEdge) {
 		attrLine := io.vPos + 1
 	}
-	val nextHPos = (io.hBlank ? (io.hPos - hTotal) | io.hPos)
-	val nextAttrChar = (hires ? nextHPos(9 downto 3) | nextHPos(9 downto 4).resize(7 bits)) + 2
-	//val horizontalOffScreen : Bool = io.hPos > Constants.totalHiresPixels;
-	val attrChar = nextAttrChar
+	
+	val normalizedHPos = (io.hBlank ? (io.hPos - hTotal) | io.hPos)
 
-	io.attrBus.address := (attrLine(7 downto 3) ## attrChar).resize(12 bits).asUInt
+	val attrXAddress = (hires ? normalizedHPos(9 downto 3) | normalizedHPos(9 downto 4).resize(7 bits)) + 2
+	io.attrBus.address := (attrLine(7 downto 3) ## attrXAddress).resize(12 bits).asUInt
 	io.attrBus.enable := True
 
+	//
 	// Character data
+	//
+
+	val hiresLastCharPixel = normalizedHPos(2 downto 0) === (~hScrollPos(2 downto 0))
+	val loresLastCharPixel = normalizedHPos(3 downto 0) === (~hScrollPos(3 downto 0))
+	val lastCharPixel = hires ? hiresLastCharPixel | loresLastCharPixel
+
+	val fetchedAttributes = io.attrBus.dataToMaster
+	val attributes = Reg(Bits(8 bits)) init(0)
+	val nextAttributes = Reg(Bits(8 bits)) init(0)
+
 	val charData = Reg(Bits(8 bits)) init(0)
 	val nextCharData = Reg(Bits(8 bits)) init(0)
-	val nextAttributes = Reg(Bits(8 bits)) init(0)
-	val attributes = Reg(Bits(8 bits)) init(0)
 
 	//
 	// Attribute extraction
@@ -138,72 +150,79 @@ class VideoTileMode(secondPlane: Boolean, hTotal: Int) extends Component {
 		colorXor := 0
 	}
 
+	//
+	// Pixel data out
+	//
 
-	val newCharDataReady = hires ? io.hPos(2 downto 0).andR | io.hPos(3 downto 0).andR
-	var charDataSpill = Reg(Bits(3 bits)) init(0)
+	val currentCharData = charData
 
-	when (newCharDataReady) {
-		when (textMode) {
-			val italic = nextAttributes(3)
-			val bold = nextAttributes(2)
-			val underline = nextAttributes(1)
-
-			val underlineCharData = Bits(8 bits)
-			underlineCharData := (underline && attrLine(2 downto 0) === 7) ? B"11111111" | nextCharData.asBits
-			val boldCharData = Bits(9 bits)
-			boldCharData := (underlineCharData ## B"0") | (bold ? (B"0" ## underlineCharData) | 0)
-			val italicCharData = Bits(11 bits)
-			when (italic && (attrLine(2 downto 0) <= 2)) {
-				italicCharData := B"00" ## boldCharData
-			}.elsewhen (italic && (attrLine(2 downto 0) <= 4)) {
-				italicCharData := B"0" ## boldCharData ## B"0"
-			}.otherwise {
-				italicCharData := boldCharData ## B"00"
-			}
-			val finalCharData = (charDataSpill | italicCharData(10 downto 8)) ## italicCharData(7 downto 0)
-			charDataSpill := finalCharData(2 downto 0).asBits
-			charData := finalCharData(10 downto 3)
-		}.otherwise {
-			charData := nextCharData
-		}
-
+	when (lastCharPixel) {
+		charData := nextCharData
 		attributes := nextAttributes
-	}.elsewhen (dataShift) {
+	} elsewhen (dataShift) {
 		charData := charData |<< 1
 	}
 
-	val pixelData = charData(7)
+	val pixel = currentCharData(7)
+	val pixelData2Color = (paletteHigh ## palette ## ((U(0, 3 bits) ## pixel ^ colorXor)))
 
 	io.indexedColor := io.pixelEnable.mux (
-		False -> (paletteHigh ## palette ## U(0, 4 bits)),
-		True ->  (paletteHigh ## palette ## ((U(0, 3 bits) ## pixelData) ^ colorXor))
+		False -> B(0),
+		True ->  pixelData2Color
 	).asUInt
 
 	//
 	// Pixel data fetch
 	//
 
+	val incomingCharData = Bits(8 bits)
+	val charDataSpill = Bits(3 bits)
+	val charDataSpillReg = Reg(Bits(3 bits))
+
+	val italic = nextAttributes(3)
+	val bold = nextAttributes(2)
+	val underline = nextAttributes(1)
+
+	val underlineCharData = Bits(8 bits)
+	underlineCharData := (underline && attrLine(2 downto 0) === 7) ? B"11111111" | io.memBus.dataToMaster
+	val boldCharData = Bits(9 bits)
+	boldCharData := (underlineCharData ## B"0") | (bold ? (B"0" ## underlineCharData) | 0)
+	val italicCharData = Bits(11 bits)
+	when (italic && (attrLine(2 downto 0) <= 2)) {
+		italicCharData := B"00" ## boldCharData
+	}.elsewhen (italic && (attrLine(2 downto 0) <= 4)) {
+		italicCharData := B"0" ## boldCharData ## B"0"
+	}.otherwise {
+		italicCharData := boldCharData ## B"00"
+	}
+	val finalCharData = (charDataSpillReg | italicCharData(10 downto 8)) ## italicCharData(7 downto 0)
+
+	when (textMode && depth === Depth.colors2) {
+		charDataSpill := finalCharData(2 downto 0).asBits
+		incomingCharData := finalCharData(10 downto 3)
+	}.otherwise {
+		charDataSpill := 0
+		incomingCharData := io.memBus.dataToMaster
+	}
+
 	io.memBus.enable  := False
 	io.memBus.address := U(0)
 
 	when (dataFetch) {
-		val attributes = io.attrBus.dataToMaster
-		nextAttributes := attributes(15 downto 8)
+		val tile = textMode ?
+			fetchedAttributes(8 downto 0).resize(11 bits) |
+			fetchedAttributes(10 downto 0)
 
-		val tile = Bits(11 bits)
-
-		when (textMode) {
-			tile := attributes(8 downto 0).resize(11 bits)
-		}.otherwise {
-			tile := attributes(10 downto 0)
-		}
 		val charAddress = io.charGenAddress + (tile ## attrLine(2 downto 0)).asUInt
 		io.memBus.enable  := True
 		io.memBus.address := charAddress
+
+		nextAttributes := fetchedAttributes(15 downto 8)
 	}
 	
 	when (dataReady) {
-		nextCharData := io.memBus.dataToMaster
+		nextCharData := incomingCharData
+		charDataSpillReg := charDataSpill
 		io.memBus.enable  := False
 		io.memBus.address := U(0)
 	}
@@ -222,6 +241,12 @@ class VideoTileMode(secondPlane: Boolean, hTotal: Int) extends Component {
 				textMode    := io.regBus.dataFromMaster(2)
 				hires       := io.regBus.dataFromMaster(1)
 			}
+			is (Register.hPosL) {
+				hScrollPos(7 downto 0) := io.regBus.dataFromMaster.asUInt
+			}
+			is (Register.hPosH) {
+				hScrollPos(9 downto 8) := io.regBus.dataFromMaster(1 downto 0).asUInt
+			}
 		}
 	}
 
@@ -230,10 +255,11 @@ class VideoTileMode(secondPlane: Boolean, hTotal: Int) extends Component {
 		reg.assignFromBits(io.regBus.address.asBits)
 		io.regBus.dataToMaster := reg.mux (
 			Register.control -> B(depth ## paletteHigh ## False ## textMode ## hires ## True).resize(8 bits),
+			Register.hPosL   -> hScrollPos(7 downto 0).asBits,
+			Register.hPosH   -> hScrollPos(9 downto 8).asBits.resized,
 			default          -> B(0)
 		)
 	} otherwise {
 		io.regBus.dataToMaster := 0
 	}
 }
-
