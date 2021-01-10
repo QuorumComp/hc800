@@ -4,7 +4,8 @@ TARGETS = \
 	boot/boot.bin \
 	kernal/kernal.bin \
 	ascii/ascii.com \
-	monitor/monitor.com
+	monitor/monitor.com \
+	scroll/scroll.com
 
 LIBS = stdlib/std.lib lowlevel/lowlevel.lib
 
@@ -15,7 +16,6 @@ CLEAN = $(addsuffix .clean,$(dir $(TARGETS) $(LIBS)))
 install: $(TARGETS)
 ifeq ($(MAKE_HOST),Windows32)
 	@mkdir $(IMAGEDIR) >NUL 2>&1 || echo. >NUL
-#cmd /c for %G in ($(subst /,\\,$?)) do copy %G $(IMAGEDIR) >NUL 2>&1
 	@cmd /Q /C for %%G in ($(subst /,\\,$?)) do xcopy %%G $(IMAGEDIR) /Y /Q >NUL
 else
 	@mkdir -p $(IMAGEDIR)
