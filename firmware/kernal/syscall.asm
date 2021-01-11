@@ -7,6 +7,7 @@
 		INCLUDE	"kernal/keyboard.i"
 
 		INCLUDE	"editor.i"
+		INCLUDE	"mmu.i"
 		INCLUDE	"text.i"
 
 CFG_VIDEO	EQU	$03
@@ -147,8 +148,8 @@ executeCommandLine:
 		jal	readFile
 		j/ne	.error
 
-		;MDebugPrint <"- setClientBanks\n">
-		jal	setClientBanks
+		;MDebugPrint <"- MmuInitializeClient\n">
+		jal	MmuInitializeClient
 
 		pop	bc-de
 
@@ -177,10 +178,24 @@ executeCommandLine:
 
 		SECTION "Exit",CODE
 exit:
+		di
+
+		ld	b,IO_ICTRL_BASE
+		ld	c,IO_ICTRL_ENABLE
+		ld	t,$7F
+		lio	(bc),t
+		ld	c,IO_ICTRL_ENABLE
+		ld	t,IO_INT_VBLANK|IO_INT_SET
+		lio	(bc),t
+
 		ld	b,IO_MMU_BASE
 		ld	c,IO_MMU_ACTIVE_INDEX
 		ld	t,CFG_VIDEO
 		lio	(bc),t
+
+		jal	MmuInitializeClient
+
+		ei
 
 		pop	hl	; discard KVector saved hl
 
@@ -243,27 +258,6 @@ readFile:
 
 .bytes_done	cmp	t,0
 		pop	bc/hl
-		j	(hl)
-
-
-setClientBanks:
-		ld	b,IO_MMU_BASE
-		ld	c,IO_MMU_CPU_BANK0
-		ld	t,BANK_CLIENT_CODE
-		ld	d,4
-.set_code_banks	lio	(bc),t
-		add	bc,1
-		add	t,1
-		dj	d,.set_code_banks
-
-		ld	c,IO_MMU_DATA_BANK0
-		ld	t,BANK_CLIENT_DATA
-		ld	d,4
-.set_data_banks	lio	(bc),t
-		add	bc,1
-		add	t,1
-		dj	d,.set_data_banks
-
 		j	(hl)
 
 

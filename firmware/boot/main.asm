@@ -185,7 +185,7 @@ VideoIsVBlankEdge:
 		push	bc-hl
 
 		ld	b,IO_ICTRL_BASE
-		ld	c,IO_CHP_ICTRL_REQUEST
+		ld	c,IO_ICTRL_REQUEST
 		lio	t,(bc)
 		and	t,IO_INT_VBLANK
 		lio	(bc),t

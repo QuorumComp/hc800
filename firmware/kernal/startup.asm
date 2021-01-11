@@ -5,6 +5,7 @@
 		INCLUDE	"lowlevel/rc800.i"
 
 		INCLUDE	"main.i"
+		INCLUDE	"mmu.i"
 		INCLUDE "text.i"
 
 		IMPORT	VBlankHandler
@@ -25,10 +26,10 @@ Debug:		MACRO
 		ld	de,Fail
 		j	(de)
 
-		SECTION "Interrupt",CODE[$10]
-		pusha
-		ld	hl,Interrupt
-		j	(hl)
+		SECTION "IllegalIrq",CODE[$10]
+		ld	t,$10
+		ld	de,Fail
+		j	(de)
 
 		SECTION "IllegalInstruction",CODE[$18]
 		ld	t,$18
@@ -40,10 +41,10 @@ Debug:		MACRO
 		ld	de,Fail
 		j	(de)
 
-		SECTION "IllegalIrq",CODE[$28]
-		ld	t,$28
-		ld	de,Fail
-		j	(de)
+		SECTION "Interrupt",CODE[$28]
+		pusha
+		ld	hl,Interrupt
+		j	(hl)
 
 		SECTION "Ident",CODE[$100]
 Ident:		DB	"HC8!"
@@ -72,7 +73,7 @@ Fail:
 
 		SECTION "Startup",CODE
 Init:
-		jal	InitializeMMU
+		jal	MmuInitialize
 
 		pop	hl
 		ld	hl,Main
@@ -80,59 +81,11 @@ Init:
 		reti
 
 
-		SECTION "MMU",CODE
-InitializeMMU:
-		push	hl
-
-		ld	de,.mmuData02
-		ld	f,.mmuDataEnd02-.mmuData02
-		jal	.copy
-
-		ld	de,.mmuData03
-		ld	f,.mmuDataEnd03-.mmuData03
-
-		pop	hl
-
-.copy		ld	b,IO_MMU_BASE
-		ld	c,0
-.loop		lco	t,(de)
-		add	de,1
-		lio	(bc),t
-		add	c,1
-		dj	f,.loop
-
-		j	(hl)
-
-.mmuData03
-		DB	$03			; update index
-		DB	MMU_CONFIG_HARVARD	; config bits
-		DB	$01,$81,$82,$83		; code banks
-		DB	$80,$81,BANK_PALETTE,BANK_ATTRIBUTE	; data banks
-		DB	$01,$80			; system code/data
-		DB	$03			; active index
-		DB	$08			; chargen
-.mmuDataEnd03
-
-.mmuData02
-		DB	$02			; update index
-		DB	MMU_CONFIG_HARVARD	; config bits
-		DB	BANK_CLIENT_CODE+0	; code banks
-		DB	BANK_CLIENT_CODE+1
-		DB	BANK_CLIENT_CODE+2
-		DB	BANK_CLIENT_CODE+3
-		DB	BANK_CLIENT_DATA+0	; data banks
-		DB	BANK_CLIENT_DATA+1
-		DB	BANK_CLIENT_DATA+2
-		DB	BANK_CLIENT_DATA+3
-		DB	$01,$80			; system code/data
-.mmuDataEnd02
-
-
 		SECTION "InterruptHandler",CODE
 
 Interrupt:
 		ld	b,IO_ICTRL_BASE
-		ld	c,IO_CHP_ICTRL_HANDLE
+		ld	c,IO_ICTRL_HANDLE
 		lio	t,(bc)
 		ld	d,t
 
@@ -142,7 +95,7 @@ Interrupt:
 		jal	VBlankHandler
 .no_vblank
 
-		ld	c,IO_CHP_ICTRL_REQUEST
+		ld	c,IO_ICTRL_REQUEST
 		ld	t,d
 		lio	(bc),t
 

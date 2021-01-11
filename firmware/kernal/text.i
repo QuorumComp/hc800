@@ -1,5 +1,7 @@
 	IFND	TEXT_I_INCLUDED_
 
+TEXT_I_INCLUDED_ = 1
+
 FLASH:		MACRO
 		pusha
 		ld	d,255
@@ -15,8 +17,6 @@ FLASH:		MACRO
 		dj	d,.loop\@
 		popa
 		ENDM
-
-VIDEO_EXT_I_INCLUDED_ = 1
 
 VATTR_ITALIC	EQU	$08
 VATTR_BOLD	EQU	$04

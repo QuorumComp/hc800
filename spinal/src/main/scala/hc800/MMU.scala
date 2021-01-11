@@ -145,7 +145,7 @@ class MMU extends Component {
 				Register.dataBank3 -> config.dataBank3,
 				Register.systemCodeBank -> config.systemCodeBank,
 				Register.systemDataBank -> config.systemDataBank,
-				Register.activeIndex -> updateIndex.resize(8 bits).asBits,
+				Register.activeIndex -> activeIndex.resize(8 bits).asBits,
 				Register.chipsetCharGen -> chipsetCharGen
 			)
 		}.otherwise {

@@ -12,7 +12,7 @@ import hc800.Constants
 object VideoGenerator {
 	object Register extends SpinalEnum(defaultEncoding = binarySequential) {
 		val control,
-			unused01,
+			vPos,
 			unused02,
 			unused03,
 			unused04,
@@ -208,11 +208,15 @@ class VideoGenerator(scanDoubleDomain: ClockDomain) extends Component {
 		}
 	}
 
+	val regData = Reg(Bits(8 bits))
+	controlBus.dataToMaster := regData
+
 	when (controlBus.enable && !controlBus.write) {
 		val reg = Register()
 		reg.assignFromBits(controlBus.address.asBits)
-		controlBus.dataToMaster := reg.mux (
+		regData := reg.mux (
 			Register.control -> B(plane1Enable ## plane0Enable).resize(8 bits),
+			Register.vPos    -> native.vPos.asBits(7 downto 0),
 			Register.debug   -> B(frameEnable).resize(8 bits),
 			default          -> B(0)
 		)
