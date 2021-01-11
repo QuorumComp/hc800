@@ -81,8 +81,7 @@ KeyboardRead:
 .repeat		jal	repeatKey
 		j	.test_t
 
-.make		ld	f,$7F
-		and	t,f
+.make		and	t,$7F
 		jal	scanCodeToAscii
 		j/z	.exit
 

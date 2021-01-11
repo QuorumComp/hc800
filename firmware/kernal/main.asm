@@ -209,8 +209,7 @@ PrintBoard:
 		dj	d,.find_length
 		j	.not_found
 
-.found_string	ld	f,$7F
-		and	t,f
+.found_string	and	t,$7F
 		ld	d,t
 .next_char	ld	f,0
 		lio	t,(bc)

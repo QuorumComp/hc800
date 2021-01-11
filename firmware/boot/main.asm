@@ -187,11 +187,9 @@ VideoIsVBlankEdge:
 		ld	b,IO_ICTRL_BASE
 		ld	c,IO_CHP_ICTRL_REQUEST
 		lio	t,(bc)
-		ld	f,IO_INT_VBLANK
-		and	t,f
+		and	t,IO_INT_VBLANK
 		lio	(bc),t
-		cmp	t,0
-		not	f
+		cmp	t,IO_INT_VBLANK
 
 		pop	bc-hl
 		j	(hl)

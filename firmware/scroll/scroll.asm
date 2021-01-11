@@ -35,7 +35,16 @@ Entry::
 		cmp	t,KEY_RIGHT
 		add/eq	de,1
 
+		cmp	t,KEY_F1
+		j/ne	.no_res
+
 		ld	b,IO_VIDEO_BASE
+		ld	c,IO_VID_PLANE0_CONTROL
+		lio	t,(bc)
+		xor	t,IO_PLANE_CTRL_HIRES
+		lio	(bc),t
+
+.no_res		ld	b,IO_VIDEO_BASE
 		ld	c,IO_VID_PLANE0_HSCROLLL
 		ld	ft,de
 		lio	(bc),t
