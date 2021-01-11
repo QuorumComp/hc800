@@ -3,6 +3,7 @@
 		INCLUDE	"lowlevel/memory.i"
 		INCLUDE	"lowlevel/nexys3.i"
 		INCLUDE	"lowlevel/rc800.i"
+		INCLUDE	"lowlevel/scancodes.i"
 
 		INCLUDE	"stdlib/string.i"
 

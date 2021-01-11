@@ -1,6 +1,7 @@
 		INCLUDE	"lowlevel/hc800.i"
 		INCLUDE	"lowlevel/memory.i"
 		INCLUDE	"lowlevel/rc800.i"
+		INCLUDE	"lowlevel/scancodes.i"
 
 		INCLUDE	"stdlib/stream.i"
 
