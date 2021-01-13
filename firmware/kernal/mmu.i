@@ -3,6 +3,7 @@
 MMU_I_INCLUDED_ = 1
 
 	GLOBAL	MmuInitialize
-	GLOBAL	MmuInitializeClient
+	GLOBAL	MmuInitializeClientCom
+	GLOBAL	MmuInitializeClientExe
 
 	ENDC

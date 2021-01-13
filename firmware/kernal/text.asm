@@ -566,8 +566,7 @@ TextSetAttributesAtCursor:
 TextGetAttributePointer:
 		push	bc
 
-		ld	b,ATTRIBUTES_BASE>>8
-		add	t,b
+		add	t,ATTRIBUTES_BASE>>8
 		exg	f,t
 		add	t,t
 

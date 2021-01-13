@@ -7,7 +7,7 @@
 MmuInitialize:
 		push	hl
 
-		jal	MmuInitializeClient
+		jal	MmuInitializeClientExe
 
 		ld	de,.mmuData03
 		ld	f,.mmuDataEnd03-.mmuData03
@@ -24,7 +24,7 @@ MmuInitialize:
 		j	(hl)
 
 .mmuData03:	DB	$03			; update index
-		DB	MMU_CONFIG_HARVARD	; config bits
+		DB	MMU_CFG_HARVARD		; config bits
 		DB	$01,$81,$82,$83		; code banks
 		DB	$80,$81,BANK_PALETTE,BANK_ATTRIBUTE	; data banks
 		DB	$01,$80			; system code/data
@@ -33,34 +33,48 @@ MmuInitialize:
 .mmuDataEnd03:
 
 
-MmuInitializeClient:
+MmuInitializeClientCom:
 		pusha
 
 		ld	t,2
 .next_config	push	ft
-		jal	.copy
+		ld	de,.mmuData02
+		ld	f,.mmuDataEnd02-.mmuData02
+		jal	copyMmuConfig
 		pop	ft
 		dj	t,.next_config
 
 		popa
 		j	(hl)
 
-.copy		ld	b,IO_MMU_BASE
-		ld	c,IO_MMU_UPDATE_INDEX
-		lio	(bc),t
+.mmuData02	DB	MMU_CFG_USER_HARVARD	; config bits
+		DB	BANK_CLIENT_CODE+0	; code banks
+		DB	BANK_CLIENT_CODE+1
+		DB	BANK_CLIENT_CODE+2
+		DB	BANK_CLIENT_CODE+3
+		DB	BANK_CLIENT_CODE+0	; data banks
+		DB	BANK_CLIENT_CODE+1
+		DB	BANK_CLIENT_CODE+2
+		DB	BANK_CLIENT_CODE+3
+		DB	$01,$80			; system code/data
+.mmuDataEnd02
 
+
+MmuInitializeClientExe:
+		pusha
+
+		ld	t,2
+.next_config	push	ft
 		ld	de,.mmuData02
 		ld	f,.mmuDataEnd02-.mmuData02
-		ld	c,IO_MMU_CONFIGURATION
-.loop		lco	t,(de)
-		add	de,1
-		lio	(bc),t
-		add	c,1
-		dj	f,.loop
+		jal	copyMmuConfig
+		pop	ft
+		dj	t,.next_config
 
+		popa
 		j	(hl)
 
-.mmuData02	DB	MMU_CONFIG_HARVARD	; config bits
+.mmuData02	DB	MMU_CFG_HARVARD		; config bits
 		DB	BANK_CLIENT_CODE+0	; code banks
 		DB	BANK_CLIENT_CODE+1
 		DB	BANK_CLIENT_CODE+2
@@ -73,3 +87,16 @@ MmuInitializeClient:
 .mmuDataEnd02
 
 
+copyMmuConfig:
+		ld	b,IO_MMU_BASE
+		ld	c,IO_MMU_UPDATE_INDEX
+		lio	(bc),t
+
+		ld	c,IO_MMU_CONFIGURATION
+.loop		lco	t,(de)
+		add	de,1
+		lio	(bc),t
+		add	c,1
+		dj	f,.loop
+
+		j	(hl)

@@ -2,7 +2,7 @@ COMMON = ../kernal/
 STD = ../stdlib/
 SRCS = monitor.asm
 ASMFLAGS = -g -el -z0 -DBOOT -i$(COMMON) -i$(STD)
-TARGET = monitor.com
+TARGET = monitor.exe
 
 ASM = motorrc8
 LIB = xlib
@@ -24,7 +24,7 @@ endif
 ASSEMBLE = $(ASM) $(DEPFLAGS) $(ASMFLAGS)
 
 $(TARGET) : $(notdir $(SRCS:asm=obj))
-	$(LINK) -m$(@:com=sym) -o$@ -thc8c $+
+	$(LINK) -m$(@:exe=sym) -o$@ -thc8x $+
 
 %.obj : %.asm
 %.obj : %.asm $(DEPDIR)/%.d

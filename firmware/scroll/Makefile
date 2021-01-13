@@ -3,7 +3,7 @@ LOWLEVEL = ../lowlevel/lowlevel.lib
 LIBS = $(STD) $(LOWLEVEL)
 SRCS = scroll.asm
 ASMFLAGS = -g -el -z0 -i../
-TARGET = scroll.com
+TARGET = scroll.exe
 
 ASM = motorrc8
 LIB = xlib
@@ -33,7 +33,7 @@ $(DEPDIR)/%.d: ;
 .PRECIOUS: $(DEPDIR)/%.d
 
 $(TARGET) : $(notdir $(SRCS:asm=obj)) $(LIBS)
-	$(LINK) -sEntry -m$(@:com=sym) -o$@ -thc8c $+
+	$(LINK) -sEntry -m$(@:exe=sym) -o$@ -thc8x $+
 
 clean :
 	$(REMOVEALL)

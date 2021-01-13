@@ -53,7 +53,8 @@ The system banks are in effect when handling interrupts and the SYS instruction.
 ### Configuration register ($01)
 | Bits | Content |
 |------|---------|
-| 0    | Enable Harvard architecture. When 0, CPU data access uses CPU banks. When 1, CPU data access uses Data banks |
+| 0    | Enable Harvard architecture for user mode. When 0, CPU data access uses CPU banks. When 1, CPU data access uses Data banks |
+| 1    | Enable Harvard architecture for system mode. When 0, CPU data access uses CPU banks. When 1, CPU data access uses Data banks |
 
 
 ## Multiplier

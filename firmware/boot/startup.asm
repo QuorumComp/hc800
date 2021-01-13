@@ -105,7 +105,7 @@ InitializeMMU:
 
 .mmuData
 		DB	$03			; update index
-		DB	MMU_CONFIG_HARVARD	; config bits
+		DB	MMU_CFG_HARVARD		; config bits
 		DB	$00,$00,$80,$80		; code banks
 		DB	$80,$01,BANK_PALETTE,BANK_ATTRIBUTE	; data banks
 		DB	$01,$01			; system code/data

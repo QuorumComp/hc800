@@ -1,7 +1,7 @@
 STD = ../stdlib/
 SRCS = ascii.asm
 ASMFLAGS = -g -el -z0 -i../
-TARGET = ascii.com
+TARGET = ascii.exe
 
 ASM = motorrc8
 LIB = xlib
@@ -31,7 +31,7 @@ $(DEPDIR)/%.d: ;
 .PRECIOUS: $(DEPDIR)/%.d
 
 $(TARGET) : $(notdir $(SRCS:asm=obj))
-	$(LINK) -sEntry -m$(@:com=sym) -o$@ -thc8c $+ $(STD)std.lib
+	$(LINK) -sEntry -m$(@:exe=sym) -o$@ -thc8x $+ $(STD)std.lib
 
 clean :
 	$(REMOVEALL)

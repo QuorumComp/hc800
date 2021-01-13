@@ -3,9 +3,9 @@ IMAGEDIR = _image_
 TARGETS = \
 	boot/boot.bin \
 	kernal/kernal.bin \
-	ascii/ascii.com \
-	monitor/monitor.com \
-	scroll/scroll.com
+	ascii/ascii.exe \
+	monitor/monitor.exe \
+	scroll/scroll.exe
 
 LIBS = stdlib/std.lib lowlevel/lowlevel.lib
 

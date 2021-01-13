@@ -94,8 +94,7 @@ copyAcceptedLine:
 		; de - attribute pointer
 
 		ld	f,0
-		ld	bc,lineLengths
-		add	ft,bc
+		add	ft,lineLengths
 		ld	h,(ft)
 
 		; h - line length

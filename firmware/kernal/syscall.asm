@@ -4,6 +4,8 @@
 		INCLUDE	"lowlevel/rc800.i"
 		INCLUDE	"lowlevel/uart.i"
 
+		INCLUDE	"stdlib/string.i"
+
 		INCLUDE	"kernal/keyboard.i"
 
 		INCLUDE	"editor.i"
@@ -109,7 +111,7 @@ Reset::
 		ld	t,$00
 		ld	c,IO_MMU_CONFIGURATION
 		lio	(bc),t
-		ld	c,IO_MMU_CPU_BANK0
+		ld	c,IO_MMU_CODE_BANK0
 		lio	(bc),t
 		ld	c,IO_MMU_DATA_BANK0
 		lio	(bc),t
@@ -121,7 +123,7 @@ Reset::
 
 		SECTION "ExecuteCommandLine",CODE
 executeCommandLine:
-		MDebugPrint <"KExecuteCommandLine\n">
+		;MDebugPrint <"KExecuteCommandLine\n">
 
 		push	bc-de
 
@@ -142,15 +144,25 @@ executeCommandLine:
 		ld	de,ft
 		jal	copyCommandLine
 
-		ld	bc,$4000
-		jal	ComSendLoadFileString
+		; try .com suffix
 
-		jal	readFile
+		ld	de,.comSuffix
+		jal	readFileWithSuffix
+		j/ne	.not_com
+
+		jal	MmuInitializeClientCom
+		j	.got_file
+
+		; try .exe suffix
+.not_com
+		ld	de,.exeSuffix
+		jal	readFileWithSuffix
 		j/ne	.error
 
 		;MDebugPrint <"- MmuInitializeClient\n">
-		jal	MmuInitializeClient
+		jal	MmuInitializeClientExe
 
+.got_file
 		pop	bc-de
 
 		; top of hl stack is return address
@@ -175,6 +187,9 @@ executeCommandLine:
 		popa
 		reti
 
+.comSuffix	DC_STR	".com"
+.exeSuffix	DC_STR	".exe"
+
 
 		SECTION "Exit",CODE
 exit:
@@ -193,7 +208,7 @@ exit:
 		ld	t,CFG_VIDEO
 		lio	(bc),t
 
-		jal	MmuInitializeClient
+		jal	MmuInitializeClientExe
 
 		ei
 
@@ -202,6 +217,28 @@ exit:
 		pop	hl	; discard hl saved by SYS
 		pop	hl	; pop return address
 		reti
+
+
+; -- Inputs:
+; --   de - suffix string
+		SECTION "ReadFile",CODE
+readFileWithSuffix:
+		push	de/hl
+
+		ld	bc,$4100
+		ld	de,$4000
+		jal	StringCopy
+
+		pop	de
+		jal	StringAppendDataString
+
+		ld	bc,$4100
+		jal	ComSendLoadFileString
+
+		jal	readFile
+
+		pop	hl
+		j	(hl)
 
 
 		SECTION "ReadFile",CODE
