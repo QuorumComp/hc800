@@ -221,7 +221,7 @@ class VideoGenerator(scanDoubleDomain: ClockDomain) extends Component {
 			default          -> B(0)
 		)
 	} otherwise {
-		controlBus.dataToMaster := 0
+		regData := 0
 	}
 
 	io.regBus.dataToMaster := 

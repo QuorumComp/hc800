@@ -43,17 +43,12 @@ class MMU extends Component {
 	}
 
 	case class ConfigurationBundle() extends Bundle {
-		val bank0 = Reg(Bits(8 bits)) init(0)
-		val bank1 = Reg(Bits(8 bits)) init(1)
-		val bank2 = Reg(Bits(8 bits)) init(2)
-		val bank3 = Reg(Bits(8 bits)) init(3)
-		val harvard = Reg(Bool()) init(False)
-		val dataBank0 = Reg(Bits(8 bits)) init(0)
-		val dataBank1 = Reg(Bits(8 bits)) init(1) 
-		val dataBank2 = Reg(Bits(8 bits)) init(2)
-		val dataBank3 = Reg(Bits(8 bits)) init(3)
-		val systemCodeBank = Reg(Bits(8 bits)) init(0)
-		val systemDataBank = Reg(Bits(8 bits)) init(0)
+		val userCode = Vec(Reg(Bits(8 bits)) init(0), 4)
+		val userData = Vec(Reg(Bits(8 bits)) init(0), 4)
+		val userHarvard = Reg(Bool()) init(False)
+		val systemCode = Reg(Bits(8 bits)) init(0)
+		val systemData = Reg(Bits(8 bits)) init(0)
+		val systemHarvard = Reg(Bool()) init(False)
 	}
 
 	val configurationStack = Reg(UInt(8 bits))
@@ -68,19 +63,17 @@ class MMU extends Component {
 		val config = configurationVec(activeIndex)
 
 		when (io.mapSource === MapSource.cpu) {
-			val codeBank = (io.mapAddressIn(15 downto 14)).mux (
-				default -> (io.mapSystem ? config.systemCodeBank | config.bank0),
-				1 -> config.bank1,
-				2 -> config.bank2,
-				3 -> config.bank3
-			)
-			val dataBank = (io.mapAddressIn(15 downto 14)).mux (
-				default -> (io.mapSystem ? config.systemDataBank | config.dataBank0),
-				1 -> config.dataBank1,
-				2 -> config.dataBank2,
-				3 -> config.dataBank3
-			)
-			val bank = (config.harvard && !io.mapCode) ? dataBank | codeBank
+			val segment = io.mapAddressIn(15 downto 14)
+
+			val userCode = config.userCode(segment)
+			val userData = config.userHarvard ? config.userData(segment) | userCode
+			val userBank = io.mapCode ? userCode | userData
+
+			val systemCode = config.systemCode
+			val systemData = config.systemHarvard ? config.systemData | systemCode
+			val systemBank = io.mapCode ? systemCode | systemData
+
+			val bank = Mux (io.mapSystem && segment === 0, systemBank, userBank)
 			io.mapAddressOut := (bank ## io.mapAddressIn.resize(14 bits)).asUInt
 		}.elsewhen (io.mapSource === MapSource.chipsetCharGen) {
 			io.mapAddressOut := ((chipsetCharGen ## B(0, 14 bits)).asUInt + io.mapAddressIn.resize(22 bits))
@@ -98,18 +91,19 @@ class MMU extends Component {
 			switch (reg) {
 				is (Register.updateIndex) { updateIndex := io.regBus.dataFromMaster(1 downto 0).asUInt }
 				is (Register.configBits) {
-					config.harvard := io.regBus.dataFromMaster(0)
+					config.userHarvard := io.regBus.dataFromMaster(0)
+					config.systemHarvard := io.regBus.dataFromMaster(1)
 				}
-				is (Register.codeBank0) { config.bank0 := io.regBus.dataFromMaster }
-				is (Register.codeBank1) { config.bank1 := io.regBus.dataFromMaster }
-				is (Register.codeBank2) { config.bank2 := io.regBus.dataFromMaster }
-				is (Register.codeBank3) { config.bank3 := io.regBus.dataFromMaster }
-				is (Register.dataBank0) { config.dataBank0 := io.regBus.dataFromMaster }
-				is (Register.dataBank1) { config.dataBank1 := io.regBus.dataFromMaster }
-				is (Register.dataBank2) { config.dataBank2 := io.regBus.dataFromMaster }
-				is (Register.dataBank3) { config.dataBank3 := io.regBus.dataFromMaster }
-				is (Register.systemCodeBank) { config.systemCodeBank := io.regBus.dataFromMaster }
-				is (Register.systemDataBank) { config.systemDataBank := io.regBus.dataFromMaster }
+				is (Register.codeBank0) { config.userCode(0) := io.regBus.dataFromMaster }
+				is (Register.codeBank1) { config.userCode(1) := io.regBus.dataFromMaster }
+				is (Register.codeBank2) { config.userCode(2) := io.regBus.dataFromMaster }
+				is (Register.codeBank3) { config.userCode(3) := io.regBus.dataFromMaster }
+				is (Register.dataBank0) { config.userData(0) := io.regBus.dataFromMaster }
+				is (Register.dataBank1) { config.userData(1) := io.regBus.dataFromMaster }
+				is (Register.dataBank2) { config.userData(2) := io.regBus.dataFromMaster }
+				is (Register.dataBank3) { config.userData(3) := io.regBus.dataFromMaster }
+				is (Register.systemCodeBank) { config.systemCode := io.regBus.dataFromMaster }
+				is (Register.systemDataBank) { config.systemData := io.regBus.dataFromMaster }
 				is (Register.activeIndex) { 
 					when (io.regBus.dataFromMaster(7)) {
 						// push
@@ -134,17 +128,17 @@ class MMU extends Component {
 		when (io.regBus.enable && !io.regBus.write) {
 			regData := reg.mux (
 				Register.updateIndex -> updateIndex.resize(8 bits).asBits,
-				Register.configBits -> (config.harvard.asBits).resize(8 bits),
-				Register.codeBank0 -> config.bank0,
-				Register.codeBank1 -> config.bank1,
-				Register.codeBank2 -> config.bank2,
-				Register.codeBank3 -> config.bank3,
-				Register.dataBank0 -> config.dataBank0,
-				Register.dataBank1 -> config.dataBank1,
-				Register.dataBank2 -> config.dataBank2,
-				Register.dataBank3 -> config.dataBank3,
-				Register.systemCodeBank -> config.systemCodeBank,
-				Register.systemDataBank -> config.systemDataBank,
+				Register.configBits -> (config.systemHarvard ## config.userHarvard).resize(8 bits),
+				Register.codeBank0 -> config.userCode(0),
+				Register.codeBank1 -> config.userCode(1),
+				Register.codeBank2 -> config.userCode(2),
+				Register.codeBank3 -> config.userCode(3),
+				Register.dataBank0 -> config.userData(0),
+				Register.dataBank1 -> config.userData(1),
+				Register.dataBank2 -> config.userData(2),
+				Register.dataBank3 -> config.userData(3),
+				Register.systemCodeBank -> config.systemCode,
+				Register.systemDataBank -> config.systemData,
 				Register.activeIndex -> activeIndex.resize(8 bits).asBits,
 				Register.chipsetCharGen -> chipsetCharGen
 			)
