@@ -9,6 +9,7 @@
 		INCLUDE	"kernal/keyboard.i"
 
 		INCLUDE	"editor.i"
+		INCLUDE	"main.i"
 		INCLUDE	"mmu.i"
 		INCLUDE	"text.i"
 
@@ -203,12 +204,28 @@ exit:
 		ld	t,IO_INT_VBLANK|IO_INT_SET
 		lio	(bc),t
 
+		ld	b,IO_VIDEO_BASE
+		ld	c,IO_VIDEO_CONTROL
+		ld	t,IO_VID_CTRL_P0EN
+		lio	(bc),t
+
+		ld	c,IO_VID_PLANE0_CONTROL
+		ld	t,IO_PLANE_CTRL_HIRES|IO_PLANE_CTRL_TEXT
+		lio	(bc),t
+
+		ld	c,IO_VID_PLANE0_HSCROLLL
+		ld	t,0
+		lio	(bc),t
+		ld	c,IO_VID_PLANE0_HSCROLLH
+		lio	(bc),t
+
 		ld	b,IO_MMU_BASE
 		ld	c,IO_MMU_ACTIVE_INDEX
 		ld	t,CFG_VIDEO
 		lio	(bc),t
 
 		jal	MmuInitializeClientExe
+		jal	InitializePalette
 
 		ei
 
