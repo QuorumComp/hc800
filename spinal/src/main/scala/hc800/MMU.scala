@@ -10,6 +10,18 @@ object MMU {
 			chipsetCharGen = newElement()
 	}
 
+	object UpperSizeConfig extends SpinalEnum(defaultEncoding = binarySequential) {
+		val size16,
+			size32,
+			size48,
+			size64 = newElement()
+
+		def isAtLeast64(config: UpperSizeConfig.C): Bool = config.asBits.andR
+		def isAtLeast48(config: UpperSizeConfig.C): Bool = config.asBits(1)
+		def isAtLeast32(config: UpperSizeConfig.C): Bool = config.asBits.orR
+		def isAtLeast16(config: UpperSizeConfig.C): Bool = True
+	}
+
 	object Register extends SpinalEnum(defaultEncoding = binarySequential) {
 		val updateIndex,
 			configBits,
@@ -46,6 +58,8 @@ class MMU extends Component {
 		val userCode = Vec(Reg(Bits(8 bits)) init(0), 4)
 		val userData = Vec(Reg(Bits(8 bits)) init(0), 4)
 		val userHarvard = Reg(Bool()) init(False)
+		val userCodeUpperSize = Reg(UpperSizeConfig()) init(UpperSizeConfig.size16)
+		val userDataUpperSize = Reg(UpperSizeConfig()) init(UpperSizeConfig.size16)
 		val systemCode = Reg(Bits(8 bits)) init(0)
 		val systemData = Reg(Bits(8 bits)) init(0)
 		val systemHarvard = Reg(Bool()) init(False)
@@ -62,11 +76,21 @@ class MMU extends Component {
 	val mapArea = new Area {
 		val config = configurationVec(activeIndex)
 
+		def mapUpperSize(segment: UInt, config: UpperSizeConfig.C): UInt =
+			segment.mux(
+				0 -> (UpperSizeConfig.isAtLeast64(config) ? U(3) | 0),
+				1 -> (UpperSizeConfig.isAtLeast48(config) ? U(3) | 1),
+				2 -> (UpperSizeConfig.isAtLeast32(config) ? U(3) | 2),
+				3 -> (UpperSizeConfig.isAtLeast16(config) ? U(3) | 3),
+			)
+
 		when (io.mapSource === MapSource.cpu) {
 			val segment = io.mapAddressIn(15 downto 14)
+			val codeSegment = mapUpperSize(segment, config.userCodeUpperSize)
+			val dataSegment = mapUpperSize(segment, config.userDataUpperSize)
 
-			val userCode = config.userCode(segment)
-			val userData = config.userHarvard ? config.userData(segment) | userCode
+			val userCode = config.userCode(codeSegment)
+			val userData = config.userHarvard ? config.userData(dataSegment) | userCode
 			val userBank = io.mapCode ? userCode | userData
 
 			val systemCode = config.systemCode
@@ -93,6 +117,8 @@ class MMU extends Component {
 				is (Register.configBits) {
 					config.userHarvard := io.regBus.dataFromMaster(0)
 					config.systemHarvard := io.regBus.dataFromMaster(1)
+					config.userCodeUpperSize := io.regBus.dataFromMaster(3 downto 2) as UpperSizeConfig()
+					config.userDataUpperSize := io.regBus.dataFromMaster(5 downto 4) as UpperSizeConfig()
 				}
 				is (Register.codeBank0) { config.userCode(0) := io.regBus.dataFromMaster }
 				is (Register.codeBank1) { config.userCode(1) := io.regBus.dataFromMaster }
@@ -128,7 +154,7 @@ class MMU extends Component {
 		when (io.regBus.enable && !io.regBus.write) {
 			regData := reg.mux (
 				Register.updateIndex -> updateIndex.resize(8 bits).asBits,
-				Register.configBits -> (config.systemHarvard ## config.userHarvard).resize(8 bits),
+				Register.configBits -> (config.userDataUpperSize ## config.userCodeUpperSize ## config.systemHarvard ## config.userHarvard).resize(8 bits),
 				Register.codeBank0 -> config.userCode(0),
 				Register.codeBank1 -> config.userCode(1),
 				Register.codeBank2 -> config.userCode(2),
