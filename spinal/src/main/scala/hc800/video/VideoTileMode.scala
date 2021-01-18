@@ -69,6 +69,7 @@ class VideoTileMode(secondPlane: Boolean, hTotal: Int) extends Component {
 	val hsyncEdge = io.hSync.rise(False)
 
 	val hScrollPos = Reg(UInt(10 bits)) init(0)
+	val vScrollPos = Reg(UInt(9 bits)) init(0)
 
 	//
 	// Shift and Fetch masks
@@ -101,7 +102,7 @@ class VideoTileMode(secondPlane: Boolean, hTotal: Int) extends Component {
 
 	val attrLine = Reg(UInt(9 bits))
 	when (hsyncEdge) {
-		attrLine := io.vPos + 1
+		attrLine := io.vPos + 1 + vScrollPos
 	}
 	
 	val normalizedHPos = (io.hBlank ? (io.hPos - hTotal) | io.hPos)
@@ -249,6 +250,12 @@ class VideoTileMode(secondPlane: Boolean, hTotal: Int) extends Component {
 			is (Register.hPosH) {
 				hScrollPos(9 downto 8) := io.regBus.dataFromMaster(1 downto 0).asUInt
 			}
+			is (Register.vPosL) {
+				vScrollPos(7 downto 0) := io.regBus.dataFromMaster.asUInt
+			}
+			is (Register.vPosH) {
+				vScrollPos(8) := io.regBus.dataFromMaster(0)
+			}
 		}
 	}
 
@@ -262,6 +269,8 @@ class VideoTileMode(secondPlane: Boolean, hTotal: Int) extends Component {
 			Register.control -> depth.asBits ## paletteHigh ## False ## textMode ## hires ## False,
 			Register.hPosL   -> hScrollPos(7 downto 0).asBits,
 			Register.hPosH   -> hScrollPos(9 downto 8).asBits.resized,
+			Register.vPosL   -> vScrollPos(7 downto 0).asBits,
+			Register.vPosH   -> vScrollPos(8).asBits.resized,
 			default          -> B(0)
 		)
 	} otherwise {
