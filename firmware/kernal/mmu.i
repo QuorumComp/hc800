@@ -2,6 +2,10 @@
 
 MMU_I_INCLUDED_ = 1
 
+MMU_CFG_KERNAL	EQU	$03
+MMU_CFG_CLIENT	EQU	$02
+
+
 	GLOBAL	MmuInitialize
 	GLOBAL	MmuInitializeClientCom
 	GLOBAL	MmuInitializeClientExe

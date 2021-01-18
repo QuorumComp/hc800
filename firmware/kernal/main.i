@@ -3,6 +3,5 @@
 MAIN_I_INCLUDED_ = 1
 
 	GLOBAL	Main
-	GLOBAL	InitializePalette
 
 	ENDC

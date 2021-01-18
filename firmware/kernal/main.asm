@@ -12,8 +12,8 @@
 		INCLUDE	"keyboard.i"
 		INCLUDE	"main.i"
 		INCLUDE "text.i"
+		INCLUDE "video.i"
 
-PALETTE_BASE	EQU	$8000
 
 		SECTION	"Main",CODE
 Main:
@@ -31,8 +31,8 @@ Main:
 				
 		MPrintString "\n /// Quorum Computing HC800 ///\n"
 
-		jal	PrintBoard
-		jal	InitializeMemory
+		jal	printBoard
+		jal	initializeMemory
 
 		MPrintString " RAM  : "
 		ld	de,totalBanks
@@ -99,7 +99,7 @@ printReadyPrompt:
 
 
 
-InitializeMemory:
+initializeMemory:
 		pusha
 
 		ld	b,IO_MMU_BASE
@@ -195,7 +195,7 @@ InitializeMemory:
 
 .pattern	DB	$FF,$C3,$AA,$55
 
-PrintBoard:
+printBoard:
 		pusha
 
 		MPrintString " Board: "
@@ -223,124 +223,7 @@ PrintBoard:
 		popa
 		j	(hl)
 
-ResetWhenCombo:
-		IMPORT	Reset
-		pusha
-
-		ld	t,IO_BUTTON_LEFT|IO_BUTTON_CENTER|IO_BUTTON_RIGHT
-		jal	CheckButtons
-		j/nz	.no_reset
-
-		ld	b,IO_NEXYS3_BASE
-		ld	c,IO_NEXYS3_BUTTONS
-.wait_release	lio	t,(bc)
-		cmp	t,0
-		j/nz	.wait_release
-
-		ld	hl,Reset
-		j	(hl)
-.no_reset
-		popa
-		j	(hl)
-
-; --
-; -- Determine if VBlank has been encountered
-; --
-; -- Returns:
-; --    f - "eq" condition if VBlank happened since last call
-; --
-VideoIsVBlankEdge::
-		push	bc-hl
-
-		ld	bc,isVBlank
-		ld	t,(bc)
-		cmp	t,0
-		not	f
-		ld	t,0
-		ld	(bc),t
-
-		pop	bc-hl
-		j	(hl)
-
-
-VBlankHandler::
-		pusha
-
-		ld	bc,isVBlank
-		ld	t,$FF
-		ld	(bc),t
-
-		jal	ResetWhenCombo
-		jal	ScreenVBlank
-		jal	KeyboardVBlank
-
-	IF 0
-		ld	bc,Count
-		ld	t,(bc)
-		ld	f,0
-		jal	SetHexSegments
-		inc	t
-		ld	(bc),t
-	ENDC
-
-		popa
-		j	(hl)
-
-
-; --
-; -- Draws a box using the defined characters
-; --
-DrawBox:
-		
-
-
-EnableVBlank:
-		pusha
-
-		ld	b,IO_ICTRL_BASE
-		ld	c,IO_ICTRL_ENABLE
-		ld	t,$7F
-		lio	(bc),t
-		ld	c,IO_ICTRL_REQUEST
-		lio	(bc),t
-
-		ld	c,IO_ICTRL_ENABLE
-		ld	t,IO_INT_SET|IO_INT_VBLANK
-		lio	(bc),t
-
-		popa
-		j	(hl)
-
-
-; --
-; -- Load palette
-; --
-InitializePalette:
-		pusha
-
-		ld	bc,PALETTE_BASE
-		ld	de,.palette
-		ld	ft,.paletteEnd-.palette
-		jal	CopyCode
-
-		popa
-		j	(hl)
-
-.palette	DRGB	$0D,$05,$00
-		DRGB	$1F,$1B,$16
-		DRGB	$0D,$05,$00
-		DRGB	$1F,$0D,$05
-
-; 00000  00100  01001  01101  10010  10110  11011  11111
-; $00,   $05,   $09,   $0D,   $12,   $16,   $1B,   $1F
-
-; 0000  01010  10101  11111
-; $00,  $0A,   $15,   $1F
-
-.paletteEnd
-
 
 		SECTION	"Vars",BSS
-isVBlank:	DS	1
 totalBanks:	DS	1
 commandLine:	DS	207

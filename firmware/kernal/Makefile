@@ -1,6 +1,14 @@
 STD = ../stdlib/
 LOWLEVEL = ../lowlevel/
-SRCS = startup.asm editor.asm keyboard.asm main.asm mmu.asm syscall.asm text.asm
+SRCS = startup.asm \
+	commandline.asm \
+	editor.asm \
+	keyboard.asm \
+	main.asm \
+	mmu.asm \
+	syscall.asm \
+	text.asm \
+	video.asm
 LIBS = $(STD)std.lib $(LOWLEVEL)lowlevel.lib
 
 ASMFLAGS = -g -el -z0 -i../
