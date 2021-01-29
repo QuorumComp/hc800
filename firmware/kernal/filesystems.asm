@@ -20,7 +20,7 @@ FileInitialize:
 		lco	t,(bc)
 		exg	f,t
 		sub	bc,1
-		ld	t,(bc)
+		lco	t,(bc)
 		ld	bc,ft
 
 		; bc - first filesystem
@@ -54,9 +54,6 @@ FileInitialize:
 FileOpen:
 		push	bc-hl
 
-		MDebugPrintR de
-		MDebugNewline
-
 		ld	f,fs_SIZEOF
 		ld	t,0
 .clear		ld	(bc),t
@@ -71,8 +68,6 @@ FileOpen:
 		ld	l,(ft)
 		add	ft,1
 		ld	h,(ft)
-
-		MDebugHexWord hl
 
 		; set filesystem pointer in file struct
 		ld	ft,bc
@@ -139,9 +134,11 @@ FileClose:
 ; --    t - Error code
 ; --    f - "eq" if success
 ; --
-		SECTION	"FileClose",CODE
+		SECTION	"FileRead",CODE
 FileRead:
 		pusha
+
+		MDebugPrint <"FileRead.1\n">
 
 		; get filesystem
 		ld	ft,bc
@@ -169,7 +166,7 @@ FileRead:
 
 
 		SECTION	"Filesystems",DATA
-filesystems:	DW	UartFilesystem
+filesystems::	DW	UartFilesystem
 
 		SECTION	"FilesystemVars",BSS
 rootFs:		DS	2

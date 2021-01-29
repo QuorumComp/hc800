@@ -11,14 +11,14 @@ IDENT_NONCE	EQU	$1234
 ; --   ft - value to print
 		SECTION	"ComPrintHexWord",CODE
 ComPrintHexWord:
-		pusha
+		push	hl
 
 		exg	f,t
 		jal	ComPrintHexByte
 		exg	f,t
 		jal	ComPrintHexByte
 
-		popa
+		pop	hl
 		j	(hl)
 
 
@@ -30,11 +30,12 @@ ComPrintHexWord:
 ComPrintHexByte:
 		pusha
 
+		push	ft
 		ld	f,0
 		rs	ft,4
 		jal	ComPrintDigit
 
-		ld	t,d
+		pop	ft
 		and	t,$F
 		jal	ComPrintDigit
 
