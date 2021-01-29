@@ -9,6 +9,7 @@
 		INCLUDE	"stdlib/syscall.i"
 
 		INCLUDE	"editor.i"
+		INCLUDE	"filesystems.i"
 		INCLUDE	"keyboard.i"
 		INCLUDE	"main.i"
 		INCLUDE "text.i"
@@ -22,13 +23,10 @@ Main:
 		jal	InitializePalette
 		jal	KeyboardInitialize
 		jal	TextInitialize
+		jal	FileInitialize
 
 		sys	KClearScreen
 
-;.spin		jal	ResetWhenCombo
-;		j	.spin
-
-				
 		MPrintString "\n /// Quorum Computing HC800 ///\n"
 
 		jal	printBoard

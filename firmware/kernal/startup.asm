@@ -1,4 +1,3 @@
-		INCLUDE	"lowlevel/commands.i"
 		INCLUDE	"lowlevel/hc800.i"
 		INCLUDE "lowlevel/memory.i"
 		INCLUDE "lowlevel/nexys3.i"
@@ -7,6 +6,7 @@
 		INCLUDE	"main.i"
 		INCLUDE	"mmu.i"
 		INCLUDE "text.i"
+		INCLUDE "uart_commands.i"
 
 		IMPORT	VBlankHandler
 
@@ -17,36 +17,36 @@ Debug:		MACRO
 		popa
 		ENDM
 
-		SECTION "Init",CODE[0]
+		SECTION "Init",CODE[0],ROOT
 		ld	ft,Init
 		j	(ft)
 
-		SECTION "NMI",CODE[$8]
+		SECTION "NMI",CODE[$8],ROOT
 		ld	t,$08
 		ld	de,Fail
 		j	(de)
 
-		SECTION "IllegalIrq",CODE[$10]
+		SECTION "IllegalIrq",CODE[$10],ROOT
 		ld	t,$10
 		ld	de,Fail
 		j	(de)
 
-		SECTION "IllegalInstruction",CODE[$18]
+		SECTION "IllegalInstruction",CODE[$18],ROOT
 		ld	t,$18
 		ld	de,Fail
 		j	(de)
 
-		SECTION "StackOverflow",CODE[$20]
+		SECTION "StackOverflow",CODE[$20],ROOT
 		ld	t,$20
 		ld	de,Fail
 		j	(de)
 
-		SECTION "Interrupt",CODE[$28]
+		SECTION "Interrupt",CODE[$28],ROOT
 		pusha
 		ld	hl,Interrupt
 		j	(hl)
 
-		SECTION "Ident",CODE[$100]
+		SECTION "Ident",CODE[$100],ROOT
 Ident:		DB	"HC8!"
 
 
@@ -72,7 +72,7 @@ Fail:
 
 
 		SECTION "Startup",CODE
-Init:
+Init::
 		jal	MmuInitialize
 
 		pop	hl

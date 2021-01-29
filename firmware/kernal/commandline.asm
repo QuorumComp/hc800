@@ -1,11 +1,12 @@
-		INCLUDE	"lowlevel/commands.i"
 		INCLUDE	"lowlevel/hc800.i"
 		INCLUDE	"lowlevel/rc800.i"
 		INCLUDE	"lowlevel/uart.i"
 
 		INCLUDE	"stdlib/string.i"
 
+		INCLUDE	"filesystems.i"
 		INCLUDE	"mmu.i"
+		INCLUDE	"uart_commands.i"
 		INCLUDE	"video.i"
 
 
@@ -133,78 +134,57 @@ SysExit::
 ; --   de - suffix string
 		SECTION "ReadFile",CODE
 readFileWithSuffix:
-		push	de/hl
+		push	bc-hl
 
+		push	de
 		ld	bc,$4100
 		ld	de,$4000
 		jal	StringCopy
-
 		pop	de
+
 		jal	StringAppendDataString
 
-		ld	bc,$4100
-		jal	ComSendLoadFileString
+		ld	bc,exeFileHandle
+		ld	de,$4100
+		jal	FileOpen
+		j/ne	.error
 
 		jal	readFile
+		j/ne	.error
 
-		pop	hl
+		jal	FileClose
+
+.error		pop	bc-de
 		j	(hl)
 
 
 		SECTION "ReadFile",CODE
-readFile:
-		push	de-hl
-
-		jal	ComSyncResponse
-		j/ne	.done
-
-		jal	UartWordInSync
-		j/ne	.timeout
+readFile:	push	bc-hl
 
 		MSetDataBank 1,BANK_CLIENT_CODE
 
-.next_bank	tst	bc
-		j/z	.done
-		push	bc
-		ld	ft,$4000
-		cmp	bc
-		j/ge	.got_size
-		ld	bc,ft
-.got_size	jal	.read_bytes
-		j/nz	.done
-		ld	ft,bc
-		pop	bc
-		sub	ft,bc
-		ld	bc,ft
+.next_bank	ld	ft,$4000
+		ld	de,ft
+		ld	bc,exeFileHandle
+		jal	FileRead
+
+		ld	hl,ft
+
+		add	bc,file_Error
+		ld	t,(bc)
+		cmp	t,ERROR_SUCCESS
+		j/ne	.exit
+
+		ld	ft,hl
+		cmp	ft,de
+		j/ltu	.success
+
 		MIncDataBank 1
 		j	.next_bank
 
-.done		pop	de-hl
-		j	(hl)
-
-.read_bytes	push	bc/hl
-		ld	de,$4000
-.next_byte	jal	UartByteInSync
-		j/ne	.timeout_pop
-		ld	(de),t
-		add	de,1
-		sub	bc,1
-		tst	bc
-		j/nz	.next_byte
-
-		pop	ft
-		ld	bc,ft
-		ld	t,ERROR_SUCCESS
-		j	.bytes_done
-
-.timeout_pop	pop	ft
-		sub	ft,bc
-		ld	bc,ft
-
-.timeout	ld	t,ERROR_TIMEOUT
-
-.bytes_done	cmp	t,0
-		pop	bc/hl
+.success	ld	t,ERROR_SUCCESS
+		cmp	t,0
+.exit		pop	bc-hl
 		j	(hl)
 
 
@@ -261,3 +241,7 @@ copyCommandLine:
 
 		pop	hl
 		j	(hl)
+
+
+		SECTION	"CommandlineVars",BSS
+exeFileHandle:	DS	file_SIZEOF

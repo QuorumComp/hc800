@@ -1,8 +1,6 @@
-		INCLUDE	"lowlevel/commands.i"
 		INCLUDE	"lowlevel/hc800.i"
 		INCLUDE	"lowlevel/nexys3.i"
 		INCLUDE	"lowlevel/rc800.i"
-		INCLUDE	"lowlevel/uart.i"
 
 		INCLUDE	"stdlib/string.i"
 
@@ -12,6 +10,7 @@
 		INCLUDE	"main.i"
 		INCLUDE	"mmu.i"
 		INCLUDE	"text.i"
+		INCLUDE	"uart_commands.i"
 		INCLUDE	"video.i"
 
 		IMPORT	SysExecuteCommandLine
@@ -42,7 +41,7 @@ KVector:	MACRO
 		ENDM
 
 
-		SECTION "SysCall",CODE[$40]
+		SECTION "SysCall",CODE[$40],ROOT
 
 		KVector	reset
 		KVector	clearScreen

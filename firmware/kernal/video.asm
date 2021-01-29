@@ -16,7 +16,7 @@ PALETTE_BASE	EQU	$8000
 ; --
 		SECTION	"VideoIsVBlankEdge",CODE
 VideoIsVBlankEdge:
-		push	bc-hl
+		push	bc/hl
 
 		ld	bc,isVBlank
 		ld	t,(bc)
@@ -25,7 +25,7 @@ VideoIsVBlankEdge:
 		ld	t,0
 		ld	(bc),t
 
-		pop	bc-hl
+		pop	bc/hl
 		j	(hl)
 
 

@@ -1,5 +1,5 @@
 LOWLEVEL = ../lowlevel/
-SRCS = startup.asm main.asm text.asm
+SRCS = startup.asm commands.asm main.asm text.asm
 
 ASMFLAGS = -g -el -z0 -i../
 TARGET = boot.bin

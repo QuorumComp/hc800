@@ -1,4 +1,3 @@
-		INCLUDE	"lowlevel/commands.i"
 		INCLUDE	"lowlevel/hc800.i"
 		INCLUDE	"lowlevel/memory.i"
 		INCLUDE	"lowlevel/nexys3.i"
@@ -9,6 +8,7 @@
 
 		INCLUDE	"editor.i"
 		INCLUDE	"keyboard.i"
+		INCLUDE	"uart_commands.i"
 		INCLUDE	"text.i"
 
 		IMPORT	ResetWhenCombo

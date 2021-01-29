@@ -1,4 +1,3 @@
-		INCLUDE	"lowlevel/commands.i"
 		INCLUDE	"lowlevel/hc800.i"
 		INCLUDE	"lowlevel/memory.i"
 

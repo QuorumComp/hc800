@@ -3,11 +3,14 @@ LOWLEVEL = ../lowlevel/
 SRCS = startup.asm \
 	commandline.asm \
 	editor.asm \
+	filesystems.asm \
 	keyboard.asm \
 	main.asm \
 	mmu.asm \
 	syscall.asm \
 	text.asm \
+	uart_commands.asm \
+	uartfs.asm \
 	video.asm
 LIBS = $(STD)std.lib $(LOWLEVEL)lowlevel.lib
 
@@ -34,7 +37,7 @@ endif
 ASSEMBLE = $(ASM) $(DEPFLAGS) $(ASMFLAGS)
 
 $(TARGET) : $(notdir $(SRCS:asm=obj)) $(LIBS)
-	$(LINK) -m$(@:bin=sym) -o$@ -thc8b $+
+	$(LINK) -sInit -m$(@:bin=sym) -o$@ -thc8b $+
 
 %.obj : %.asm
 %.obj : %.asm $(DEPDIR)/%.d

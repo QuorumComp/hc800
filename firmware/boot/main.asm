@@ -1,8 +1,8 @@
 		INCLUDE	"lowlevel/hc800.i"
-		INCLUDE	"lowlevel/commands.i"
 		INCLUDE	"lowlevel/memory.i"
 		INCLUDE	"lowlevel/uart.i"
 
+		INCLUDE	"commands.i"
 		INCLUDE	"main.i"
 		INCLUDE "text.i"
 
