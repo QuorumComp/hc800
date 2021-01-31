@@ -37,11 +37,6 @@ uartOpen:
 		push	bc
 		ld	bc,uartFile1
 		jal	StringCopy
-		pop	bc
-
-		push	bc
-		ld	ft,de
-		ld	bc,ft
 		jal	sendStatFileCommand
 		pop	bc
 
@@ -104,7 +99,7 @@ uartClose:
 uartRead:
 		push	bc-hl
 
-		MDebugPrint <"uartRead\n">
+		MDebugPrint <"uartRead.1\n">
 
 		; send command
 
@@ -125,8 +120,6 @@ uartRead:
 		sub	bc,file_Offset
 		pop	de
 
-		ld	ft,0
-		jal	UartWordOutSync
 		pop	ft
 		jal	UartWordOutSync
 
@@ -136,7 +129,6 @@ uartRead:
 		j/ne	.error
 
 		jal	UartWordInSync
-		push	ft
 
 		push	bc
 
@@ -155,14 +147,16 @@ uartRead:
 		ld	t,ERROR_SUCCESS
 		ld	(bc),t
 
-		pop	ft
+		ld	ft,de
 		j	.exit
 
 .error		add	bc,file_Error
 		ld	(bc),t
 		ld	ft,0
 
-.exit		pop	bc-hl
+.exit		MDebugPrint <"uartRead.2\n">
+
+		pop	bc-hl
 		j	(hl)
 
 

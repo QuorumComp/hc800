@@ -149,12 +149,16 @@ readFileWithSuffix:
 		jal	FileOpen
 		j/ne	.error
 
+		MDebugPrint <"readFileWithSuffix.1\n">
+
 		jal	readFile
 		j/ne	.error
 
 		jal	FileClose
 
-.error		pop	bc-de
+.error		MDebugPrint <"readFileWithSuffix.2\n">
+
+		pop	bc-hl
 		j	(hl)
 
 

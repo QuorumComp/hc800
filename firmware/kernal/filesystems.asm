@@ -1,4 +1,5 @@
 		INCLUDE	"lowlevel/math.i"
+		INCLUDE	"lowlevel/memory.i"
 
 		INCLUDE	"stdlib/string.i"
 
@@ -54,12 +55,11 @@ FileInitialize:
 FileOpen:
 		push	bc-hl
 
-		ld	f,fs_SIZEOF
+		push	de
+		ld	de,file_SIZEOF
 		ld	t,0
-.clear		ld	(bc),t
-		add	bc,1
-		dj	f,.clear
-		sub	bc,fs_SIZEOF
+		jal	SetMemory
+		pop	de
 
 		MDebugPrint <"FileOpen.1\n">
 
@@ -91,6 +91,10 @@ FileOpen:
 		jal	(hl)
 
 		MDebugPrint <"FileOpen.3\n">
+
+		ld	de,file_SIZEOF
+		jal	ComDumpMemory
+
 		pop	bc-hl
 		j	(hl)
 
@@ -136,30 +140,44 @@ FileClose:
 ; --
 		SECTION	"FileRead",CODE
 FileRead:
-		pusha
+		push	bc-hl
 
 		MDebugPrint <"FileRead.1\n">
 
+		push	ft-bc
+
 		; get filesystem
 		ld	ft,bc
-		ld	l,(ft)
+		ld	c,(ft)
 		add	ft,1
-		ld	h,(ft)
+		ld	b,(ft)
 
 		; get read function
-		add	ft,fs_Read
-		ld	l,(ft)
-		add	ft,1
-		ld	h,(ft)
+		add	bc,fs_Read+1
+		lco	t,(bc)
+		exg	f,t
+		sub	bc,1
+		lco	t,(bc)
+		ld	hl,ft
 
-		pop	ft
+		pop	ft-bc
 		jal	(hl)
+
+		MDebugPrint <"FileRead.2\n">
 
 		ld	bc,ft
 		jal	MathLoadOperand16U
 
+		MDebugPrint <"FileRead.3\n">
+
 		add	bc,file_Offset
 		jal	MathAdd_32_Operand
+
+		MDebugPrint <"FileRead.4\n">
+
+		sub	bc,file_Offset
+		ld	de,file_SIZEOF
+		jal	ComDumpMemory
 
 		pop	bc-hl
 		j	(hl)

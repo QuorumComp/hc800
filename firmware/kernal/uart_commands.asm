@@ -22,6 +22,34 @@ ComPrintHexWord:
 		j	(hl)
 
 
+; -- Print memory as hexadecimal
+; --
+; -- Inputs:
+; --   bc - pointer to data segment
+; --   de - number of bytes to print
+		SECTION	"ComDumpMemory",CODE
+ComDumpMemory:
+		pusha
+
+		sub	de,1
+		add	d,1
+		add	e,1
+
+.loop		ld	t,(bc)
+		jal	ComPrintHexByte
+		ld	t,' '
+		jal	ComPrintChar
+		add	bc,1
+		dj	e,.loop		
+		dj	d,.loop		
+
+		ld	t,10
+		jal	ComPrintChar
+
+		popa
+		j	(hl)
+
+
 ; -- Print value as hexadecimal
 ; --
 ; -- Inputs:

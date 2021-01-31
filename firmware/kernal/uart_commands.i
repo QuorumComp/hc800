@@ -67,6 +67,7 @@ MDebugHexWord:	MACRO	;register
 	GLOBAL	ComSendLoadFileString
 	GLOBAL	ComReadFile
 	GLOBAL	ComRequestChar
+	GLOBAL	ComDumpMemory
 	GLOBAL	ComPrintHexByte
 	GLOBAL	ComPrintHexWord
 	GLOBAL	ComPrintChar
