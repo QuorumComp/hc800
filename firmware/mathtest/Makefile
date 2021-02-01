@@ -1,8 +1,9 @@
-COMMON = ../kernal/
-STD = ../stdlib/
-SRCS = monitor.asm
-ASMFLAGS = -g -el -z0 -DBOOT -i$(COMMON) -i$(STD)
-TARGET = monitor.exe
+STD = ../stdlib/std.lib
+LOWLEVEL = ../lowlevel/lowlevel.lib
+LIBS = $(STD) $(LOWLEVEL)
+SRCS = mathtest.asm
+ASMFLAGS = -g -el -z0 -DBOOT -i../
+TARGET = mathtest.com
 
 ASM = motorrc8
 LIB = xlib
@@ -23,8 +24,8 @@ endif
 
 ASSEMBLE = $(ASM) $(DEPFLAGS) $(ASMFLAGS)
 
-$(TARGET) : $(notdir $(SRCS:asm=obj))
-	$(LINK) -m$(@:exe=sym) -o$@ -thc8x $+
+$(TARGET) : $(notdir $(SRCS:asm=obj)) $(LIBS)
+	$(LINK) -sEntry -m$(@:com=sym) -o$@ -thc8c $+
 
 %.obj : %.asm
 %.obj : %.asm $(DEPDIR)/%.d

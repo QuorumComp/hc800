@@ -149,16 +149,12 @@ readFileWithSuffix:
 		jal	FileOpen
 		j/ne	.error
 
-		MDebugPrint <"readFileWithSuffix.1\n">
-
 		jal	readFile
 		j/ne	.error
 
 		jal	FileClose
 
-.error		MDebugPrint <"readFileWithSuffix.2\n">
-
-		pop	bc-hl
+.error		pop	bc-hl
 		j	(hl)
 
 
@@ -176,6 +172,7 @@ readFile:	push	bc-hl
 
 		add	bc,file_Error
 		ld	t,(bc)
+		sub	bc,file_Error
 		cmp	t,ERROR_SUCCESS
 		j/ne	.exit
 
@@ -187,7 +184,7 @@ readFile:	push	bc-hl
 		j	.next_bank
 
 .success	ld	t,ERROR_SUCCESS
-		cmp	t,0
+		ld	f,FLAGS_EQ
 .exit		pop	bc-hl
 		j	(hl)
 
@@ -247,5 +244,5 @@ copyCommandLine:
 		j	(hl)
 
 
-		SECTION	"CommandlineVars",BSS
+		SECTION	"CommandlineVars",BSS[$1234]
 exeFileHandle:	DS	file_SIZEOF

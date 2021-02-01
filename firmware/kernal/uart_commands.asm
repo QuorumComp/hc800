@@ -31,6 +31,11 @@ ComPrintHexWord:
 ComDumpMemory:
 		pusha
 
+		ld	ft,bc
+		jal	ComPrintHexWord
+		ld	t,':'
+		jal	ComPrintChar
+
 		sub	de,1
 		add	d,1
 		add	e,1

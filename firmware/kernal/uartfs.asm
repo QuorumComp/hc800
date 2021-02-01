@@ -32,8 +32,6 @@ uartName:	DC_STR	"uart"
 uartOpen:	
 		push	bc-hl
 
-		MDebugPrint <"uartOpen\n">
-
 		push	bc
 		ld	bc,uartFile1
 		jal	StringCopy
@@ -99,8 +97,6 @@ uartClose:
 uartRead:
 		push	bc-hl
 
-		MDebugPrint <"uartRead.1\n">
-
 		; send command
 
 		push	ft
@@ -128,18 +124,22 @@ uartRead:
 		jal	ComSyncResponse
 		j/ne	.error
 
+		push	bc
 		jal	UartWordInSync
+		ld	ft,bc
+		pop	bc
 
 		push	bc
 
 		exg	ft,de
-		exg	bc,ft
+		exg	ft,bc
 
 		; ft = file struct
 		; bc = memory
 		; de = length
 
 		jal	UartMemoryInSync
+
 		pop	bc
 		j/ne	.error
 
@@ -154,9 +154,7 @@ uartRead:
 		ld	(bc),t
 		ld	ft,0
 
-.exit		MDebugPrint <"uartRead.2\n">
-
-		pop	bc-hl
+.exit		pop	bc-hl
 		j	(hl)
 
 
@@ -185,7 +183,7 @@ sendStatFileCommand:
 		ld	t,ERROR_SUCCESS
 		ld	f,FLAGS_EQ
 .exit
-		popa
+		pop	hl
 		j	(hl)
 
 

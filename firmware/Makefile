@@ -4,7 +4,7 @@ TARGETS = \
 	boot/boot.bin \
 	kernal/kernal.bin \
 	ascii/ascii.exe \
-	monitor/monitor.exe
+	mathtest/mathtest.com
 
 LIBS = stdlib/std.lib lowlevel/lowlevel.lib
 

@@ -1,4 +1,5 @@
-STD = ../stdlib/
+STD = ../stdlib/std.lib
+LIBS = $(STD)
 SRCS = ascii.asm
 ASMFLAGS = -g -el -z0 -i../
 TARGET = ascii.exe
@@ -30,8 +31,8 @@ ASSEMBLE = $(ASM) $(DEPFLAGS) $(ASMFLAGS)
 $(DEPDIR)/%.d: ;
 .PRECIOUS: $(DEPDIR)/%.d
 
-$(TARGET) : $(notdir $(SRCS:asm=obj))
-	$(LINK) -sEntry -m$(@:exe=sym) -o$@ -thc8x $+ $(STD)std.lib
+$(TARGET) : $(notdir $(SRCS:asm=obj)) $(LIBS)
+	$(LINK) -sEntry -m$(@:exe=sym) -o$@ -thc8x $+
 
 clean :
 	$(REMOVEALL)
