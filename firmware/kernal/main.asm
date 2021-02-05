@@ -12,6 +12,7 @@
 		INCLUDE	"filesystems.i"
 		INCLUDE	"keyboard.i"
 		INCLUDE	"main.i"
+		INCLUDE	"mmu.i"
 		INCLUDE "text.i"
 		INCLUDE "video.i"
 
@@ -42,6 +43,7 @@ Main:
 		MPrintString " KiB\n"
 
 		jal	EnableVBlank
+
 		ei
 
 .read_line
@@ -102,7 +104,7 @@ initializeMemory:
 
 		ld	b,IO_MMU_BASE
 		ld	c,IO_MMU_UPDATE_INDEX
-		ld	t,$03
+		ld	t,MMU_CFG_KERNAL
 		ld	c,IO_MMU_ACTIVE_INDEX
 		lio	(bc),t
 

@@ -128,6 +128,33 @@ FileClose:
 
 
 ; ---------------------------------------------------------------------------
+; -- Skip ahead in file
+; --
+; -- Inputs:
+; --   ft - bytes to skip
+; --   bc - pointer to file struct
+; --
+; -- Output:
+; --    t - Error code
+; --    f - "eq" if success
+; --
+		SECTION	"FileRead",CODE
+FileSkip:
+		push	bc-hl
+
+		jal	MathLoadOperand16U
+
+		add	bc,file_Offset-file_Error
+		jal	MathAdd_32_Operand
+
+		ld	t,ERROR_SUCCESS
+		ld	f,FLAGS_EQ
+
+		pop	bc-hl
+		j	(hl)
+
+
+; ---------------------------------------------------------------------------
 ; -- Read from file offset
 ; --
 ; -- Inputs:

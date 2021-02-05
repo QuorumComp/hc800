@@ -158,10 +158,18 @@ readHunk:
 		j/eq	.exit
 
 		cmp	t,HUNK_DATA
-		j/ne	.not_mmu
+		j/ne	.not_data
 		jal	readHunkData
-.exit
-		pop	bc-hl
+		j	.exit
+.not_data
+		; unknown hunk
+		ld	ft,de
+		jal	FileSkip
+
+		ld	t,ERROR_SUCCESS
+		ld	f,FLAGS_Z
+
+.exit		pop	bc-hl
 		j	(hl)
 
 ; -- Inputs:

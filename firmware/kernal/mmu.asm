@@ -24,12 +24,7 @@ MmuInitialize:
 		jal	internalMmuSetConfig
 
 		ld	b,IO_MMU_BASE
-
-		ld	c,IO_MMU_ACTIVE_INDEX
-		ld	t,MMU_CFG_KERNAL
-		lio	(bc),t	; active index
-
-		add	bc,IO_MMU_CHARGEN-IO_MMU_ACTIVE_INDEX
+		ld	c,IO_MMU_CHARGEN
 		ld	t,$08
 		lio	(bc),t	; chargen
 
@@ -100,7 +95,6 @@ internalMmuSetConfig:
 		ld	c,IO_MMU_UPDATE_INDEX
 		lio	(bc),t
 
-		ld	f,MMU_CONFIG_SIZE
 		ld	c,IO_MMU_CONFIGURATION
 .loop		lco	t,(de)
 		add	de,1

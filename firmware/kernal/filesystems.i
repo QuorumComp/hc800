@@ -7,6 +7,7 @@ FILESYSTEMS_I_INCLUDED_ = 1
 		GLOBAL	FileOpen
 		GLOBAL	FileRead
 		GLOBAL	FileReadByte
+		GLOBAL	FileSkip
 		GLOBAL	FileClose
 
 		RSRESET
