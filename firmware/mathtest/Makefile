@@ -3,7 +3,7 @@ LOWLEVEL = ../lowlevel/lowlevel.lib
 LIBS = $(STD) $(LOWLEVEL)
 SRCS = mathtest.asm
 ASMFLAGS = -g -el -z0 -DBOOT -i../
-TARGET = mathtest.com
+TARGET = mathtest
 
 ASM = motorrc8
 LIB = xlib
@@ -25,7 +25,7 @@ endif
 ASSEMBLE = $(ASM) $(DEPFLAGS) $(ASMFLAGS)
 
 $(TARGET) : $(notdir $(SRCS:asm=obj)) $(LIBS)
-	$(LINK) -sEntry -m$(@:com=sym) -o$@ -thc8c $+
+	$(LINK) -sEntry -m$@.sym -o$@ -thc8s $+
 
 %.obj : %.asm
 %.obj : %.asm $(DEPDIR)/%.d

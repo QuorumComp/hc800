@@ -3,95 +3,104 @@
 		INCLUDE	"mmu.i"
 
 
+; ---------------------------------------------------------------------------
+; -- Set default kernal MMU configurations
+; --
 		SECTION "MMU",CODE
 MmuInitialize:
-		push	hl
+		pusha
 
-		jal	MmuInitializeClientExe
+		ld	de,.mmuDataKernal
+		ld	f,.mmuDataKernalEnd-.mmuDataKernal
+		ld	t,MMU_CFG_KERNAL
+		jal	internalMmuSetConfig
 
-		ld	de,.mmuData03
-		ld	f,.mmuDataEnd03-.mmuData03
+		ld	t,MMU_CFG_KERNAL
+		jal	MmuActivateConfig
+
+		ld	de,.mmuDataLoad
+		ld	f,.mmuDataLoadEnd-.mmuDataLoad
+		ld	t,MMU_CFG_LOAD
+		jal	internalMmuSetConfig
 
 		ld	b,IO_MMU_BASE
-		ld	c,0
-.loop		lco	t,(de)
-		add	de,1
-		lio	(bc),t
-		add	c,1
-		dj	f,.loop
 
-		pop	hl
+		ld	c,IO_MMU_ACTIVE_INDEX
+		ld	t,MMU_CFG_KERNAL
+		lio	(bc),t	; active index
+
+		add	bc,IO_MMU_CHARGEN-IO_MMU_ACTIVE_INDEX
+		ld	t,$08
+		lio	(bc),t	; chargen
+
+		popa
 		j	(hl)
 
-.mmuData03:	DB	$03			; update index
-		DB	MMU_CFG_HARVARD		; config bits
+.mmuDataKernal:	DB	MMU_CFG_HARVARD		; config bits
 		DB	$01,$81,$82,$83		; code banks
 		DB	$80,$81,BANK_PALETTE,BANK_ATTRIBUTE	; data banks
 		DB	$01,$80			; system code/data
-		DB	$03			; active index
-		DB	$08			; chargen
-.mmuDataEnd03:
+.mmuDataKernalEnd:
+
+.mmuDataLoad:	DB	MMU_CFG_HARVARD|MMU_CFG_DATA_48K ; config bits
+		DB	$01,$81,$82,$83		; code banks
+		DB	$80,$00,$00,$00		; data banks
+		DB	$01,$80			; system code/data
+.mmuDataLoadEnd:
 
 
-MmuInitializeClientCom:
+; ---------------------------------------------------------------------------
+; -- Activate MMU configuration
+; --
+		SECTION "MMU",CODE
+MmuActivateConfig:
 		pusha
 
-		ld	t,2
-.next_config	push	ft
-		ld	de,.mmuData02
-		ld	f,.mmuDataEnd02-.mmuData02
-		jal	copyMmuConfig
-		pop	ft
-		dj	t,.next_config
+		ld	b,IO_MMU_BASE
+		ld	c,IO_MMU_ACTIVE_INDEX
+		lio	(bc),t
 
 		popa
 		j	(hl)
 
-.mmuData02	DB	MMU_CFG_USER_HARVARD	; config bits
-		DB	BANK_CLIENT_CODE+0	; code banks
-		DB	BANK_CLIENT_CODE+1
-		DB	BANK_CLIENT_CODE+2
-		DB	BANK_CLIENT_CODE+3
-		DB	BANK_CLIENT_CODE+0	; data banks
-		DB	BANK_CLIENT_CODE+1
-		DB	BANK_CLIENT_CODE+2
-		DB	BANK_CLIENT_CODE+3
-		DB	$01,$80			; system code/data
-.mmuDataEnd02
 
-
-MmuInitializeClientExe:
+; ---------------------------------------------------------------------------
+; -- Load MMU configuration
+; --
+; -- Inputs:
+; --    t - MMU configuration index
+; --   de - configuration, 9 bytes of data (config, 4x code, 4x data)
+; --
+MmuSetConfig:
 		pusha
 
-		ld	t,2
-.next_config	push	ft
-		ld	de,.mmuData02
-		ld	f,.mmuDataEnd02-.mmuData02
-		jal	copyMmuConfig
-		pop	ft
-		dj	t,.next_config
+		ld	f,MMU_CONFIG_SIZE
+		jal	internalMmuSetConfig
 
 		popa
 		j	(hl)
 
-.mmuData02	DB	MMU_CFG_HARVARD		; config bits
-		DB	BANK_CLIENT_CODE+0	; code banks
-		DB	BANK_CLIENT_CODE+1
-		DB	BANK_CLIENT_CODE+2
-		DB	BANK_CLIENT_CODE+3
-		DB	BANK_CLIENT_DATA+0	; data banks
-		DB	BANK_CLIENT_DATA+1
-		DB	BANK_CLIENT_DATA+2
-		DB	BANK_CLIENT_DATA+3
-		DB	$01,$80			; system code/data
-.mmuDataEnd02
 
+; ---------------------------------------------------------------------------
+; -- PRIVATE FUNCTIONS
+; ---------------------------------------------------------------------------
 
-copyMmuConfig:
+; ---------------------------------------------------------------------------
+; -- Load MMU configuration
+; --
+; -- Inputs:
+; --    f - length of config data
+; --    t - MMU configuration index
+; --   de - configuration
+; --
+internalMmuSetConfig:
+		pusha
+
 		ld	b,IO_MMU_BASE
 		ld	c,IO_MMU_UPDATE_INDEX
 		lio	(bc),t
 
+		ld	f,MMU_CONFIG_SIZE
 		ld	c,IO_MMU_CONFIGURATION
 .loop		lco	t,(de)
 		add	de,1
@@ -99,4 +108,7 @@ copyMmuConfig:
 		add	c,1
 		dj	f,.loop
 
+		popa
 		j	(hl)
+
+

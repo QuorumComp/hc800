@@ -9,6 +9,10 @@
 		INCLUDE	"uart_commands.i"
 		INCLUDE	"video.i"
 
+HUNK_MMU	EQU	0
+HUNK_END	EQU	1
+HUNK_DATA	EQU	2
+
 
 		SECTION "ExecuteCommandLine",CODE
 SysExecuteCommandLine::
@@ -16,43 +20,21 @@ SysExecuteCommandLine::
 
 		push	bc-de
 
-		push	bc
-		ld	b,IO_MMU_BASE
-		ld	c,IO_MMU_ACTIVE_INDEX
-		ld	t,MMU_CFG_CLIENT
-		lio	(bc),t
-		ld	c,IO_MMU_UPDATE_INDEX
-		lio	(bc),t
-
-		ld	c,IO_MMU_DATA_BANK1
-		ld	t,BANK_CLIENT_DATA
-		lio	(bc),t
-		pop	bc
-
 		ld	ft,bc
 		ld	de,ft
-		jal	copyCommandLine
+		jal	tokenizeCommandLine
 
-		; try .com suffix
+		ld	t,MMU_CFG_LOAD|MMU_INDEX_PUSH
+		jal	MmuActivateConfig
 
-		ld	de,.comSuffix
-		jal	readFileWithSuffix
-		j/ne	.not_com
+		jal	readExecutable
 
-		jal	MmuInitializeClientCom
-		j	.got_file
+		push	ft
+		ld	t,MMU_INDEX_POP
+		jal	MmuActivateConfig
 
-		; try .exe suffix
-.not_com
-		ld	de,.exeSuffix
-		jal	readFileWithSuffix
+		pop	ft-de
 		j/ne	.error
-
-		;MDebugPrint <"- MmuInitializeClient\n">
-		jal	MmuInitializeClientExe
-
-.got_file
-		pop	bc-de
 
 		; top of hl stack is return address
 
@@ -60,24 +42,7 @@ SysExecuteCommandLine::
 
 		ld	hl,0
 		push	hl	;push HL for reti pop
-		reti
-
-.error		push	ft
-
-		MSetDataBank 1,$81
-
-		ld	b,IO_MMU_BASE
-		ld	c,IO_MMU_ACTIVE_INDEX
-		ld	t,MMU_CFG_KERNAL
-		lio	(bc),t
-		ld	c,IO_MMU_UPDATE_INDEX
-		lio	(bc),t
-
-		popa
-		reti
-
-.comSuffix	DC_STR	".com"
-.exeSuffix	DC_STR	".exe"
+.error		reti
 
 
 		SECTION "Exit",CODE
@@ -116,7 +81,7 @@ SysExit::
 		ld	t,MMU_CFG_KERNAL
 		lio	(bc),t
 
-		jal	MmuInitializeClientExe
+		jal	MmuInitialize
 		jal	InitializePalette
 
 		ei
@@ -131,21 +96,12 @@ SysExit::
 
 
 ; -- Inputs:
-; --   de - suffix string
-		SECTION "ReadFile",CODE
-readFileWithSuffix:
+; --   de - commandline
+		SECTION "readExecutable",CODE
+readExecutable:
 		push	bc-hl
 
-		push	de
-		ld	bc,$4100
-		ld	de,$4000
-		jal	StringCopy
-		pop	de
-
-		jal	StringAppendDataString
-
 		ld	bc,exeFileHandle
-		ld	de,$4100
 		jal	FileOpen
 		j/ne	.error
 
@@ -158,36 +114,127 @@ readFileWithSuffix:
 		j	(hl)
 
 
+; -- Inputs:
+; --   bc - file handle
 		SECTION "ReadFile",CODE
 readFile:	push	bc-hl
 
-		MSetDataBank 1,BANK_CLIENT_CODE
+		jal	readHeader
+		j/ne	.error
 
-.next_bank	ld	ft,$4000
-		ld	de,ft
-		ld	bc,exeFileHandle
-		jal	FileRead
+.next_hunk	jal	readHunk
+		j/eq	.next_hunk
 
-		ld	hl,ft
+.error		pop	bc-hl
+		j	(hl)
 
-		add	bc,file_Error
-		ld	t,(bc)
-		sub	bc,file_Error
-		cmp	t,ERROR_SUCCESS
+
+; -- Inputs:
+; --   bc - file handle
+		SECTION "ReadHunk",CODE
+readHunk:
+		push	bc-hl
+
+		jal	FileReadByte	; hunk type
+		j/ne	.exit
+		ld	e,t		; e = hunk type
+
+		jal	FileReadByte
+		j/ne	.exit
+		ld	d,t
+		jal	FileReadByte
+		j/ne	.exit
+		exg	f,t
+		ld	t,d		; ft = length
+
+		exg	ft,de
+
+		cmp	t,HUNK_MMU
+		j/ne	.not_mmu
+		jal	readHunkMmu
+		j	.exit
+.not_mmu
+		cmp	t,HUNK_END
+		j/eq	.exit
+
+		cmp	t,HUNK_DATA
+		j/ne	.not_mmu
+		jal	readHunkData
+.exit
+		pop	bc-hl
+		j	(hl)
+
+; -- Inputs:
+; --   bc - file handle
+; --   de - hunk length
+		SECTION "ReadHunkData",CODE
+readHunkData:
+		push	bc-hl
+
+		jal	FileReadByte
 		j/ne	.exit
 
-		ld	ft,hl
-		cmp	ft,de
-		j/ltu	.success
+		; set data bank
 
-		MIncDataBank 1
-		j	.next_bank
+		push	ft/bc
 
-.success	ld	t,ERROR_SUCCESS
-		ld	f,FLAGS_EQ
+		ld	b,IO_MMU_BASE
+		ld	c,IO_MMU_UPDATE_INDEX
+		ld	t,MMU_CFG_LOAD
+		lio	(bc),t
+		pop	ft
+		add	c,IO_MMU_DATA_BANK3-IO_MMU_UPDATE_INDEX
+		lio	(bc),t
+		pop	bc
+
+		; load data
+
+		sub	de,1
+		ld	ft,de	; bytes to read
+		ld	de,$4000
+		jal	FileRead
+
 .exit		pop	bc-hl
 		j	(hl)
 
+
+; -- Read MMU hunk
+; -- Inputs:
+; --   bc - file handle
+readHunkMmu:
+		push	bc-hl
+
+		ld	ft,MMU_CONFIG_SIZE
+		ld	de,mmuConfig
+		jal	FileRead
+		j/ne	.error
+
+		ld	t,MMU_CFG_CLIENT
+		jal	MmuSetConfig
+
+.error		pop	bc-hl
+		j	(hl)
+
+
+; -- Read header and check if it is 'UC'
+; -- Inputs:
+; --   bc - file handle
+readHeader:
+		push	de/hl
+
+		jal	FileReadByte
+		j/ne	.exit
+		ld	d,t
+		jal	FileReadByte
+		j/ne	.exit
+		ld	e,t
+
+		sub	de,'UC'
+		tst	de
+		ld	t,ERROR_FORMAT
+
+.exit		pop	de/hl
+		j	(hl)
 
 ; --
 ; -- Copy and tokenize command line to first client data bank
@@ -195,10 +242,11 @@ readFile:	push	bc-hl
 ; -- Inputs:
 ; --   de - command line (Pascal string)
 ; --
-copyCommandLine:
-		push	hl
+tokenizeCommandLine:
+		pusha
 
-		ld	bc,$4000	; bc = destination
+		ld	ft,de
+		ld	bc,ft
 
 		ld	t,(de)
 		add	de,1
@@ -240,9 +288,10 @@ copyCommandLine:
 .arguments_done	ld	t,0
 		ld	(bc),t
 
-		pop	hl
+		popa
 		j	(hl)
 
 
-		SECTION	"CommandlineVars",BSS[$1234]
+		SECTION	"CommandlineVars",BSS
 exeFileHandle:	DS	file_SIZEOF
+mmuConfig:	DS	MMU_CONFIG_SIZE

@@ -2,12 +2,15 @@
 
 MMU_I_INCLUDED_ = 1
 
-MMU_CFG_KERNAL	EQU	$03
+MMU_CFG_KERNAL	EQU	$00
+MMU_CFG_LOAD	EQU	$01
 MMU_CFG_CLIENT	EQU	$02
 
+MMU_CONFIG_SIZE	EQU	9
 
 	GLOBAL	MmuInitialize
-	GLOBAL	MmuInitializeClientCom
-	GLOBAL	MmuInitializeClientExe
+	GLOBAL	MmuActivateConfig
+	GLOBAL	MmuSetConfig
+
 
 	ENDC

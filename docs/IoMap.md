@@ -55,6 +55,17 @@ The system banks are in effect when handling interrupts and the SYS instruction.
 |------|---------|
 | 0    | Enable Harvard architecture for user mode. When 0, CPU data access uses CPU banks. When 1, CPU data access uses Data banks |
 | 1    | Enable Harvard architecture for system mode. When 0, CPU data access uses CPU banks. When 1, CPU data access uses Data banks |
+| 3:2  | User code upper size |
+| 5:4  | User data upper size |
+
+"Upper size" configuration determines the size of the upper bank. When size 16 KiB is selected, there are four independent banks, corresponding to the banks specified in the bank registers. When the size is 32 KiB, there are three addressable banks - two 16 KiB banks and one 32 KiB. The first two correspond to bank registers 0 and 1, the last bank is selected by bank register 3.
+
+| Value | Meaning | Bank select registers |
+|-------|---------|-----------------------|
+| 0     | 4 x 16 KiB banks | 0, 1, 2, 3 |
+| 1     | 2 x 16 KiB banks, 1 x 32 KiB  | 0, 1, 3 |
+| 2     | 1 x 16 KiB bank, 1 x 48 KiB  | 0, 3 |
+| 3     | 1 x 64 KiB  | 3 |
 
 
 ## Multiplier

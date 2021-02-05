@@ -3,8 +3,8 @@ IMAGEDIR = _image_
 TARGETS = \
 	boot/boot.bin \
 	kernal/kernal.bin \
-	ascii/ascii.exe \
-	mathtest/mathtest.com
+	ascii/ascii \
+	mathtest/mathtest
 
 LIBS = stdlib/std.lib lowlevel/lowlevel.lib
 

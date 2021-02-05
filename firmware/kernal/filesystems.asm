@@ -163,11 +163,40 @@ FileRead:
 
 		jal	MathLoadOperand16U
 
-		add	bc,file_Offset
+		add	bc,file_Error
+		ld	t,(bc)
+		cmp	t,ERROR_SUCCESS
+		j/ne	.exit
+
+		add	bc,file_Offset-file_Error
 		jal	MathAdd_32_Operand
 
 		ld	t,ERROR_SUCCESS
 		ld	f,FLAGS_EQ
+
+.exit		pop	bc-hl
+		j	(hl)
+
+
+; ---------------------------------------------------------------------------
+; -- Read byte from file offset
+; --
+; -- Inputs:
+; --   bc - pointer to file struct
+; --
+; -- Output:
+; --    t - byte
+; --    f - "eq" if success
+; --
+		SECTION	"FileReadByte",CODE
+FileReadByte:
+		push	bc-hl
+
+		ld	ft,1
+		ld	de,readBuffer
+		jal	FileRead
+
+		ld	t,(de)
 
 		pop	bc-hl
 		j	(hl)
@@ -177,6 +206,7 @@ FileRead:
 filesystems::	DW	UartFilesystem
 
 		SECTION	"FilesystemVars",BSS
+readBuffer:	DS	2
 rootFs:		DS	2
 rootPath:	DS_STR
 filePath:	DS_STR
