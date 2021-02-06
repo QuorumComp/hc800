@@ -68,8 +68,8 @@ class MMU extends Component {
 	val configurationStack = Reg(UInt(8 bits))
 
 	val configurationVec = Vec(ConfigurationBundle(), 4)
-	val updateIndex = Reg(UInt(2 bits)) init(3)
-	val activeIndex = Reg(UInt(2 bits)) init(3)
+	val updateIndex = Reg(UInt(2 bits)) init(0)
+	val activeIndex = Reg(UInt(2 bits)) init(0)
 
 	val chipsetCharGen = Reg(Bits(8 bits)) init(0)
 

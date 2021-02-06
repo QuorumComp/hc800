@@ -144,7 +144,7 @@ FileSkip:
 
 		jal	MathLoadOperand16U
 
-		add	bc,file_Offset-file_Error
+		add	bc,file_Offset
 		jal	MathAdd_32_Operand
 
 		ld	t,ERROR_SUCCESS
@@ -186,6 +186,7 @@ FileRead:
 		ld	hl,ft
 
 		pop	ft-bc
+
 		jal	(hl)
 
 		jal	MathLoadOperand16U

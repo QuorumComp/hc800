@@ -69,15 +69,15 @@ Main:
 		ld	bc,commandLine
 		ld	t,(bc)
 		cmp	t,0
-		j/z	.ok
+		j/eq	.read_line
 
 		sys	KExecute
-		j/eq	.ok
-
+		j/eq	.no_error
 		jal	printError
-.ok
-
-		j	.read_line
+.no_error
+		;j	.read_line
+		ld	hl,.read_line
+		j	(hl)
 
 printError:
 		push	hl
@@ -105,6 +105,7 @@ initializeMemory:
 		ld	b,IO_MMU_BASE
 		ld	c,IO_MMU_UPDATE_INDEX
 		ld	t,MMU_CFG_KERNAL
+		lio	(bc),t
 		ld	c,IO_MMU_ACTIVE_INDEX
 		lio	(bc),t
 

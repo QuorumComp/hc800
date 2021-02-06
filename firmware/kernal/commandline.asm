@@ -3,6 +3,7 @@
 		INCLUDE	"lowlevel/uart.i"
 
 		INCLUDE	"stdlib/string.i"
+		INCLUDE	"stdlib/stream.i"
 
 		INCLUDE	"filesystems.i"
 		INCLUDE	"mmu.i"
@@ -16,8 +17,6 @@ HUNK_DATA	EQU	2
 
 		SECTION "ExecuteCommandLine",CODE
 SysExecuteCommandLine::
-		;MDebugPrint <"KExecuteCommandLine\n">
-
 		push	bc-de
 
 		ld	ft,bc
@@ -32,17 +31,20 @@ SysExecuteCommandLine::
 		push	ft
 		ld	t,MMU_INDEX_POP
 		jal	MmuActivateConfig
-
-		pop	ft-de
+		pop	ft
 		j/ne	.error
 
 		; top of hl stack is return address
 
-		;MDebugPrint <"- jump\n">
+		ld	t,MMU_CFG_CLIENT
+		jal	MmuActivateConfig
 
 		ld	hl,0
 		push	hl	;push HL for reti pop
-.error		reti
+		reti
+
+.error		pop	hl
+		reti
 
 
 		SECTION "Exit",CODE
@@ -76,15 +78,15 @@ SysExit::
 		ld	c,IO_VID_PLANE0_VSCROLLH
 		lio	(bc),t
 
-		ld	b,IO_MMU_BASE
-		ld	c,IO_MMU_ACTIVE_INDEX
 		ld	t,MMU_CFG_KERNAL
-		lio	(bc),t
-
+		jal	MmuActivateConfig
 		jal	MmuInitialize
+
 		jal	InitializePalette
 
 		ei
+
+		pop	bc-de
 
 		pop	hl	; discard KVector saved hl
 
@@ -124,6 +126,7 @@ readFile:	push	bc-hl
 
 .next_hunk	jal	readHunk
 		j/eq	.next_hunk
+		cmp	t,ERROR_SUCCESS
 
 .error		pop	bc-hl
 		j	(hl)
@@ -137,6 +140,7 @@ readHunk:
 
 		jal	FileReadByte	; hunk type
 		j/ne	.exit
+
 		ld	e,t		; e = hunk type
 
 		jal	FileReadByte
@@ -155,7 +159,11 @@ readHunk:
 		j	.exit
 .not_mmu
 		cmp	t,HUNK_END
-		j/eq	.exit
+		j/ne	.not_end
+		ld	t,ERROR_SUCCESS
+		ld	f,FLAGS_NZ
+		j	.exit
+.not_end
 
 		cmp	t,HUNK_DATA
 		j/ne	.not_data
@@ -185,7 +193,6 @@ readHunkData:
 		; set data bank
 
 		push	ft/bc
-
 		ld	b,IO_MMU_BASE
 		ld	c,IO_MMU_UPDATE_INDEX
 		ld	t,MMU_CFG_LOAD
@@ -194,6 +201,8 @@ readHunkData:
 		add	c,IO_MMU_DATA_BANK3-IO_MMU_UPDATE_INDEX
 		lio	(bc),t
 		pop	bc
+
+		;MDebugMemory exeFileHandle,file_SIZEOF
 
 		; load data
 
@@ -217,8 +226,12 @@ readHunkMmu:
 		jal	FileRead
 		j/ne	.error
 
+		ld	t,(de)
+		or	t,MMU_CFG_SYS_HARVARD
+		ld	(de),t
+
 		ld	t,MMU_CFG_CLIENT
-		jal	MmuSetConfig
+		jal	MmuSetConfigData
 
 .error		pop	bc-hl
 		j	(hl)

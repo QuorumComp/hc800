@@ -93,7 +93,9 @@ mist/simulation/modelsim/
 spinal/null/
 spinal/simWorkspace/
 spinal/tmp/
-firmware/scroll/scroll.exe
-firmware/monitor/monitor.exe
 firmware/boot/boot.bin
-firmware/ascii/ascii.exe
+firmware/ascii/ascii
+firmware/mathtest/mathtest
+mist/hc800_mist.v*
+specnext/hc800_zxnext.v*
+mist/PLLJ_PLLSPE_INFO.txt

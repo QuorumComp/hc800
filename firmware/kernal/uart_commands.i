@@ -63,6 +63,51 @@ MDebugHexWord:	MACRO	;register
 		popa
 		ENDM
 
+MDebugRegisters: MACRO
+		pusha
+		pusha
+
+		pop	ft
+		jal	ComPrintHexWord
+		ld	t,' '
+		jal	ComPrintChar
+
+		pop	bc
+		ld	ft,bc
+		jal	ComPrintHexWord
+		ld	t,' '
+		jal	ComPrintChar
+
+		pop	de
+		ld	ft,de
+		jal	ComPrintHexWord
+		ld	t,' '
+		jal	ComPrintChar
+
+		pop	hl
+		ld	ft,hl
+		jal	ComPrintHexWord
+		ld	t,10
+		jal	ComPrintChar
+
+		popa
+		ENDM
+
+MDebugMemory:	MACRO	;memory,size
+		pusha
+	IF	"\1".lower.compareto("de")==0
+		ld	ft,\1
+		ld	bc,ft
+	ELSE
+		IF	"\1".lower.compareto("bc")~=0
+			ld	bc,\1
+		ENDC
+	ENDC
+		ld	de,\2
+		jal	ComDumpMemory
+		popa
+		ENDM
+
 	GLOBAL	ComIdentify
 	GLOBAL	ComLoadFile
 	GLOBAL	ComSendLoadFileString

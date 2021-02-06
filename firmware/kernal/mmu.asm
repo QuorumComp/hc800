@@ -6,22 +6,27 @@
 ; ---------------------------------------------------------------------------
 ; -- Set default kernal MMU configurations
 ; --
-		SECTION "MMU",CODE
+		SECTION "MmuInitialize",CODE
 MmuInitialize:
 		pusha
-
-		ld	de,.mmuDataKernal
-		ld	f,.mmuDataKernalEnd-.mmuDataKernal
-		ld	t,MMU_CFG_KERNAL
-		jal	internalMmuSetConfig
-
-		ld	t,MMU_CFG_KERNAL
-		jal	MmuActivateConfig
 
 		ld	de,.mmuDataLoad
 		ld	f,.mmuDataLoadEnd-.mmuDataLoad
 		ld	t,MMU_CFG_LOAD
-		jal	internalMmuSetConfig
+		jal	internalMmuSetConfigCode
+
+		ld	de,.mmuDataKernal
+		ld	f,.mmuDataKernalEnd-.mmuDataKernal
+
+		ld	t,MMU_CFG_CLIENT
+		jal	internalMmuSetConfigCode
+		ld	t,MMU_CFG_SPARE
+		jal	internalMmuSetConfigCode
+		ld	t,MMU_CFG_KERNAL
+		jal	internalMmuSetConfigCode
+
+		ld	t,MMU_CFG_KERNAL
+		jal	MmuActivateConfig
 
 		ld	b,IO_MMU_BASE
 		ld	c,IO_MMU_CHARGEN
@@ -47,7 +52,7 @@ MmuInitialize:
 ; ---------------------------------------------------------------------------
 ; -- Activate MMU configuration
 ; --
-		SECTION "MMU",CODE
+		SECTION "MmuActivateConfig",CODE
 MmuActivateConfig:
 		pusha
 
@@ -66,19 +71,12 @@ MmuActivateConfig:
 ; --    t - MMU configuration index
 ; --   de - configuration, 9 bytes of data (config, 4x code, 4x data)
 ; --
-MmuSetConfig:
+		SECTION "MmuSetConfigCode",CODE
+MmuSetConfigCode:
 		pusha
 
 		ld	f,MMU_CONFIG_SIZE
-		jal	internalMmuSetConfig
-
-		popa
-		j	(hl)
-
-
-; ---------------------------------------------------------------------------
-; -- PRIVATE FUNCTIONS
-; ---------------------------------------------------------------------------
+		j	internalMmuSetConfigCode\.enter
 
 ; ---------------------------------------------------------------------------
 ; -- Load MMU configuration
@@ -88,15 +86,55 @@ MmuSetConfig:
 ; --    t - MMU configuration index
 ; --   de - configuration
 ; --
-internalMmuSetConfig:
+internalMmuSetConfigCode:
 		pusha
-
+.enter
 		ld	b,IO_MMU_BASE
 		ld	c,IO_MMU_UPDATE_INDEX
 		lio	(bc),t
 
 		ld	c,IO_MMU_CONFIGURATION
 .loop		lco	t,(de)
+		add	de,1
+		lio	(bc),t
+		add	c,1
+		dj	f,.loop
+
+		popa
+		j	(hl)
+
+
+; ---------------------------------------------------------------------------
+; -- Load MMU configuration
+; --
+; -- Inputs:
+; --    t - MMU configuration index
+; --   de - configuration, 9 bytes of data (config, 4x code, 4x data)
+; --
+		SECTION "MmuSetConfigData",CODE
+MmuSetConfigData:
+		pusha
+
+		ld	f,MMU_CONFIG_SIZE
+		j	internalMmuSetConfigData\.enter
+
+; ---------------------------------------------------------------------------
+; -- Load MMU configuration
+; --
+; -- Inputs:
+; --    f - length of config data
+; --    t - MMU configuration index
+; --   de - configuration
+; --
+internalMmuSetConfigData:
+		pusha
+.enter
+		ld	b,IO_MMU_BASE
+		ld	c,IO_MMU_UPDATE_INDEX
+		lio	(bc),t
+
+		ld	c,IO_MMU_CONFIGURATION
+.loop		ld	t,(de)
 		add	de,1
 		lio	(bc),t
 		add	c,1
