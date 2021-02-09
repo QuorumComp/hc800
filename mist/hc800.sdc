@@ -23,9 +23,13 @@
 
 # Clock constraints
 
-create_clock -name "CLOCK_27[0]" -period 37.000ns [get_ports {CLOCK_27[0]}]
-create_clock -name "CLOCK_27[1]" -period 37.000ns [get_ports {CLOCK_27[1]}]
+create_clock -name "CLOCK_27[0]" -period 37.037ns [get_ports {CLOCK_27[0]}]
+create_clock -name "CLOCK_27[1]" -period 37.037ns [get_ports {CLOCK_27[1]}]
 
+set sys_clk "clk_13_5M"
+
+create_clock -name {SPI_SCK}  -period 41.666 -waveform { 20.8 41.666 } [get_ports {SPI_SCK}]
+set_clock_groups -asynchronous -group [get_clocks {SPI_SCK}] -group [get_clocks $sys_clk]
 
 # Automatically constrain PLL and other generated clocks
 derive_pll_clocks -create_base_clocks

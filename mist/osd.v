@@ -89,7 +89,7 @@ reg [9:0] h_cnt;
 reg hsD, hsD2;
 reg [9:0] hs_low, hs_high;
 wire hs_pol = hs_high < hs_low;
-wire [9:0] h_dsp_width = hs_pol?hs_low:hs_high;
+wire [9:0] h_dsp_width = 880;
 wire [9:0] h_dsp_ctr = { 1'b0, h_dsp_width[9:1] };
 
 always @(posedge pclk) begin

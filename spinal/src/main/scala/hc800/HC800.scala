@@ -91,6 +91,11 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 
 		val ramBus = master(Bus(addressWidth = 21))
 
+		val sd_cs = out Bool
+		val sd_clock = out Bool
+		val sd_di = in Bool
+		val sd_do = out Bool
+
 		val keyboardColumns = boardIsZxNext generate (in  Bits(7 bits))
 		val keyboardRows    = boardIsZxNext generate (out Bits(8 bits))
 
@@ -107,6 +112,7 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 		val keyboard = M"000000110000----"
 		val uart     = M"000001000000----"
 		val graphics = M"00000101--------"
+		val sd       = M"000001100000----"
 		val id       = M"011111111111----"
 		val board    = M"1---------------"
 	}
@@ -193,6 +199,7 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 		val boardEnable    = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.board))
 		val mathEnable     = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.math))
 		val uartEnable     = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.uart))
+		val sdEnable       = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.sd))
 		val intCtrlEnable  = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.intCtrl))
 
 		val dataFromMaster = (cpuArea.cpuBus.dataFromMaster | cpuArea.ioBus.dataFromMaster)
@@ -254,6 +261,7 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 		val kernal = new RAM(size = 16384)
 		val font = new Font()
 		val uart = new UART()
+		val sd = new SD()
 		val nexys3 = new Nexys3()
 
 		val hBlanking = Bool()
@@ -272,6 +280,11 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 
 		uart.io.uart.txd <> io.txd
 		uart.io.uart.rxd <> io.rxd
+
+		sd.io.sd_cs <> io.sd_cs
+		sd.io.sd_clock <> io.sd_clock
+		sd.io.sd_di <> io.sd_di
+		sd.io.sd_do <> io.sd_do
 
 		val memDataIn =
 			machineBus.wireClient(bootROM.io.bus, bootEnable) |
@@ -293,6 +306,7 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 			cpuArea.ioBus.wireClient(keyboard.io.bus, keyboardEnable) |
 			cpuArea.ioBus.wireClient(math.io, mathEnable) |
 			cpuArea.ioBus.wireClient(uart.io.bus, uartEnable) |
+			cpuArea.ioBus.wireClient(sd.io.bus, sdEnable) |
 			cpuArea.ioBus.wireClient(interruptController.io.regBus, intCtrlEnable)
 
 		val delayIoDataIn = Delay(ioDataIn, 1)

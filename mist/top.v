@@ -47,9 +47,8 @@ module top(
 );
 
 localparam CONF_STR = {
-	"SuperChip;CH8;",
-	"O1,Monitor type,4:3,16:9;",
-	"O2,CPU Speed,Fast,Slow;"
+	"HC800;HC8;",
+	"S;HC8;Mount"
 };
 
 wire doublescan_disable;
@@ -111,7 +110,22 @@ wire       kbd_extend;
 wire [7:0] kbd_data;
 wire       no_csync;
 
-user_io#(.STRLEN(14 + 25 + 23)) userIo(
+wire [31:0] sd_lba;
+wire  [1:0] sd_rd;
+wire  [1:0] sd_wr;
+wire sd_ack;
+wire sd_ack_conf;
+wire sd_conf;
+wire sd_sdhc;
+wire [7:0] sd_dout;
+wire       sd_dout_strobe;
+wire [7:0] sd_din;
+wire       sd_din_strobe;
+wire [8:0] sd_buff_addr;
+wire [1:0]  img_mounted;
+wire [31:0] img_size;
+
+user_io#(.STRLEN(10 + 11)) userIo(
 	.clk_sys   (clk_13_5M),
 	
 	.SPI_CLK   (SPI_SCK),
@@ -134,7 +148,63 @@ user_io#(.STRLEN(14 + 25 + 23)) userIo(
 	.key_extended(kbd_extend),
 	
 	.no_csync(no_csync),
-	.scandoubler_disable(doublescan_disable)
+	.scandoubler_disable(doublescan_disable),
+
+	.sd_lba(sd_lba),
+	.sd_rd(sd_rd),
+	.sd_wr(sd_wr),
+	.sd_ack(sd_ack),
+	.sd_ack_conf(sd_ack_conf),
+	.sd_conf(sd_conf),
+	.sd_sdhc(sd_sdhc),
+	.sd_dout(sd_dout),
+	.sd_dout_strobe(sd_dout_strobe),
+	.sd_din(sd_dout_strobe),
+	.sd_din_strobe(sd_din_strobe),
+	.sd_buff_addr(sd_buff_addr),
+
+	.img_mounted(img_mounted),
+	.img_size(img_size)
+);
+
+// SD card
+
+wire sd_cs;
+wire sd_clock;
+wire sd_di;
+wire sd_do;
+wire sd_busy;
+
+sd_card sdCard(
+	.clk_sys(clk_13_5M),
+
+	 // link to user_io for io controller
+	.sd_lba(sd_lba),
+	.sd_rd(sd_rd),
+	.sd_wr(sd_wr),
+	.sd_ack(sd_ack),
+	.sd_ack_conf(sd_ack_conf),
+	.sd_conf(sd_conf),
+	.sd_sdhc(sd_sdhc),
+	
+	.sd_busy(sd_busy),
+	
+    // data coming in from io controller
+	.sd_buff_dout(sd_dout),
+	.sd_buff_wr(sd_dout_strobe),
+
+	// data coming in from io controller
+	.sd_buff_din(sd_din),
+
+	.sd_buff_addr(sd_buff_addr),
+
+	// configuration input
+	.allow_sdhc(1'b1),
+	
+	.sd_cs(sd_cs),
+	.sd_sck(sd_clock),
+	.sd_sdi(sd_di),
+	.sd_sdo(sd_do)
 );
 
 // Reset circuit
@@ -312,7 +382,12 @@ HC800 hc800(
 	.io_ramBus_write(ram_write),
 	.io_ramBus_dataToMaster(ram_data_in_bus_r),
 	.io_ramBus_dataFromMaster(ram_data_out),
-	.io_ramBus_address(ram_address)
+	.io_ramBus_address(ram_address),
+	
+	.io_sd_cs(sd_cs),
+	.io_sd_clock(sd_clock),
+	.io_sd_do(sd_do),
+	.io_sd_di(sd_di)
 );
 
 
