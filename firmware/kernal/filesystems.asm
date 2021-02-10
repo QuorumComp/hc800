@@ -77,18 +77,13 @@ FileOpen:
 		ld	(ft),h
 
 		; get open function
-		push	bc
-		ld	ft,hl
-		ld	bc,ft
-		add	bc,fs_Open+1
-		lco	t,(bc)
+		add	hl,fs_Open+1
+		lco	t,(hl)
 		exg	f,t
-		sub	bc,1
-		lco	t,(bc)
-		ld	hl,ft
-		pop	bc
+		sub	hl,1
+		lco	t,(hl)
 
-		jal	(hl)
+		jal	(ft)
 
 		pop	bc-hl
 		j	(hl)
@@ -116,9 +111,8 @@ FileClose:
 		exg	f,t
 		sub	bc,1
 		lco	t,(bc)
-		ld	hl,ft
 
-		jal	(hl)
+		jal	(ft)
 
 		ld	t,ERROR_SUCCESS
 		ld	f,FLAGS_EQ

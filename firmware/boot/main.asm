@@ -182,14 +182,14 @@ EmptyReceiveBuffer:
 ; --    f - "eq" condition if VBlank happened since last call
 ; --
 VideoIsVBlankEdge:
-		push	bc-hl
+		push	hl
 
-		ld	b,IO_ICTRL_BASE
-		ld	c,IO_ICTRL_REQUEST
-		lio	t,(bc)
+		ld	h,IO_ICTRL_BASE
+		ld	l,IO_ICTRL_REQUEST
+		lio	t,(hl)
 		and	t,IO_INT_VBLANK
-		lio	(bc),t
+		lio	(hl),t
 		cmp	t,IO_INT_VBLANK
 
-		pop	bc-hl
+		pop	hl
 		j	(hl)

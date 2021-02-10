@@ -48,7 +48,7 @@ Entry::		di
 		jal	InitializeMMU
 		jal	InitializePalette
 		jal	TextInitialize
-		jal	ClearIrq
+		jal	clearIrq
 
 		ld	ft,Main
 		j	(ft)
@@ -76,7 +76,7 @@ InitializePalette:
 ; --
 ; -- Stop IRQ and clear requests
 ; --
-ClearIrq:
+clearIrq:
 		ld	b,IO_ICTRL_BASE
 		ld	c,IO_ICTRL_ENABLE
 		ld	t,$7F

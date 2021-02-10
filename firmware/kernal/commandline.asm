@@ -192,15 +192,14 @@ readHunkData:
 
 		; set data bank
 
-		push	ft/bc
-		ld	b,IO_MMU_BASE
-		ld	c,IO_MMU_UPDATE_INDEX
+		push	ft
+		ld	h,IO_MMU_BASE
+		ld	l,IO_MMU_UPDATE_INDEX
 		ld	t,MMU_CFG_LOAD
-		lio	(bc),t
+		lio	(hl),t
 		pop	ft
-		add	c,IO_MMU_DATA_BANK3-IO_MMU_UPDATE_INDEX
-		lio	(bc),t
-		pop	bc
+		add	l,IO_MMU_DATA_BANK3-IO_MMU_UPDATE_INDEX
+		lio	(hl),t
 
 		;MDebugMemory exeFileHandle,file_SIZEOF
 
