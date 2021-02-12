@@ -47,8 +47,9 @@ module top(
 );
 
 localparam CONF_STR = {
-	"HC800;HC8;",
-	"S;HC8;Mount"
+	"HC800;;",
+	"S,VHD,Mount;",
+	"V,1.0"
 };
 
 wire doublescan_disable;
@@ -113,19 +114,19 @@ wire       no_csync;
 wire [31:0] sd_lba;
 wire  [1:0] sd_rd;
 wire  [1:0] sd_wr;
-wire sd_ack;
-wire sd_ack_conf;
-wire sd_conf;
-wire sd_sdhc;
-wire [7:0] sd_dout;
-wire       sd_dout_strobe;
-wire [7:0] sd_din;
-wire       sd_din_strobe;
-wire [8:0] sd_buff_addr;
-wire [1:0]  img_mounted;
+wire        sd_ack;
+wire        sd_ack_conf;
+wire        sd_conf;
+wire        sd_sdhc;
+wire  [7:0] sd_dout;
+wire        sd_dout_strobe;
+wire  [7:0] sd_din;
+wire        sd_din_strobe;
+wire  [8:0] sd_buff_addr;
+wire  [1:0] img_mounted;
 wire [31:0] img_size;
 
-user_io#(.STRLEN(10 + 11)) userIo(
+user_io#(.STRLEN(7 + 12 + 5), .ROM_DIRECT_UPLOAD(0)) userIo(
 	.clk_sys   (clk_13_5M),
 	
 	.SPI_CLK   (SPI_SCK),
@@ -150,6 +151,7 @@ user_io#(.STRLEN(10 + 11)) userIo(
 	.no_csync(no_csync),
 	.scandoubler_disable(doublescan_disable),
 
+	.clk_sd(clk_13_5M),
 	.sd_lba(sd_lba),
 	.sd_rd(sd_rd),
 	.sd_wr(sd_wr),
@@ -159,11 +161,11 @@ user_io#(.STRLEN(10 + 11)) userIo(
 	.sd_sdhc(sd_sdhc),
 	.sd_dout(sd_dout),
 	.sd_dout_strobe(sd_dout_strobe),
-	.sd_din(sd_dout_strobe),
+	.sd_din(sd_din),
 	.sd_din_strobe(sd_din_strobe),
 	.sd_buff_addr(sd_buff_addr),
 
-	.img_mounted(img_mounted),
+	.img_mounted(img_mounted[0]),
 	.img_size(img_size)
 );
 
@@ -180,8 +182,8 @@ sd_card sdCard(
 
 	 // link to user_io for io controller
 	.sd_lba(sd_lba),
-	.sd_rd(sd_rd),
-	.sd_wr(sd_wr),
+	.sd_rd(sd_rd[0]),
+	.sd_wr(sd_wr[0]),
 	.sd_ack(sd_ack),
 	.sd_ack_conf(sd_ack_conf),
 	.sd_conf(sd_conf),
@@ -386,8 +388,8 @@ HC800 hc800(
 	
 	.io_sd_cs(sd_cs),
 	.io_sd_clock(sd_clock),
-	.io_sd_do(sd_do),
-	.io_sd_di(sd_di)
+	.io_sd_di(sd_di),
+	.io_sd_do(sd_do)
 );
 
 

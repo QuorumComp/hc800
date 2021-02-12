@@ -16,6 +16,8 @@ Entry::
 		jal	StreamHexByteOut
 		dj	d,.loop
 
+		MNewLine
+
 		sys	KExit
 
 .op1	DB	$01,$FF,$03,$04

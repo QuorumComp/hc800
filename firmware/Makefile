@@ -4,7 +4,8 @@ TARGETS = \
 	boot/boot.bin \
 	kernal/kernal.bin \
 	ascii/ascii \
-	mathtest/mathtest
+	mathtest/mathtest \
+	sdtest/sdtest
 
 LIBS = stdlib/std.lib lowlevel/lowlevel.lib
 

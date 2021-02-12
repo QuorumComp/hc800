@@ -93,8 +93,8 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 
 		val sd_cs = out Bool
 		val sd_clock = out Bool
-		val sd_di = in Bool
-		val sd_do = out Bool
+		val sd_di = out Bool
+		val sd_do = in Bool
 
 		val keyboardColumns = boardIsZxNext generate (in  Bits(7 bits))
 		val keyboardRows    = boardIsZxNext generate (out Bits(8 bits))
