@@ -27,10 +27,17 @@ class SD extends Component {
 
 	// External interface
 
-	io.sd_cs := !cardSelect
-	io.sd_clock := processing && ClockDomain.current.readClockWire
-
+	val sdClock = RegInit(False)
 	when (processing) {
+		sdClock := !sdClock
+	} otherwise {
+		sdClock := False
+	}
+
+	io.sd_cs := !cardSelect
+	io.sd_clock := sdClock
+
+	when (processing && sdClock) {
 		when (count === 7) {
 			count := 0
 			inDataProcess := False
@@ -40,13 +47,15 @@ class SD extends Component {
 		}
 	}
 
-	when (inDataProcess) {
+	when (inDataProcess && sdClock) {
 		spiDataIn := spiDataIn(6 downto 0) ## io.sd_do;
 	}
 
 	when (outDataProcess) {
 		io.sd_di := spiDataOut(7)
-		spiDataOut := spiDataOut(6 downto 0) ## False;
+		when (sdClock) {
+			spiDataOut := spiDataOut(6 downto 0) ## False;
+		}
 	} otherwise {
 		io.sd_di := False
 	}
@@ -191,8 +200,8 @@ object SD {
 					var result = 0xA5
 					while (!dut.io.sd_cs.toBoolean) {
 						dut.io.sd_do #= ((result >>> 7) & 1) != 0
-						result = ((result & 1) << 7) | (result >> 1)
 						waitUntil(dut.io.sd_clock.toBoolean)
+						result = ((result >> 7) & 1) | ((result & 0x7F) << 1)
 						waitUntil(!dut.io.sd_clock.toBoolean)
 					}
 					sleep(1)

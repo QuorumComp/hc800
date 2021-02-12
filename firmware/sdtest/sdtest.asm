@@ -49,7 +49,7 @@ sdInReply:
 .loop		jal	sdIn
 		ld	b,t
 		and	t,$80
-		cmp	t,$80
+		cmp	t,$00
 		j/eq	.done
 		dj	c,.loop
 
