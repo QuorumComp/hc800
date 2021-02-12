@@ -3,7 +3,22 @@
 		INCLUDE	"stdlib/stream.i"
 		INCLUDE	"stdlib/syscall.i"
 
-		SECTION	"Monitor",CODE
+		; b is assumed to be IO_SDCARD_BASE
+SELECT:		MACRO
+		ld	c,IO_SD_STATUS
+		ld	t,IO_STAT_SELECT
+		lio	(bc),t
+		ENDM
+
+		; b is assumed to be IO_SDCARD_BASE
+DESELECT:	MACRO
+		push	ft
+		ld	t,0
+		lio	(bc),t
+		pop	ft
+		ENDM
+
+		SECTION	"SDTest",CODE
 
 Entry::
 		MPrintString <"CMD0 ">
@@ -17,25 +32,27 @@ Entry::
 sdGoIdleState:
 		push	hl
 
-		jal	sdSelectOn
+		ld	b,IO_SDCARD_BASE
+		SELECT
 
+		ld	c,IO_SD_DATA
 		ld	t,$00|$40	;CMD0
-		jal	sdOut
+		lio	(bc),t
 
 		; argument, stuff bits
+		ld	f,4
 		ld	t,$00
-		jal	sdOut
-		jal	sdOut
-		jal	sdOut
-		jal	sdOut
+.arg		lio	(bc),t
+		nop
+		dj	f,.arg
 
 		; CRC
 		ld	t,$95
-		jal	sdOut
+		lio	(bc),t
 
 		jal	sdInReply
 
-		jal	sdSelectOff
+		DESELECT
 
 		pop	hl
 		j	(hl)
@@ -45,96 +62,19 @@ sdGoIdleState:
 sdInReply:
 		push	bc-hl
 
-		ld	c,100
-.loop		jal	sdIn
-		ld	b,t
+		ld	b,IO_SDCARD_BASE
+		ld	c,IO_SD_DATA
+		ld	f,100
+.loop		lio	t,(bc)
+		ld	d,t
 		and	t,$80
 		cmp	t,$00
 		j/eq	.done
-		dj	c,.loop
+		dj	f,.loop
 
-.done		ld	t,b
+.done		ld	t,d
 
 		pop	bc-hl
 		j	(hl)
 		
 
-sdIn:
-		push	bc-hl
-
-		jal	sdWait
-
-		ld	b,IO_SDCARD_BASE
-
-		ld	c,IO_SD_STATUS
-		lio	t,(bc)
-		or	t,IO_STAT_IN_ACTIVE
-		lio	(bc),t
-
-		jal	sdWait
-
-		ld	c,IO_SD_DATA
-		lio	t,(bc)
-
-		pop	bc-hl
-		j	(hl)
-
-
-sdOut:
-		pusha
-
-		jal	sdWait
-
-		ld	b,IO_SDCARD_BASE
-		ld	c,IO_SD_DATA
-		lio	(bc),t
-
-		jal	sdWait
-
-		popa
-		j	(hl)
-
-
-sdWait:
-		pusha
-
-		ld	b,IO_SDCARD_BASE
-		ld	c,IO_SD_STATUS
-
-.wait		lio	t,(bc)
-		and	t,IO_STAT_IN_ACTIVE|IO_STAT_OUT_ACTIVE
-		cmp	t,0
-		j/ne	.wait
-
-		popa
-		j	(hl)
-
-
-
-
-
-sdSelectOn:
-		pusha
-
-		ld	b,IO_SDCARD_BASE
-		ld	c,IO_SD_STATUS
-
-		lio	t,(bc)
-		or	t,IO_STAT_SELECT
-		lio	(bc),t
-
-		popa
-		j	(hl)
-
-sdSelectOff:
-		pusha
-
-		ld	b,IO_SDCARD_BASE
-		ld	c,IO_SD_STATUS
-
-		lio	t,(bc)
-		ld	t,~IO_STAT_SELECT
-		lio	(bc),t
-
-		popa
-		j	(hl)
