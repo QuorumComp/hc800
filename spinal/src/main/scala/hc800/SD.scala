@@ -18,12 +18,13 @@ class SD extends Component {
 	// State
 
 	val cardSelect = RegInit(False)
-	val inDataProcess = RegInit(False)
-	val outDataProcess = RegInit(False)
+	val inDataEnabled = RegInit(False)
+	val inDataProcessing = RegInit(False)
+	val outDataProcessing = RegInit(False)
 	val spiDataIn = RegInit(B(0, 8 bits))
 	val spiDataOut = RegInit(B(0, 8 bits))
 	val count = RegInit(U(0, 3 bits))
-	val processing = inDataProcess || outDataProcess
+	val processing = inDataProcessing || outDataProcessing
 
 	// External interface
 
@@ -40,18 +41,18 @@ class SD extends Component {
 	when (processing && sdClock) {
 		when (count === 7) {
 			count := 0
-			inDataProcess := False
-			outDataProcess := False
+			inDataProcessing := False
+			outDataProcessing := False
 		} otherwise {
 			count := count + 1
 		}
 	}
 
-	when (inDataProcess && sdClock) {
+	when (inDataProcessing && sdClock) {
 		spiDataIn := spiDataIn(6 downto 0) ## io.sd_do;
 	}
 
-	when (outDataProcess) {
+	when (outDataProcessing) {
 		io.sd_di := spiDataOut(7)
 		when (sdClock) {
 			spiDataOut := spiDataOut(6 downto 0) ## False;
@@ -70,8 +71,12 @@ class SD extends Component {
 	when (io.bus.enable && !io.bus.write) {
 		ioDataOut := busRegister.mux (
 			Register.data -> spiDataIn,
-			Register.status -> B(cardSelect ## outDataProcess ## inDataProcess).resize(8 bits)
+			Register.status -> B(cardSelect ## outDataProcessing ## inDataEnabled).resize(8 bits)
 		)
+
+		when (busRegister === Register.data) {
+			inDataProcessing := inDataEnabled
+		}
 	} otherwise {
 		ioDataOut := 0
 	}
@@ -80,11 +85,16 @@ class SD extends Component {
 		switch (busRegister) {
 			is (Register.data) {
 				spiDataOut := io.bus.dataFromMaster
-				outDataProcess := True
+				outDataProcessing := True
 			}
 			is (Register.status) {
 				cardSelect := io.bus.dataFromMaster(2)
-				inDataProcess := io.bus.dataFromMaster(0)
+
+				val newInEnabled = io.bus.dataFromMaster(0)
+				when (newInEnabled && !inDataEnabled) {
+					inDataProcessing := True
+				}
+				inDataEnabled := newInEnabled
 			}
 		}
 	}

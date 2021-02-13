@@ -61,10 +61,20 @@ sdSendIfCond:
 		lio	(bc),t		;CRC
 
 		jal	sdInReply1
-		jal	sdIn		;R7[31:24]
-		jal	sdIn		;R7[23:16]
-		jal	sdIn		;R7[15:8]
-		jal	sdIn		;R7[7:0] echo
+
+		lio	t,(bc)		;R7[31:24]
+
+		nop
+		nop
+		lio	t,(bc)		;R7[23:16]
+
+		nop
+		nop
+		lio	t,(bc)		;R7[15:8]
+
+		nop
+		nop
+		lio	t,(bc)		;R7[7:0] echo
 
 		DESELECT
 
@@ -102,12 +112,12 @@ sdGoIdleState:
 ; t = byte
 ; f = "eq" ok
 sdInReply1:
-		ld	f,100
-.loop		ld	c,IO_SD_STATUS
+		ld	c,IO_SD_STATUS
 		ld	t,IO_STAT_IN_ACTIVE|IO_STAT_SELECT
 		lio	(bc),t
-		ld	c,IO_SD_DATA
-		nop
+
+		ld	f,100
+.loop		ld	c,IO_SD_DATA
 		lio	t,(bc)
 		ld	d,t
 		and	t,$80
