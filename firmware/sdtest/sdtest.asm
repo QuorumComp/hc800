@@ -20,6 +20,11 @@ REPLY_PARAMETER_ERROR	EQU	$40
 
 REPLY_ERRORS		EQU	REPLY_ILLEGAL_COMMAND|REPLY_CRC_ERROR|REPLY_ERASE_SEQ_ERROR|REPLY_ADDRESS_ERROR|REPLY_PARAMETER_ERROR
 
+TYPE_NONE	EQU	0
+TYPE_V1		EQU	1
+TYPE_V2		EQU	2
+TYPE_V2_HC	EQU	3
+
 		; b is assumed to be IO_SDCARD_BASE
 SELECT:		MACRO
 		ld	b,IO_SDCARD_BASE
@@ -40,6 +45,13 @@ DESELECT:	MACRO
 
 Entry::
 		jal	sdInit
+		j/ne	.fail
+
+		ld	bc,sdType
+		ld	t,(bc)
+		jal	StreamHexByteOut
+		MNewLine		
+.fail
 		sys	KExit
 
 sdInit:
@@ -57,31 +69,23 @@ sdInit:
 
 .v2_card	jal	sdInitV2
 
-.handle_status	ld	t,1
-		ld/ne	t,0
+.handle_status	ld/ne	t,TYPE_NONE
 
-		ld	bc,sdPresent
+		ld	bc,sdType
 		ld	(bc),t
 
 		pop	hl
 		j	(hl)
 
 sdInitV1:
-		MPrintString <"V1 card\n">
-
 		ld	d,HCS
 		jal	sdSendOpCond
 
-		ld	bc,sdIsSDHC
-		ld	t,0
-		ld	(bc),t
-.fail
+		ld	t,TYPE_V1
 		j	(hl)
 
 sdInitV2:
 		push	hl
-
-		MPrintString <"V2 card\n">
 
 		ld	d,HCS
 		jal	sdSendOpCond
@@ -90,21 +94,12 @@ sdInitV2:
 		jal	sdReadCcsBit
 		j/ne	.fail
 
-		ld	bc,sdIsSDHC
-		ld	(bc),t
-
 		cmp	t,0
-		j/eq	.standard
+		ld	t,TYPE_V2_HC
+		ld/eq	t,TYPE_V2
+		ld	f,FLAGS_EQ
 
-		; high capacity
-		MPrintString <"High capacity (SDHC)\n">
-		j	.done
-
-.standard	MPrintString <"Standard capacity\n">
-.done		ld	f,FLAGS_EQ
-
-.fail
-		pop	hl
+.fail		pop	hl
 		j	(hl)
 
 
@@ -117,9 +112,9 @@ sdReadCcsBit:
 		jal	sdReadOcr
 		j/ne	.fail
 
+		pop	de
 		ld	t,d
 		and	t,$40	;t = CCS bit
-		pop	de
 
 		ld	f,0
 		rs	ft,6
@@ -130,7 +125,7 @@ sdReadCcsBit:
 
 ; -- Return:
 ; --    f - "eq" if OK
-; --   de - top (d=31:24, e=23:16), next(d=15:8, e=7:0)
+; --   de - top (d=15:8, e=7:0), next(d=31:24, e=23:16)
 sdReadOcr:
 		push	hl
 
@@ -146,18 +141,18 @@ sdReadOcr:
 		j/ne	.fail
 
 		ld	c,IO_SD_DATA
-		ld	t,(bc)
-		ld	e,t
-		nop
-		ld	t,(bc)
+		lio	t,(bc)
 		ld	d,t
+		nop
+		lio	t,(bc)
+		ld	e,t
 		push	de
 
-		ld	t,(bc)
-		ld	e,t
-		nop
-		ld	t,(bc)
+		lio	t,(bc)
 		ld	d,t
+		nop
+		lio	t,(bc)
+		ld	e,t
 
 .fail		DESELECT
 
@@ -359,5 +354,4 @@ sdStuffBits4:
 
 
 		SECTION	"SdCardVars",BSS
-sdPresent	DS	1
-sdIsSDHC	DS	1
+sdType		DS	1
