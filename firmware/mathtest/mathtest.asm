@@ -10,15 +10,27 @@ Entry::
 		ld	de,.op2
 		jal	MathAdd_32_32
 
-		ld	d,4
-.loop		ld	t,(bc)
-		add	bc,1
-		jal	StreamHexByteOut
-		dj	d,.loop
+		jal	.print_bc
 
-		MNewLine
+		ld	bc,.op1
+		ld	t,17
+		jal	MathShift_32
+
+		jal	.print_bc
 
 		sys	KExit
 
-.op1	DB	$01,$FF,$03,$04
-.op2	DB	$FF,$02,$03,$04
+.print_bc	push	hl
+		ld	d,4
+		add	bc,3
+.loop		ld	t,(bc)
+		sub	bc,1
+		jal	StreamHexByteOut
+		dj	d,.loop
+		MNewLine
+		pop	hl
+		j	(hl)
+
+
+.op1	MInt32	$0403FF01
+.op2	MInt32	$040302FF
