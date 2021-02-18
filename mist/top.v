@@ -48,7 +48,7 @@ module top(
 
 localparam CONF_STR = {
 	"HC800;;",
-	"S,VHD,Mount;",
+	"S1,VHD,Mount;",
 	"V,1.0"
 };
 
@@ -126,7 +126,7 @@ wire  [8:0] sd_buff_addr;
 wire  [1:0] img_mounted;
 wire [31:0] img_size;
 
-user_io#(.STRLEN(7 + 12 + 5), .ROM_DIRECT_UPLOAD(0)) userIo(
+user_io#(.STRLEN(7 + 13 + 5), .ROM_DIRECT_UPLOAD(0)) userIo(
 	.clk_sys   (clk_13_5M),
 	
 	.SPI_CLK   (SPI_SCK),
@@ -171,23 +171,41 @@ user_io#(.STRLEN(7 + 12 + 5), .ROM_DIRECT_UPLOAD(0)) userIo(
 
 // SD card
 
-wire sd_cs;
+wire sd_cs0;
+wire sd_cs1;
+wire sd_conf0;
+wire sd_conf1;
+wire sd_sdhc0;
+wire sd_sdhc1;
+wire sd_do0;
+wire sd_do1;
+wire [31:0] sd_lba0;
+wire [31:0] sd_lba1;
+wire [7:0] sd_din0;
+wire [7:0] sd_din1;
+
+assign sd_conf = !sd_cs0 ? sd_conf0 : !sd_cs1 ? sd_conf1 : 0;
+assign sd_sdhc = !sd_cs0 ? sd_sdhc0 : !sd_cs1 ? sd_sdhc1 : 0;
+assign sd_do = !sd_cs0 ? sd_do0 : !sd_cs1 ? sd_do1 : 0;
+assign sd_din = !sd_cs0 ? sd_din0 : !sd_cs1 ? sd_din1 : 0;
+assign sd_lba = !sd_cs0 ? sd_lba0 : !sd_cs1 ? sd_lba1 : 0;
+
 wire sd_clock;
 wire sd_di;
 wire sd_do;
 wire sd_busy;
 
-sd_card sdCard(
+sd_card sdCard0(
 	.clk_sys(clk_13_5M),
 
 	 // link to user_io for io controller
-	.sd_lba(sd_lba),
+	.sd_lba(sd_lba0),
 	.sd_rd(sd_rd[0]),
 	.sd_wr(sd_wr[0]),
 	.sd_ack(sd_ack),
 	.sd_ack_conf(sd_ack_conf),
-	.sd_conf(sd_conf),
-	.sd_sdhc(sd_sdhc),
+	.sd_conf(sd_conf0),
+	.sd_sdhc(sd_sdhc0),
 	
 	.sd_busy(sd_busy),
 	
@@ -196,17 +214,49 @@ sd_card sdCard(
 	.sd_buff_wr(sd_dout_strobe),
 
 	// data coming in from io controller
-	.sd_buff_din(sd_din),
+	.sd_buff_din(sd_din0),
 
 	.sd_buff_addr(sd_buff_addr),
 
 	// configuration input
 	.allow_sdhc(1'b1),
 	
-	.sd_cs(sd_cs),
+	.sd_cs(sd_cs0),
 	.sd_sck(sd_clock),
 	.sd_sdi(sd_di),
-	.sd_sdo(sd_do)
+	.sd_sdo(sd_do0)
+);
+
+sd_card sdCard1(
+	.clk_sys(clk_13_5M),
+
+	 // link to user_io for io controller
+	.sd_lba(sd_lba1),
+	.sd_rd(sd_rd[1]),
+	.sd_wr(sd_wr[1]),
+	.sd_ack(sd_ack),
+	.sd_ack_conf(sd_ack_conf),
+	.sd_conf(sd_conf1),
+	.sd_sdhc(sd_sdhc1),
+	
+	.sd_busy(sd_busy),
+	
+    // data coming in from io controller
+	.sd_buff_dout(sd_dout),
+	.sd_buff_wr(sd_dout_strobe),
+
+	// data coming in from io controller
+	.sd_buff_din(sd_din1),
+
+	.sd_buff_addr(sd_buff_addr),
+
+	// configuration input
+	.allow_sdhc(1'b1),
+	
+	.sd_cs(sd_cs1),
+	.sd_sck(sd_clock),
+	.sd_sdi(sd_di),
+	.sd_sdo(sd_do1)
 );
 
 // Reset circuit
@@ -386,7 +436,7 @@ HC800 hc800(
 	.io_ramBus_dataFromMaster(ram_data_out),
 	.io_ramBus_address(ram_address),
 	
-	.io_sd_cs(sd_cs),
+	.io_sd_cs({sd_cs1,sd_cs0}),
 	.io_sd_clock(sd_clock),
 	.io_sd_di(sd_di),
 	.io_sd_do(sd_do)

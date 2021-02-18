@@ -151,13 +151,14 @@ always @(posedge clk_sys) begin
     old_mounted <= img_mounted;
     if (~old_mounted & img_mounted) begin
         // update card size in case of a virtual SD image
-        if (sd_sdhc)
+        if (csdcid[127:126] == 2'b01) begin
             // CSD V2.0 size = (c_size + 1) * 512K
             csdcid[69:48] <= {9'd0, img_size[31:19] };
-        else begin
+        end else begin
             // CSD V1.0 no. of blocks = c_size ** (c_size_mult + 2)
             csdcid[49:47] <= 3'd7; //c_size_mult
             csdcid[73:62] <= img_size[29:18]; //c_size
+            csdcid[83:80] <= 4'd9; //read_bl_len
         end
     end
 end

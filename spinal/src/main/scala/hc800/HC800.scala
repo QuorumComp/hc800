@@ -91,7 +91,7 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 
 		val ramBus = master(Bus(addressWidth = 21))
 
-		val sd_cs = out Bool
+		val sd_cs = out Bits(2 bits)
 		val sd_clock = out Bool
 		val sd_di = out Bool
 		val sd_do = in Bool

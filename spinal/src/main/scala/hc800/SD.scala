@@ -9,7 +9,7 @@ class SD extends Component {
     val io = new Bundle {
 		val bus = slave(Bus(addressWidth = 1))
 
-		val sd_cs = out Bool
+		val sd_cs = out Bits(2 bits)
 		val sd_clock = out Bool
 		val sd_di = out Bool
 		val sd_do = in Bool
@@ -17,7 +17,7 @@ class SD extends Component {
 
 	// State
 
-	val cardSelect = RegInit(False)
+	val cardSelect = RegInit(B"00")
 	val inDataEnabled = RegInit(False)
 	val inDataProcessing = RegInit(False)
 	val outDataProcessing = RegInit(False)
@@ -35,7 +35,7 @@ class SD extends Component {
 		sdClock := False
 	}
 
-	io.sd_cs := !cardSelect
+	io.sd_cs := ~cardSelect
 	io.sd_clock := sdClock
 
 	when (processing && sdClock) {
@@ -88,7 +88,7 @@ class SD extends Component {
 				outDataProcessing := True
 			}
 			is (Register.status) {
-				cardSelect := io.bus.dataFromMaster(2)
+				cardSelect := io.bus.dataFromMaster(3 downto 2)
 
 				val newInEnabled = io.bus.dataFromMaster(0)
 				when (newInEnabled && !inDataEnabled) {
@@ -204,11 +204,11 @@ object SD {
 
 			fork {
 				while (true) {
-					waitUntil(!dut.io.sd_cs.toBoolean)
+					waitUntil(!dut.io.sd_cs(0).toBoolean)
 
 					var count = 0
 					var result = 0xA5
-					while (!dut.io.sd_cs.toBoolean) {
+					while (!dut.io.sd_cs(0).toBoolean) {
 						dut.io.sd_do #= ((result >>> 7) & 1) != 0
 						waitUntil(dut.io.sd_clock.toBoolean)
 						result = ((result >> 7) & 1) | ((result & 0x7F) << 1)
