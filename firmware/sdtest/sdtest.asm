@@ -5,22 +5,21 @@
 		INCLUDE	"stdlib/stream.i"
 		INCLUDE	"stdlib/syscall.i"
 
-		INCLUDE	"sd.i"
+		INCLUDE	"blockdevice.i"
+		INCLUDE	"sddevice.i"
 
 		SECTION	"SDTest",CODE
 
 Entry::
-		jal	SdInit
+		ld	t,1
+		ld	bc,sdDevice
+		jal	SdDeviceMake
 		j/ne	.fail
 
-		ld	bc,SdType
-		ld	t,(bc)
-		jal	StreamHexByteOut
-		MNewLine
-
+		ld	ft,sdDevice
 		ld	bc,sectorNumber
 		ld	de,sectorData
-		jal	SdReadSingleBlock
+		jal	BlockDeviceRead
 
 		ld	bc,sectorData
 		ld	d,16
@@ -35,8 +34,21 @@ Entry::
 .fail
 		sys	KExit
 
+
+printBc:	push	hl
+		ld	d,4
+		add	bc,3
+.loop		ld	t,(bc)
+		sub	bc,1
+		jal	StreamHexByteOut
+		dj	d,.loop
+		MNewLine
+		pop	hl
+		j	(hl)
+
 		SECTION	"Data",DATA
 sectorNumber:	MInt32	0
 
 		SECTION	"Sector",BSS
+sdDevice	DS	bdev_SIZEOF
 sectorData:	DS	512

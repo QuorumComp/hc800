@@ -1,4 +1,5 @@
 		INCLUDE	"lowlevel/hc800.i"
+		INCLUDE	"lowlevel/math.i"
 		INCLUDE	"lowlevel/rc800.i"
 
 		INCLUDE	"stdlib/stream.i"
@@ -6,6 +7,8 @@
 
 		INCLUDE	"sd.i"
 
+
+CMD0_CRC	EQU	$95
 
 CMD8_PATTERN:	EQU	$AA	;pattern for CMD08
 CMD8_VOLTAGES:	EQU	$01	;3.3V
@@ -26,9 +29,10 @@ REPLY_PARAMETER_ERROR	EQU	$40
 REPLY_ERRORS		EQU	REPLY_ILLEGAL_COMMAND|REPLY_CRC_ERROR|REPLY_ERASE_SEQ_ERROR|REPLY_ADDRESS_ERROR|REPLY_PARAMETER_ERROR
 
 SELECT:		MACRO
+		ld	bc,SdSelect
+		ld	t,(bc)
 		ld	b,IO_SDCARD_BASE
 		ld	c,IO_SD_STATUS
-		ld	t,IO_STAT_SELECT
 		lio	(bc),t
 		ENDM
 
@@ -40,7 +44,7 @@ DESELECT:	MACRO
 		pop	ft
 		ENDM
 
-	IF 1
+	IF 1 ; 1 = disable debug
 		PURGE	MPrintString
 MPrintString:	MACRO
 		ENDM
@@ -59,6 +63,182 @@ MHexByteOut:	MACRO
 		ENDM
 	ENDC
 
+
+; ---------------------------------------------------------------------------
+; -- Get total number of blocks (CMD9)
+; --
+; -- Inputs:
+; --   bc - pointer to 32 bit block number
+; --
+; -- Returns:
+; --    f - "eq" condition if success
+; --
+		SECTION	"SdGetTotalBlocks",CODE
+SdGetTotalBlocks:
+		MPrintString <"SdGetTotalBlocks\n">
+		push	bc-hl
+
+		SELECT
+
+		ld	c,IO_SD_DATA
+		ld	t,9|$40		;CMD9
+		lio	(bc),t
+
+		jal	sdStuffBits5	;arg, CRC
+
+		jal	sdInFirst
+		j/ne	.error
+
+		jal	sdInPacket
+		j/ne	.error
+
+		; 16 bytes
+
+		lio	t,(bc)
+		MHexByteOut
+		and	t,$C0
+		cmp	t,0
+		j/eq	.v1
+
+		cmp	t,$40
+		j/ne	.error
+
+.v2		jal	.handle_v2
+		j	.done
+
+.v1		jal	.handle_v1
+
+.done		MNewLine
+		ld	f,FLAGS_EQ
+
+.error		ld	b,IO_SDCARD_BASE
+		DESELECT
+		pop	bc-hl
+		j	(hl)
+
+.handle_v2	push	hl
+		MPrintString <"CSD v2\n">
+
+		; 13 bits []
+		; shift 19
+
+		jal	sdSkipBytes8
+
+		lio	t,(bc)
+		MHexByteOut
+		ld	f,0
+		and	t,$1F	; 60:56
+		ls	ft,8
+		lio	t,(bc)	; 55:48
+		MHexByteOut
+
+		push	ft
+		jal	sdSkipBytes4
+		jal	sdInLast
+		pop	ft
+
+		pop	bc
+		push	bc
+		exg	ft,bc
+
+		ld	(ft),c
+		add	ft,1
+		ld	(ft),b
+		add	ft,1
+		ld	c,0
+		ld	(ft),c
+		add	ft,1
+		ld	(ft),c
+		sub	ft,3
+
+		ld	bc,ft
+		ld	ft,19
+		jal	MathShift_32
+
+		pop	hl
+		j	(hl)
+
+.handle_v1	push	hl
+
+		MPrintString <"CSD v1\n">
+		jal	sdSkipBytes4
+
+		; READ_BL_LEN [83:80]
+		lio	t,(bc)
+		and	t,$0F
+		sub	t,9	; map block length to shift factor
+		ld	f,0
+		ld	hl,ft
+
+		; C_SIZE [73:62]
+		lio	t,(bc)
+		and	t,$03
+		ld	f,t
+		lio	t,(bc)
+		ls	ft,2
+		ld	de,ft
+		lio	t,(bc)
+		ld	f,0
+		ls	ft,2
+		ld	t,d
+		exg	f,t
+		or	t,e
+		ld	de,ft	; de = C_SIZE, 12 bits
+		add	de,1
+
+		; C_SIZE_MULT [49:47]
+
+		lio	t,(bc)
+		and	t,$03
+		ld	f,t
+		lio	t,(bc)
+		rs	ft,7	; ft = C_SIZE_MULT
+		add	ft,2
+
+		add	ft,hl	; ft = shift amount for C_SIZE
+
+		push	ft
+		jal	sdSkipBytes5
+		jal	sdInLast
+		pop	ft
+
+		pop	bc
+		push	bc
+		exg	ft,bc
+
+		; bc = shift amount for C_SIZE
+		; ft = pointer to size
+
+		ld	(ft),e
+		add	ft,1
+		ld	(ft),d
+		add	ft,1
+		ld	e,0
+		ld	(ft),e
+		add	ft,1
+		ld	(ft),e
+		sub	ft,3
+
+		exg	ft,bc
+		jal	MathShift_32
+
+		pop	hl
+		j	(hl)
+
+; ---------------------------------------------------------------------------
+; -- Write block to SD card (CMD17)
+; --
+; -- Inputs:
+; --   bc - pointer to 32 bit block number
+; --   de - pointer to destination
+; --
+; -- Returns:
+; --    f - "eq" condition if success
+; --
+		SECTION	"SdWriteSingleBlock",CODE
+SdWriteSingleBlock:
+		ld	f,FLAGS_NE
+		j	(hl)
 
 
 
@@ -81,7 +261,7 @@ SdReadSingleBlock:
 		exg	ft,hl
 
 		; hl = pointer to dest
-		; de = pointer to black number
+		; de = pointer to block number
 
 		SELECT
 
@@ -89,33 +269,25 @@ SdReadSingleBlock:
 		ld	t,17|$40	;CMD17
 		lio	(bc),t
 
-		push	hl
+		ld	ft,hl
 		jal	sdSendBlockNumber
+		ld	de,ft
+
 		jal	sdInFirst
-		pop	hl
 		j/ne	.error
 
-		LDLOOP	de,1000
-.wait_packet	lio	t,(bc)
-		MHexByteOut
-		cmp	t,$FF
-		j/ne	.got_packet
-		DELAY	100
-		dj	e,.wait_packet	
-		dj	d,.wait_packet	
-
-.got_packet	cmp	t,$FE
+		jal	sdInPacket
 		j/ne	.error
 
 		MPrintString <"  do read\n">
 
-		ld	e,BLOCKLEN/8
+		ld	l,BLOCKLEN/8
 .read_loop	REPT	8
 		lio	t,(bc)
-		ld	(hl),t
-		add	hl,1
+		ld	(de),t
+		add	de,1
 		ENDR
-		dj	e,.read_loop
+		dj	l,.read_loop
 
 		MPrintString <"  did read\n">
 
@@ -177,10 +349,10 @@ SdInit:		push	bc-hl
 ; -- Send block number
 ; --
 ; -- Inputs:
+; --    t - SD card type
 ; --   	b - IO_SDCARD_BASE
 ; --   de - pointer to block number
 ; --
-
 sdSendBlockNumber:
 		MPrintString <"sdSendBlockNumber\n">
 
@@ -190,8 +362,6 @@ sdSendBlockNumber:
 
 		add	de,3
 
-		ld	ft,SdType
-		ld	t,(ft)
 		cmp	t,SDTYPE_V2_HC
 		j/eq	.hc
 
@@ -248,28 +418,74 @@ sdSendBlockNumber:
 sdSetBlockLen512:
 		MPrintString <"sdSetBlockLen512\n">
 
-		push	hl
+		push	de/hl
 
 		SELECT
 
-		ld	c,IO_SD_DATA
-		ld	t,16|$40	;CMD16
-		lio	(bc),t
-
-		jal	sdStuffBits2
-
-		ld	t,BLOCKLEN>>8
-		lio	(bc),t
-
-		jal	sdStuffBits2
+		ld	de,.bytes
+		jal	sdSendBytes6
 
 		jal	sdInFirst
 
 		DESELECT
 
-		pop	hl
+		pop	de/hl
 		j	(hl)
 
+.bytes		DB	16|$40,0,0,BLOCKLEN>>8,0,0
+
+
+; ---------------------------------------------------------------------------
+; -- Send six bytes to SD card
+; --
+; -- Inputs:
+; --   de - pointer to six bytes in code segment
+; --
+		SECTION	"sdSendBytes",CODE
+sdSendBytes6:
+		pusha
+
+		ld	c,IO_SD_DATA
+		ld	f,6
+.loop		lco	t,(de)
+		add	de,1
+		lio	(bc),t
+		dj	f,.loop
+
+		popa
+		j	(hl)
+
+
+; ---------------------------------------------------------------------------
+; -- Skip bytes from SD card
+; --
+		SECTION	"sdSkipBytes",CODE
+sdSkipBytes4:
+		pusha
+		ld	f,4
+		j	sdSkipBytes6\.entry
+
+sdSkipBytes5:
+		pusha
+		ld	f,5
+		j	sdSkipBytes6\.entry
+
+sdSkipBytes8:
+		pusha
+		ld	f,8
+		j	sdSkipBytes6\.entry
+
+sdSkipBytes6:
+		pusha
+		ld	f,6
+.entry		ld	c,IO_SD_DATA
+.loop		lio	t,(bc)
+		MHexByteOut
+		nop
+		dj	f,.loop
+
+		popa
+		j	(hl)
 
 ; ---------------------------------------------------------------------------
 ; -- Initialize V1 card
@@ -334,7 +550,7 @@ sdInitV2:
 ; --
 ; -- Returns:
 ; --    t - ccs bit (0 or 1)
-; --    f - "ne" = fail
+; --    f - "eq" condition if successful
 ; --
 		SECTION	"sdReadCcsBit",CODE
 sdReadCcsBit:
@@ -399,6 +615,7 @@ sdReadOcr:
 
 		pop	hl
 		j	(hl)
+
 
 ; ---------------------------------------------------------------------------
 ; -- Perform ACMD41 (SEND_OP_COND)
@@ -490,26 +707,8 @@ sdSendIfCond:
 
 		SELECT
 
-		ld	c,IO_SD_DATA
-		ld	t,8|$40		;CMD8
-		lio	(bc),t
-
-		; argument
-		nop
-		ld	t,$00
-		lio	(bc),t		;arg[31:24]
-		nop
-		nop
-		lio	(bc),t		;arg[23:16]
-		nop
-		ld	t,CMD8_VOLTAGES	;arg[15:12] arg[11:8]=1,3.3VCC
-		lio	(bc),t		;arg[15:8]
-		nop
-		ld	t,CMD8_PATTERN
-		lio	(bc),t		;arg[7:0]
-		nop
-		ld	t,CMD8_CRC
-		lio	(bc),t		;CRC
+		ld	de,.bytes
+		jal	sdSendBytes6
 
 		jal	sdInFirst
 
@@ -536,6 +735,9 @@ sdSendIfCond:
 		j	(hl)
 
 
+.bytes		DB	8|$40,$00,$00,CMD8_VOLTAGES,CMD8_PATTERN,CMD8_CRC
+
+
 ; ---------------------------------------------------------------------------
 ; -- Perform CMD0 (GO_IDLE_STATE)
 ; --
@@ -552,15 +754,8 @@ sdGoIdleState:
 
 		SELECT
 
-		ld	c,IO_SD_DATA
-		ld	t,0|$40		;CMD0
-		lio	(bc),t
-
-		jal	sdStuffBits4
-
-		; CRC
-		ld	t,$95
-		lio	(bc),t
+		ld	de,.bytes
+		jal	sdSendBytes6
 
 		jal	sdInFirst	;R1
 
@@ -568,6 +763,8 @@ sdGoIdleState:
 
 		pop	hl
 		j	(hl)
+
+.bytes		DB	0|$40,0,0,0,0,CMD0_CRC
 
 
 ; ---------------------------------------------------------------------------
@@ -585,8 +782,10 @@ sdInFirst:
 		MPrintString <"sdInFirst\n">
 		push	de/hl
 
+		ld	ft,SdSelect
+		ld	t,(ft)
+		or	t,IO_STAT_IN_ACTIVE
 		ld	c,IO_SD_STATUS
-		ld	t,IO_STAT_IN_ACTIVE|IO_STAT_SELECT
 		lio	(bc),t
 
 		ld	f,100
@@ -623,13 +822,14 @@ sdInFirst:
 ; --
 		SECTION	"sdInLast",CODE
 sdInLast:
-		MPrintString <"sdInLast\n">
 		ld	c,IO_SD_STATUS
-		ld	t,IO_STAT_SELECT
+		lio	t,(bc)
+		and	t,IO_STAT_SELECT0|IO_STAT_SELECT1
 		lio	(bc),t
 
 		ld	c,IO_SD_DATA
 		lio	t,(bc)
+		MHexByteOut
 
 		push	ft
 
@@ -668,6 +868,35 @@ sdStuffBits4:
 		j	(hl)
 
 
+; ---------------------------------------------------------------------------
+; -- Get packet start ($FE byte)
+; --
+; -- Inputs:
+; --   	b - IO_SDCARD_BASE
+; --
+; -- Returns:
+; --    f - "eq" condition if success
+; --
+		SECTION	"sdInPacket",CODE
+sdInPacket:	push	de/hl
+
+		LDLOOP	de,1000
+.wait_packet	lio	t,(bc)
+		MHexByteOut
+		cmp	t,$FF
+		j/ne	.got_packet
+		DELAY	100
+		dj	e,.wait_packet	
+		dj	d,.wait_packet	
+
+.got_packet	cmp	t,$FE
+
+		MNewLine
+
+		pop	de/hl
+		j	(hl)
+
 
 		SECTION	"SdCardVars",BSS
+SdSelect:	DS	1
 SdType:		DS	1

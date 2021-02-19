@@ -19,7 +19,7 @@ ifeq ($(MAKE_HOST),Windows32)
 	@cmd /Q /C for %%G in ($(subst /,\\,$?)) do xcopy %%G $(IMAGEDIR) /Y /Q >NUL
 else
 	@mkdir -p $(IMAGEDIR)
-	cp $? $(IMAGEDIR)
+	@cp $? $(IMAGEDIR)
 endif
 
 clean: $(CLEAN)

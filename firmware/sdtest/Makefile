@@ -1,7 +1,7 @@
 STD = ../stdlib/std.lib
 LOWLEVEL = ../lowlevel/lowlevel.lib
 LIBS = $(STD) $(LOWLEVEL)
-SRCS = sdtest.asm sd.asm
+SRCS = sdtest.asm sd.asm sddevice.asm blockdevice.asm
 ASMFLAGS = -g -el -z0 -DBOOT -i../
 TARGET = sdtest
 

@@ -8,8 +8,11 @@ SDTYPE_V2	EQU	2
 SDTYPE_V2_HC	EQU	3
 
 		GLOBAL	SdInit
+		GLOBAL	SdGetTotalBlocks
 		GLOBAL	SdReadSingleBlock
+		GLOBAL	SdWriteSingleBlock
 
 		GLOBAL	SdType
+		GLOBAL	SdSelect
 
 	ENDC
