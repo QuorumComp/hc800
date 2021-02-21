@@ -256,11 +256,10 @@ SdWriteSingleBlock:
 SdReadSingleBlock:	
 		push	bc-hl
 
+		push	de
 		exg	ft,bc
 		exg	ft,de
-		exg	ft,hl
 
-		; hl = pointer to dest
 		; de = pointer to block number
 
 		SELECT
@@ -269,9 +268,10 @@ SdReadSingleBlock:
 		ld	t,17|$40	;CMD17
 		lio	(bc),t
 
-		ld	ft,hl
+		ld	hl,SdType
+		ld	t,(hl)
 		jal	sdSendBlockNumber
-		ld	de,ft
+		pop	de
 
 		jal	sdInFirst
 		j/ne	.error
@@ -354,7 +354,7 @@ SdInit:		push	bc-hl
 ; --   de - pointer to block number
 ; --
 sdSendBlockNumber:
-		MPrintString <"sdSendBlockNumber\n">
+		MPrintString <"sdSendBlockNumber ">
 
 		pusha
 
@@ -376,6 +376,7 @@ sdSendBlockNumber:
 		ls	ft,1
 		exg	f,t
 		lio	(bc),t
+		MHexByteOut
 		dj	l,.sc_arg
 
 		ld	t,(de)
@@ -395,12 +396,14 @@ sdSendBlockNumber:
 .hc_arg		ld	t,(de)
 		sub	de,1
 		lio	(bc),t
+		MHexByteOut
 		dj	l,.hc_arg
 
 		ld	t,0	;CRC
 		lio	(bc),t
 
-.done		popa
+.done		MNewLine
+		popa
 		j	(hl)
 
 

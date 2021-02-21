@@ -23,22 +23,22 @@ Debug:		MACRO
 
 		SECTION "NMI",CODE[$8],ROOT
 		ld	t,$08
-		ld	de,Fail
+		ld	de,FailEntry
 		j	(de)
 
 		SECTION "IllegalIrq",CODE[$10],ROOT
 		ld	t,$10
-		ld	de,Fail
+		ld	de,FailEntry
 		j	(de)
 
 		SECTION "IllegalInstruction",CODE[$18],ROOT
 		ld	t,$18
-		ld	de,Fail
+		ld	de,FailEntry
 		j	(de)
 
 		SECTION "StackOverflow",CODE[$20],ROOT
 		ld	t,$20
-		ld	de,Fail
+		ld	de,FailEntry
 		j	(de)
 
 		SECTION "Interrupt",CODE[$28],ROOT
@@ -50,8 +50,8 @@ Debug:		MACRO
 Ident:		DB	"HC8!"
 
 
-		SECTION "Fail",CODE
-Fail:
+		SECTION "FailEntry",CODE
+FailEntry:
 		di
 		push	hl
 		jal	ComPrintHexByte

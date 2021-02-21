@@ -36,36 +36,32 @@ SdDeviceMake:
 		jal	SdInit
 		j/ne	.exit
 
-		ld	ft,SdType
-		ld	d,(ft)
+		add	de,SdType-SdSelect
+		ld	t,(de)
+		add	bc,bdev_Type-bdev_Select
+		ld	(bc),t
 
-		ld	ft,bc
+		; copy function pointers to structure
 
-		ld	bc,readBlock
-		add	ft,bdev_Read-bdev_Select
-		ld	(ft),c
-		add	ft,1
-		ld	(ft),b
-
-		ld	bc,writeBlock
-		add	ft,bdev_Write-(bdev_Read+1)
-		ld	(ft),c
-		add	ft,1
-		ld	(ft),b
-
-		ld	bc,getSize
-		add	ft,bdev_Size-(bdev_Write+1)
-		ld	(ft),c
-		add	ft,1
-		ld	(ft),b
-
-		add	ft,bdev_Type-(bdev_Size+1)
-		ld	(ft),d
+		ld	de,.template
+		add	bc,bdev_Read-bdev_Type
+		ld	f,.templateEnd-.template
+.template_loop	lco	t,(de)
+		ld	(bc),t
+		add	de,1
+		add	bc,1
+		dj	f,.template_loop
 
 		ld	f,FLAGS_EQ
 
 .exit		pop	bc-hl
 		j	(hl)
+
+
+.template	DW	readBlock
+		DW	writeBlock
+		DW	getSize
+.templateEnd
 
 
 writeBlock:
@@ -77,6 +73,17 @@ writeBlock:
 		pop	hl
 		j	(hl)
 
+; ---------------------------------------------------------------------------
+; -- Read block from device
+; --
+; -- Inputs:
+; --   ft - pointer to block device structure
+; --   bc - pointer to block number
+; --   de - pointer to destination
+; --
+; -- Returns:
+; --    f - "eq" condition if success
+; --
 readBlock:
 		push	hl
 
@@ -88,7 +95,7 @@ readBlock:
 
 
 getSize:
-		pusha
+		push	bc
 
 		ld	t,$FF
 		ld	f,4
@@ -96,7 +103,9 @@ getSize:
 		add	bc,1
 		dj	f,.loop
 
-		popa
+		ld	f,FLAGS_NE
+
+		pop	bc
 		j	(hl)
 
 

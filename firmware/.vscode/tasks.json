@@ -6,7 +6,7 @@
 		{
 			"label": "Build",
 			"type": "shell",
-			"command": "./b.sh",
+			"command": "sleep 1s && ./b.sh",
 			"problemMatcher": [],
 			"group": {
 				"kind": "build",
