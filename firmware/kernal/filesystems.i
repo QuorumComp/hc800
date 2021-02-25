@@ -63,6 +63,6 @@ fs_Close	RW	1
 ; --
 fs_Read		RW	1
 
-fs_SIZEOF	RB	0
+fs_PRIVATE	RB	0
 
 	ENDC

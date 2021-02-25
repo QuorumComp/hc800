@@ -6,6 +6,16 @@
 		SECTION	"Monitor",CODE
 
 Entry::
+		ld	ft,$0102
+		ld	bc,.op1
+		jal	MathMultiplyUnsigned_32_16
+		jal	.print_bc
+
+		ld	ft,31245
+		jal	StreamDecimalWordOut
+		MNewLine
+
+	IF 0
 		ld	bc,.op1
 		ld	de,.op2
 		jal	MathAdd_32_32
@@ -17,6 +27,7 @@ Entry::
 		jal	MathShift_32
 
 		jal	.print_bc
+	ENDC
 
 		sys	KExit
 

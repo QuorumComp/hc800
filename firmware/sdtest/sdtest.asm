@@ -7,6 +7,7 @@
 		INCLUDE	"stdlib/syscall.i"
 
 		INCLUDE	"blockdevice.i"
+		INCLUDE	"fat32.i"
 		INCLUDE	"mbr.i"
 		INCLUDE	"sddevice.i"
 
@@ -27,12 +28,33 @@ Entry::
 		j/ne	.fail
 
 		ld	bc,mbrDevice
-		ld	f,bdev_SIZEOF
-.dev_loop	ld	t,(bc)
+		ld	de,fat32
+		jal	Fat32FsMake
+		j/ne	.fail
+
+		jal	printVBR
+
+		jal	printFat32
+
+		MNewLine
+
+.fail
+		sys	KExit
+
+printFat32:
+		pusha
+		ld	bc,fat32+fs_SectorsToCluster
+		ld	e,fs_Fat32_SIZEOF-fs_SectorsToCluster
+.loop		ld	t,(bc)
 		add	bc,1
 		jal	StreamHexByteOut
-		dj	f,.dev_loop
+		dj	e,.loop
 		MNewLine
+		popa
+		j	(hl)
+	
+
+printVBR:	pusha
 
 		MStackAlloc 512
 		ld	de,ft		; de = sector data
@@ -43,8 +65,6 @@ Entry::
 
 		ld	ft,de
 		ld	bc,ft
-
-;		add	bc,$1BE
 
 		ld	d,16
 .line		ld	e,32
@@ -57,8 +77,8 @@ Entry::
 
 		MStackFree 512
 
-.fail
-		sys	KExit
+		popa
+		j	(hl)
 
 
 printBc:	push	hl
@@ -78,3 +98,4 @@ sectorNumber:	MInt32	0
 		SECTION	"Sector",BSS
 mbrDevice	DS	bdev_SIZEOF
 sdDevice	DS	bdev_SIZEOF
+fat32		DS	fs_Fat32_SIZEOF
