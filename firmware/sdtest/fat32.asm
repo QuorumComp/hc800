@@ -1,4 +1,5 @@
 		INCLUDE	"lowlevel/math.i"
+		INCLUDE	"lowlevel/rc800.i"
 		INCLUDE	"lowlevel/stack.i"
 
 		INCLUDE	"kernal/filesystems.i"
@@ -22,6 +23,8 @@ BS_BOOT_RECORD_SIG	EQU	$1FE
 ; $0E(2) + $24(4)*$10(1)
 
 ;$248 + $EDC*2
+
+;$20 + $3D0*2
 
 ; ---------------------------------------------------------------------------
 ; -- Make FAT32 file system jump table
@@ -66,12 +69,21 @@ Fat32FsMake:
 ; --
 		SECTION	"fillFsStruct",CODE
 fillFsStruct:
-		push	bc-hl
+		pusha
+
+		add	de,fs_Open
+		ld	hl,.template
+		ld	f,fs_PRIVATE-fs_Open
+.copy_template	ld	t,(hl)
+		ld	(de),t
+		add	hl,1
+		add	de,1
+		dj	f,.copy_template
 
 		; determine how much to shift a cluster number to get sector
 
 		add	bc,BPB_SECTORS_PER_CLUSTER
-		add	de,fs_SectorsToCluster
+		add	de,fs_ClusterToSector-fs_PRIVATE
 		ld	t,(bc)
 		ld	f,0
 		jal	MathLog2_16
@@ -80,7 +92,7 @@ fillFsStruct:
 		; get root directory cluster
 
 		add	bc,BPB_ROOT_CLUSTER-BPB_SECTORS_PER_CLUSTER
-		add	de,fs_RootCluster-fs_SectorsToCluster
+		add	de,fs_RootCluster-fs_ClusterToSector
 		jal	.copy4
 
 		; get FAT base cluster
@@ -94,7 +106,7 @@ fillFsStruct:
 		add	de,fs_DataBase-fs_FatBase
 		jal	.calcDataBase
 
-		pop	bc-hl
+		popa
 		j	(hl)
 
 .copy2		pusha
@@ -113,6 +125,10 @@ fillFsStruct:
 .copy_table	DB	BPB_ROOT_CLUSTER
 		DB	BPB_FAT_BASE
 
+.template	DW	fileOpen
+		DW	fileClose
+		DW	fileRead
+.template_end
 
 ; ---------------------------------------------------------------------------
 ; -- Calc data base cluster
@@ -151,6 +167,47 @@ fillFsStruct:
 		popa
 		j	(hl)
 
+
+
+
+; ---------------------------------------------------------------------------
+; -- Open a directory for iterating
+; --
+; -- Inputs:
+; --   bc - FAT32 directory structure to fill in
+; --   de - pointer to path
+; --
+dirOpen:
+		MStackAlloc 
+		jal	followPath
+
+
+; ---------------------------------------------------------------------------
+; -- Follow a file path
+; --
+; -- Inputs:
+; --   ft - 32 byte working buffer
+; --   bc - pointer to path
+; --   de - FAT32 directory structure to fill in
+; --
+followPath:
+		pusha
+
+		popa
+		j	(hl)
+
+
+fileOpen:
+		ld	f,FLAGS_EQ
+		j	(hl)
+
+fileClose:
+		ld	f,FLAGS_EQ
+		j	(hl)
+
+fileRead:
+		ld	f,FLAGS_EQ
+		j	(hl)
 
 ; ---------------------------------------------------------------------------
 ; -- Read block from device
