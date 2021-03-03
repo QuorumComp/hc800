@@ -5,11 +5,6 @@
 		INCLUDE	"sd.i"
 		INCLUDE	"sddevice.i"
 
-		RSSET	bdev_PRIVATE
-bdev_Select	RB	1
-bdev_Type	RB	1
-
-
 ; ---------------------------------------------------------------------------
 ; -- Make SD block device structure
 ; --
@@ -30,7 +25,7 @@ SdDeviceMake:
 		ld	de,SdSelect
 		ld	(de),t
 
-		add	bc,bdev_Select
+		add	bc,sddev_Select
 		ld	(bc),t
 
 		jal	SdInit
@@ -38,13 +33,13 @@ SdDeviceMake:
 
 		add	de,SdType-SdSelect
 		ld	t,(de)
-		add	bc,bdev_Type-bdev_Select
+		add	bc,sddev_Type-sddev_Select
 		ld	(bc),t
 
 		; copy function pointers to structure
 
 		ld	de,.template
-		add	bc,bdev_Read-bdev_Type
+		add	bc,bdev_Read-sddev_Type
 		ld	f,.templateEnd-.template
 .template_loop	lco	t,(de)
 		ld	(bc),t
@@ -113,9 +108,9 @@ getSize:
 setSdVariables:
 		pusha
 
-		add	ft,bdev_Select
+		add	ft,sddev_Select
 		ld	b,(ft)
-		add	ft,bdev_Type-bdev_Select
+		add	ft,sddev_Type-sddev_Select
 		ld	c,(ft)
 
 		ld	ft,SdSelect

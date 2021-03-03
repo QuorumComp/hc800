@@ -130,13 +130,10 @@ fillFsStruct:
 		DW	fileRead
 .template_end
 
-; ---------------------------------------------------------------------------
-; -- Calc data base cluster
-; --
-; -- Inputs:
-; --   bc - volume boot record
-; --   de - destination
-; --
+		; -- Calc data base cluster
+		; -- bc - volume boot record
+		; -- de - destination
+		; --
 		; BPB_FAT_BASE(2) + BPB_FAT_SIZE32(4)*BPB_TOTAL_FAT_SECTORS(1)
 .calcDataBase:
 		pusha

@@ -145,7 +145,6 @@ printSector:	pusha
 		dj	f,.print_long
 		MNewLine
 
-
 		MStackAlloc 512
 		ld	de,ft		; de = sector data
 
@@ -153,27 +152,7 @@ printSector:	pusha
 		ld	bc,sectorNumber
 		jal	BlockDeviceRead
 
-		ld	ft,de
-		ld	bc,ft
-
-		ld	d,16
-.line		ld	e,32
-.loop		ld	t,(bc)
-		add	bc,1
-		jal	StreamHexByteOut
-		dj	e,.loop
-		ld	t,' '
-		sys	KCharacterOut
-		sub	bc,32
-		ld	e,32
-.char_loop	ld	t,(bc)
-		add	bc,1
-		cmp	t,' '
-		ld/ltu	t,'.'
-		sys	KCharacterOut
-		dj	e,.char_loop
-		MNewLine
-		dj	d,.line
+;		jal	StreamMemoryDump
 
 		MStackFree 512
 
@@ -196,6 +175,6 @@ printBc:	push	hl
 sectorNumber:	MInt32	0
 
 		SECTION	"Sector",BSS
-mbrDevice	DS	bdev_SIZEOF
-sdDevice	DS	bdev_SIZEOF
+mbrDevice	DS	mbrdev_SIZEOF
+sdDevice	DS	sddev_SIZEOF
 fat32		DS	fs_Fat32_SIZEOF

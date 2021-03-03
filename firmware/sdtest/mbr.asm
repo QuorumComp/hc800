@@ -7,12 +7,6 @@
 
 TYPE_FAT32_LBA	EQU	$0C
 
-		RSSET	bdev_PRIVATE
-bdev_Underlying	RW	1
-bdev_Offset	RB	4		
-bdev_Sectors	RB	4		
-
-
 		RSRESET
 part_Status	RB	1
 part_StartCHS	RB	3
@@ -107,7 +101,7 @@ MakeMbrPartitionDevice:
 		pop	bc
 		swap	de	; get underlying device pointer
 		ld	ft,de
-		add	bc,bdev_Underlying
+		add	bc,mbrdev_Underlying
 		ld	(bc),t
 		exg	f,t
 		add	bc,1
@@ -118,7 +112,7 @@ MakeMbrPartitionDevice:
 
 		; copy offset to structure
 
-		add	bc,bdev_Offset-(bdev_Underlying+1)
+		add	bc,mbrdev_Offset-(mbrdev_Underlying+1)
 		add	de,part_StartLBA-part_Type
 		ld	f,4
 .offset_loop	ld	t,(de)
@@ -139,7 +133,7 @@ MakeMbrPartitionDevice:
 
 		; copy function pointers to structure
 
-		add	bc,bdev_Read-(bdev_Sectors+4)
+		add	bc,bdev_Read-(mbrdev_Sectors+4)
 		ld	de,.template
 		ld	f,.templateEnd-.template
 .template_loop	lco	t,(de)
@@ -196,16 +190,16 @@ mbrRead:
 
 		sub	de,4
 		pop	ft
-		add	ft,bdev_Offset
+		add	ft,mbrdev_Offset
 		exg	ft,de
 		exg	ft,bc
 
 		; bc = blockNumber
-		; de = bdev_Offset
+		; de = mbrdev_Offset
 
 		jal	MathAdd_32_32
 
-		add	de,bdev_Underlying+1-bdev_Offset
+		add	de,mbrdev_Underlying+1-mbrdev_Offset
 		ld	t,(de)
 		sub	de,1
 		exg	f,t

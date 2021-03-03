@@ -6,8 +6,7 @@ BLOCKDEVICE_SD_I_INCLUDED__ = 1
 bdev_Read	RW	1
 bdev_Write	RW	1
 bdev_Size	RW	1
-bdev_PRIVATE	RB	10
-bdev_SIZEOF	RB	0
+bdev_PRIVATE	RB	0
 
 		GLOBAL	BlockDeviceRead
 
