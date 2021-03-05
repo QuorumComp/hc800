@@ -21,6 +21,9 @@ Debug:		MACRO
 		ld	ft,Init
 		j	(ft)
 
+		SECTION "Checksum",CODE[7],ROOT
+		DB	0
+
 		SECTION "NMI",CODE[$8],ROOT
 		ld	t,$08
 		ld	de,FailEntry
@@ -45,9 +48,6 @@ Debug:		MACRO
 		pusha
 		ld	hl,Interrupt
 		j	(hl)
-
-		SECTION "Ident",CODE[$100],ROOT
-Ident:		DB	"HC8!"
 
 
 		SECTION "FailEntry",CODE

@@ -7,37 +7,10 @@
 		INCLUDE	"stdlib/string.i"
 		INCLUDE	"stdlib/syscall.i"
 
-		INCLUDE	"blockdevice.i"
-		INCLUDE	"fat32.i"
-		INCLUDE	"mbr.i"
-		INCLUDE	"sddevice.i"
-
 		SECTION	"SDTest",CODE
 
 Entry::
 		MStackInit 1024
-
-		ld	t,1
-		ld	bc,sdDevice
-		jal	SdDeviceMake
-		j/ne	.fail
-
-		ld	t,0
-		ld	bc,mbrDevice
-		ld	de,sdDevice
-		jal	MakeMbrPartitionDevice
-		j/ne	.fail
-
-		ld	bc,mbrDevice
-		ld	de,fat32
-		jal	Fat32FsMake
-		j/ne	.fail
-
-		;jal	printVBR
-
-		jal	printFat32
-
-		jal	printRootSector
 
 		MNewLine
 
@@ -45,6 +18,94 @@ Entry::
 		sys	KExit
 
 .string		DC_STR	<"/this/is//a/test/">
+
+
+		END
+		
+listRootDirectory:
+		pusha
+		ld	de,fat32+fs_RootCluster
+		ld	bc,sectorNumber
+		REPT 4
+		ld	t,(de)
+		ld	(bc),t
+		add	de,1
+		add	bc,1
+		ENDR
+		ld	bc,sectorNumber
+		ld	de,fat32
+		jal	clusterToSector
+
+		MStackAlloc 512
+		ld	de,ft		; de = sector data
+
+		ld	ft,mbrDevice
+		ld	bc,sectorNumber
+		jal	BlockDeviceRead
+
+		ld	ft,de
+		ld	bc,ft
+		jal	printFiles
+
+		MStackFree 512
+
+		popa
+		j	(hl)
+
+; bc = sector data
+printFiles:
+		pusha
+
+		ld	f,16
+.loop		jal	printFile
+		add	bc,32
+		dj	f,.loop
+
+		popa
+		j	(hl)
+
+
+printFile:
+		pusha
+
+		add	bc,$0B
+		ld	t,(bc)
+		cmp	t,$0F
+		j/eq	.exit
+		sub	bc,$0B
+
+		ld	t,(bc)
+		add	bc,1
+
+		cmp	t,0
+		j/eq	.exit
+		cmp	t,$E5
+		j/eq	.exit
+
+		cmp	t,$05
+		ld/eq	t,$E5
+
+		ld	f,8
+.name		sys	KCharacterOut
+		ld	t,(bc)
+		add	bc,1
+		dj	f,.name
+
+		push	ft
+		ld	t,'.'
+		sys	KCharacterOut
+		pop	ft			
+
+		ld	f,3
+.ext		sys	KCharacterOut
+		ld	t,(bc)
+		add	bc,1
+		dj	f,.ext
+
+		MNewLine
+
+.exit		popa
+		j	(hl)
 
 ; bc = cluster/result
 ; de = fat32 structure
@@ -152,7 +213,7 @@ printSector:	pusha
 		ld	bc,sectorNumber
 		jal	BlockDeviceRead
 
-;		jal	StreamMemoryDump
+		jal	StreamMemoryDump
 
 		MStackFree 512
 

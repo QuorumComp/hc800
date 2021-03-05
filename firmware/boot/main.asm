@@ -1,5 +1,6 @@
 		INCLUDE	"lowlevel/hc800.i"
 		INCLUDE	"lowlevel/memory.i"
+		INCLUDE	"lowlevel/rc800.i"
 		INCLUDE	"lowlevel/uart.i"
 
 		INCLUDE	"commands.i"
@@ -47,6 +48,11 @@ Main:
 LoadKernal:
 		push	bc-hl
 
+		ld	bc,$4000
+		ld	de,$4000
+		ld	t,0
+		jal	SetMemory
+
 		MPrintString "Loading kernal"
 		ld	t,.kernal_length
 		ld	bc,.kernal_name
@@ -83,22 +89,20 @@ LoadKernal:
 CheckKernal:
 		push	bc-hl
 
-		ld	bc,$4100
-		ld	de,.ident
-		ld	h,4
-
-.ident_loop	ld	t,(bc)
+		ld	bc,$4000
+		LDLOOP	de,$4000
+		ld	ft,0
+.checksum	ld	t,(bc)
 		add	bc,1
+		add	t,f
 		ld	f,t
-		lco	t,(de)
-		add	de,1
-		cmp	t,f
-		j/ne	.ident_false
-		dj	h,.ident_loop
-		ld	t,ERROR_SUCCESS
-		j	.done
+		dj	e,.checksum
+		dj	d,.checksum
 
-.ident_false	MPrintString "Kernal missing ident. Failure."
+		; t equals zero (ERROR_SUCCESS) if checksum match
+		j/eq	.done
+
+.ident_false	MPrintString "Kernal checksum mismatch. Failure."
 		MNewline
 		ld	t,ERROR_PROTOCOL
 .done

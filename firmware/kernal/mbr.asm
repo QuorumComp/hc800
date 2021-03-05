@@ -2,6 +2,9 @@
 		INCLUDE	"lowlevel/rc800.i"
 		INCLUDE	"lowlevel/stack.i"
 
+		INCLUDE	"stdlib/stream.i"
+		INCLUDE	"stdlib/syscall.i"
+
 		INCLUDE	"blockdevice.i"
 		INCLUDE	"mbr.i"
 
@@ -37,6 +40,13 @@ mbr_Partition3	RB	part_SIZEOF
 MakeMbrPartitionDevice:
 		pusha
 
+		;MPrintString <"MakeMbrPartitionDevice\n">
+		pusha
+		ld	ft,bc
+		jal	StreamHexWordOut
+		MNewLine
+		popa
+
 		; zero block number variable
 
 		ld	bc,blockNumber
@@ -57,20 +67,24 @@ MakeMbrPartitionDevice:
 		; bc = blockNumber
 		; de = sector buffer
 
+		;MPrintString <"  - load MBR\n">
 		jal	BlockDeviceRead
-		j/ne	.fail
+		;MPrintString <"  - loaded MBR\n">
+		j/ne	.fail_popa
 
 		; check signature
 
 		add	de,510
 		ld	t,(de)
 		cmp	t,$55
-		j/ne	.fail
+		j/ne	.fail_popa
 		add	de,1
 		ld	t,(de)
 		cmp	t,$AA
-		j/ne	.fail
+		j/ne	.fail_popa
 		add	de,mbr_Partition0-511
+
+		;MPrintString <"  - mbr signature ok\n">
 
 		; point to partition entry
 
@@ -87,14 +101,16 @@ MakeMbrPartitionDevice:
 		ld	t,(de)
 		and	t,$7F
 		cmp	t,0
-		j/ne	.fail
+		j/ne	.fail_pop_bc_to_hl
+
+		;MPrintString <"  - partition ok\n">
 
 		; check type
 
 		add	de,part_Type
 		ld	t,(de)
 		cmp	t,TYPE_FAT32_LBA
-		j/ne	.fail
+		j/ne	.fail_pop_bc_to_hl
 
 		; copy underlying pointer to structure
 
@@ -145,11 +161,15 @@ MakeMbrPartitionDevice:
 		sub	bc,bdev_Size+1
 		pop	de/hl
 		ld	f,FLAGS_EQ
+		j	.exit
+
+.fail_popa	pop	ft
+.fail_pop_bc_to_hl
+		ld	f,FLAGS_NE
+		pop	bc-hl
+.exit		MStackFree 512
 		j	(hl)
 
-.fail		ld	f,FLAGS_NE
-		pop	bc-hl
-		j	(hl)
 
 .template	DW	mbrRead
 		DW	mbrWrite

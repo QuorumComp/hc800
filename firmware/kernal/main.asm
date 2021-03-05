@@ -2,12 +2,14 @@
 		INCLUDE	"lowlevel/math.i"
 		INCLUDE	"lowlevel/memory.i"
 		INCLUDE	"lowlevel/nexys3.i"
+		INCLUDE	"lowlevel/stack.i"
 		INCLUDE	"lowlevel/uart.i"
 
 		INCLUDE	"stdlib/stream.i"
 		INCLUDE	"stdlib/string.i"
 		INCLUDE	"stdlib/syscall.i"
 
+		INCLUDE	"blockdevice.i"
 		INCLUDE	"editor.i"
 		INCLUDE	"filesystems.i"
 		INCLUDE	"keyboard.i"
@@ -21,10 +23,20 @@
 Main:
 		di
 
+		; initialize kernal BSS to zeroes
+
+		ld	bc,$0000
+		ld	de,$4000
+		ld	t,0
+		jal	SetMemory
+
+		MStackInit 1024
+
 		jal	InitializePalette
 		jal	KeyboardInitialize
 		jal	TextInitialize
-		jal	FileInitialize
+		jal	BlockDeviceInit
+		;jal	FileInitialize
 
 		sys	KClearScreen
 

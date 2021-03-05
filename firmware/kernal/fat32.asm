@@ -20,12 +20,6 @@ BS_FSTYPE32		EQU	$52
 BS_BOOT_RECORD_SIG	EQU	$1FE
 
 
-; $0E(2) + $24(4)*$10(1)
-
-;$248 + $EDC*2
-
-;$20 + $3D0*2
-
 ; ---------------------------------------------------------------------------
 ; -- Make FAT32 file system jump table
 ; --
@@ -58,6 +52,10 @@ Fat32FsMake:
 .exit		MStackFree 512
 		pop	bc-hl
 		j	(hl)
+
+
+Fat32Change:
+		SECTION	"Fat32FsMake",CODE
 
 
 ; ---------------------------------------------------------------------------
@@ -121,9 +119,6 @@ fillFsStruct:
 		dj	f,.copy_loop
 		popa
 		j	(hl)
-
-.copy_table	DB	BPB_ROOT_CLUSTER
-		DB	BPB_FAT_BASE
 
 .template	DW	fileOpen
 		DW	fileClose
@@ -219,7 +214,7 @@ loadVolumeBootRecord:
 
 		; zero block number
 
-		ld	ft,blockNumber
+		ld	ft,sectorNumber
 		ld	l,0
 		ld	(ft),l
 		add	ft,1
@@ -232,7 +227,7 @@ loadVolumeBootRecord:
 		; load volume boot record
 
 		ld	ft,bc		; block device structure
-		ld	bc,blockNumber	; block number
+		ld	bc,sectorNumber	; block number
 		jal	BlockDeviceRead
 
 		pop	bc-hl
@@ -282,4 +277,7 @@ checkFat32:	push	bc-hl
 
 
 		SECTION	"Fat32Vars",BSS
-blockNumber:	DS	4
+fs:		DS	2
+sectorDirty:	DS	1
+sectorNumber:	DS	4
+sectorData:	DS	512

@@ -4,12 +4,14 @@
 
 		INCLUDE	"stdlib/string.i"
 
+		INCLUDE	"blockdevice.i"
+		INCLUDE	"fat32.i"
 		INCLUDE	"filesystems.i"
 		INCLUDE	"uart_commands.i"
 		INCLUDE	"uartfs.i"
 
-TOTAL_FILESYSTEMS = 1
-
+MAX_FILESYSTEMS = 10
+MAX_FAT_VOLUMES = 3
 
 ; ---------------------------------------------------------------------------
 ; -- Initialize file subsystem
@@ -18,19 +20,46 @@ TOTAL_FILESYSTEMS = 1
 FileInitialize:
 		pusha
 
-		ld	bc,filesystems+1
-		lco	t,(bc)
-		exg	f,t
-		sub	bc,1
-		lco	t,(bc)
-		ld	bc,ft
+		ld	t,0
+		push	ft
 
-		; bc - first filesystem
+		; t - device identifier
+		; t' - total filesystems
+
+		ld	bc,filesystems
+		ld	de,fat32Filesystems
+
+.next_blockdevice
+		jal	mountFat
+		j/ne	.no_fat
+
+		; success, store filesystem pointer
+
+		jal	.storeFsPointer
+
+		swap	ft
+		add	t,1	; increase total filesystems
+		swap	ft
+
+.no_fat		add	t,1
+		cmp	t,TOTAL_BLOCKDEVICES
+		j/ne	.next_blockdevice
+
+		ld	de,UartFilesystem
+		jal	.storeFsPointer
+
+		; restore total number of filesystems and store
+
+		pop	ft
+		ld	bc,totalFilesystems
+		ld	(bc),t
+
+		; de - UART filesystem, use as root
 
 		ld	ft,rootFs
-		ld	(ft),c
+		ld	(ft),e
 		add	ft,1
-		ld	(ft),b
+		ld	(ft),d
 
 		; initialize root
 
@@ -39,6 +68,30 @@ FileInitialize:
 		ld	(ft),b
 
 		popa
+		j	(hl)
+
+.storeFsPointer
+		exg	ft,bc
+		ld	(ft),e
+		add	ft,1
+		ld	(ft),d
+		add	ft,1
+		exg	ft,bc
+
+		j	(hl)
+
+
+; t  - device identifier
+; de - file system structure
+mountFat:
+		push	bc/hl
+
+		jal	BlockDeviceGet
+		j/ne	.fail
+
+		jal	Fat32FsMake
+
+.fail		pop	bc/hl
 		j	(hl)
 
 
@@ -180,7 +233,6 @@ FileRead:
 		ld	hl,ft
 
 		pop	ft-bc
-
 		jal	(hl)
 
 		jal	MathLoadOperand16U
@@ -224,12 +276,12 @@ FileReadByte:
 		j	(hl)
 
 
-		SECTION	"Filesystems",DATA
-filesystems::	DW	UartFilesystem
-
-		SECTION	"FilesystemVars",BSS
-readBuffer:	DS	2
-rootFs:		DS	2
-rootPath:	DS_STR
-filePath:	DS_STR
+			SECTION	"FilesystemVars",BSS
+fat32Filesystems:	DS	fs_Fat32_SIZEOF*MAX_FAT_VOLUMES
+filesystems:		DS	MAX_FILESYSTEMS*2
+totalFilesystems:	DS	1
+readBuffer:		DS	2
+rootFs:			DS	2
+rootPath:		DS_STR
+filePath:		DS_STR
 
