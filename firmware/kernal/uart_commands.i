@@ -15,18 +15,31 @@ ERROR_FORMAT		RB	1
 ERROR_PROTOCOL		EQU	$FE
 ERROR_TIMEOUT		EQU	$FF
 
+		PURGE	MDebugPrint
+
 MDebugPrint:	MACRO
 		pusha
-		j	.skip\@
-.string\@	DB	\1
-.skip\@		ld	d,.skip\@-.string\@
+		jal	__Print\@
+		popa
+		
+		PUSHS
+		SECTION "Strings",CODE
+__Print\@:
+		push	hl
+		ld	d,.skip\@-.string\@
 		ld	bc,.string\@
 .next\@		lco	t,(bc)
 		add	bc,1
 		jal	ComPrintChar
 		j/ne	.error\@
 		dj	d,.next\@
-.error\@	popa
+		pop	hl
+		j	(hl)
+.error\@	pop	hl
+		j	(hl)
+.string\@	DB	\1
+.skip\@
+		POPS
 		ENDM
 
 MDebugPrintR:	MACRO	;register

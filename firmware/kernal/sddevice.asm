@@ -4,6 +4,10 @@
 		INCLUDE	"blockdevice.i"
 		INCLUDE	"sd.i"
 		INCLUDE	"sddevice.i"
+		INCLUDE	"uart_commands.i"
+
+		INCLUDE	"uart_commands_disabled.i"
+
 
 ; ---------------------------------------------------------------------------
 ; -- Make SD block device structure
@@ -18,6 +22,12 @@
 		SECTION	"SdDeviceMake",CODE
 SdDeviceMake:
 		push	bc-hl
+
+		MDebugPrint <"SdDeviceMake ">
+		MDebugHexWord ft
+		MDebugPrint <" ">
+		MDebugHexWord bc
+		MDebugNewline
 
 		ld	d,t
 		ld	t,IO_STAT_SELECT0
@@ -89,6 +99,15 @@ readBlock:
 		j	(hl)
 
 
+; ---------------------------------------------------------------------------
+; -- Get device size
+; --
+; -- Inputs:
+; --   bc - pointer to size in blocks
+; --
+; -- Returns:
+; --    f - "eq" condition if success
+; --
 getSize:
 		push	bc
 

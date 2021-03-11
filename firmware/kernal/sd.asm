@@ -6,6 +6,9 @@
 		INCLUDE	"stdlib/syscall.i"
 
 		INCLUDE	"sd.i"
+		INCLUDE	"uart_commands.i"
+
+		INCLUDE	"uart_commands_disabled.i"
 
 
 CMD0_CRC	EQU	$95
@@ -153,7 +156,7 @@ SdGetTotalBlocks:
 
 		ld	bc,ft
 		ld	ft,19
-		jal	MathShift_32
+		jal	MathShiftLeft_32
 
 		pop	hl
 		j	(hl)
@@ -220,7 +223,7 @@ SdGetTotalBlocks:
 		sub	ft,3
 
 		exg	ft,bc
-		jal	MathShift_32
+		jal	MathShiftLeft_32
 
 		pop	hl
 		j	(hl)
@@ -257,8 +260,8 @@ SdReadSingleBlock:
 		push	bc-hl
 
 		push	de
-		exg	ft,bc
-		exg	ft,de
+		ld	ft,bc
+		ld	de,ft
 
 		; de = pointer to block number
 

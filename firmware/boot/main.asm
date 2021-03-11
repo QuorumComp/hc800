@@ -100,13 +100,14 @@ CheckKernal:
 		dj	d,.checksum
 
 		; t equals zero (ERROR_SUCCESS) if checksum match
+		cmp	t,0
 		j/eq	.done
 
 .ident_false	MPrintString "Kernal checksum mismatch. Failure."
 		MNewline
 		ld	t,ERROR_PROTOCOL
+		ld	f,FLAGS_NE
 .done
-		cmp	t,0
 		pop	bc-hl
 		j	(hl)
 

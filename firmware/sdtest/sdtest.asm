@@ -10,18 +10,68 @@
 		SECTION	"SDTest",CODE
 
 Entry::
-		MStackInit 1024
-
-		MNewLine
-
-.fail
+		jal	listDevices
 		sys	KExit
 
-.string		DC_STR	<"/this/is//a/test/">
+listDevices:
+		pusha
+
+		ld	bc,deviceInfo
+		ld	d,0
+
+.loop		ld	t,d
+		sys	KGetBlockDevice
+		jal/eq	printDevice
+
+		add	d,1
+		cmp	d,TOTAL_BLOCKDEVICES
+		j/ne	.loop
+
+		popa
+		j	(hl)
+
+
+printDevice:
+		pusha
+
+		MPrintString <"device: ">
+
+		ld	bc,deviceInfo
+		add	bc,bdinf_Name
+		jal	StreamBssStringOut
+
+		MPrintString <"\tsize: ">
+
+		add	bc,bdinf_Size-bdinf_Name
+		ld	ft,bc
+		ld	de,ft
+		ld	bc,sectors
+		jal	MathCopy_32
+
+		ld	t,11
+		jal	MathShiftRight_32
+
+		ld	t,(bc)
+		exg	f,t
+		add	bc,1
+		ld	t,(bc)
+		exg	f,t
+
+		jal	StreamDecimalWordOut
+		MPrintString <" MiB\n">
+
+		popa
+		j	(hl)
+
+
+		SECTION	"Variables",BSS_S
+deviceInfo	DS	bdinf_SIZEOF
+sectors		DS	4
+
 
 
 		END
-		
+
 listRootDirectory:
 		pusha
 		ld	de,fat32+fs_RootCluster
@@ -119,7 +169,7 @@ clusterToSector:
 		add	de,fs_ClusterToSector
 		ld	t,(de)
 		ld	t,3
-		jal	MathShift_32
+		jal	MathShiftLeft_32
 
 		add	de,fs_DataBase-fs_ClusterToSector
 		jal	MathAdd_32_32

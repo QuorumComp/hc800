@@ -514,7 +514,24 @@ keyBackspace:	push	hl
 		j	(hl)
 
 
-keyTab:		j	(hl)
+keyTab:
+		push	hl
+
+		jal	TextGetCursor
+		ld	t,f
+		cmp	t,CHARS_PER_LINE-8
+		j/geu	.dont_move
+
+		and	t,7
+		sub	t,8
+		neg	t
+
+		ld	b,t
+		ld	c,0
+		jal	moveCursor
+
+.dont_move	pop	hl
+		j	(hl)
 
 
 keyReturn:	pusha

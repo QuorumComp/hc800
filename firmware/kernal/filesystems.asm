@@ -2,7 +2,9 @@
 		INCLUDE	"lowlevel/memory.i"
 		INCLUDE	"lowlevel/rc800.i"
 
+		INCLUDE	"stdlib/stream.i"
 		INCLUDE	"stdlib/string.i"
+		INCLUDE	"stdlib/syscall.i"
 
 		INCLUDE	"blockdevice.i"
 		INCLUDE	"fat32.i"
@@ -30,6 +32,8 @@ FileInitialize:
 		ld	de,fat32Filesystems
 
 .next_blockdevice
+		push	ft
+
 		jal	mountFat
 		j/ne	.no_fat
 
@@ -41,7 +45,8 @@ FileInitialize:
 		add	t,1	; increase total filesystems
 		swap	ft
 
-.no_fat		add	t,1
+.no_fat		pop	ft
+		add	t,1
 		cmp	t,TOTAL_BLOCKDEVICES
 		j/ne	.next_blockdevice
 

@@ -7,6 +7,9 @@
 
 		INCLUDE	"blockdevice.i"
 		INCLUDE	"mbr.i"
+		INCLUDE	"uart_commands.i"
+
+		INCLUDE	"uart_commands_disabled.i"
 
 TYPE_FAT32_LBA	EQU	$0C
 
@@ -40,12 +43,13 @@ mbr_Partition3	RB	part_SIZEOF
 MakeMbrPartitionDevice:
 		pusha
 
-		;MPrintString <"MakeMbrPartitionDevice\n">
-		pusha
-		ld	ft,bc
-		jal	StreamHexWordOut
-		MNewLine
-		popa
+		MDebugPrint <"MakeMbrPartitionDevice enter ">
+		MDebugHexWord ft
+		MDebugPrint <" ">
+		MDebugHexWord bc
+		MDebugPrint <" ">
+		MDebugHexWord de
+		MDebugNewline
 
 		; zero block number variable
 
@@ -67,9 +71,10 @@ MakeMbrPartitionDevice:
 		; bc = blockNumber
 		; de = sector buffer
 
-		;MPrintString <"  - load MBR\n">
+		;MDebugPrint <"  - load MBR\n">
 		jal	BlockDeviceRead
-		;MPrintString <"  - loaded MBR\n">
+
+		;MDebugPrint <"  - loaded MBR\n">
 		j/ne	.fail_popa
 
 		; check signature
@@ -84,7 +89,7 @@ MakeMbrPartitionDevice:
 		j/ne	.fail_popa
 		add	de,mbr_Partition0-511
 
-		;MPrintString <"  - mbr signature ok\n">
+		;MDebugPrint <"  - mbr signature ok\n">
 
 		; point to partition entry
 
@@ -103,7 +108,7 @@ MakeMbrPartitionDevice:
 		cmp	t,0
 		j/ne	.fail_pop_bc_to_hl
 
-		;MPrintString <"  - partition ok\n">
+		;MDebugPrint <"  - partition ok\n">
 
 		; check type
 
@@ -124,7 +129,7 @@ MakeMbrPartitionDevice:
 		ld	(bc),t
 		swap	de	; restore partition pointer
 
-		; bc have now been popped
+		; bc has now been popped
 
 		; copy offset to structure
 
@@ -138,7 +143,7 @@ MakeMbrPartitionDevice:
 		dj	f,.offset_loop
 
 		; copy size to structure
-
+		add	bc,mbrdev_Sectors-(mbrdev_Offset+4)
 		add	de,part_Sectors-(part_StartLBA+4)
 		ld	f,4
 .size_loop	ld	t,(de)
@@ -158,8 +163,9 @@ MakeMbrPartitionDevice:
 		add	bc,1
 		dj	f,.template_loop
 
-		sub	bc,bdev_Size+1
+		sub	bc,bdev_Read+.templateEnd-.template
 		pop	de/hl
+
 		ld	f,FLAGS_EQ
 		j	.exit
 
@@ -167,7 +173,16 @@ MakeMbrPartitionDevice:
 .fail_pop_bc_to_hl
 		ld	f,FLAGS_NE
 		pop	bc-hl
-.exit		MStackFree 512
+.exit
+		MDebugPrint <"MakeMbrPartitionDevice exit ">
+		MDebugHexWord ft
+		MDebugPrint <" ">
+		MDebugHexWord bc
+		MDebugPrint <" ">
+		MDebugHexWord de
+		MDebugNewline
+
+		MStackFree 512
 		j	(hl)
 
 

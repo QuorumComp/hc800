@@ -15,6 +15,7 @@
 
 		IMPORT	SysExecuteCommandLine
 		IMPORT	SysExit
+		IMPORT	SysGetBlockDevice
 
 SET_MMU_KERNAL	MACRO
 		ld	b,IO_MMU_BASE
@@ -51,6 +52,7 @@ KVector:	MACRO
 		KVector	SysExit
 		KVector debugCharOut
 		KVector charIn
+		KVector SysGetBlockDevice
 
 
 		SECTION "DebugCharOut",CODE
