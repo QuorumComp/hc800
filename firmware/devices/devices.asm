@@ -46,6 +46,17 @@ printDevice:
 		ld	ft,bc
 		ld	de,ft
 		ld	bc,sectors
+		ld	f,$FF
+		ld	l,4
+.copy		ld	t,(de)
+		ld	(bc),t
+		and	t,f
+		ld	f,t
+		dj	l,.copy
+
+		cmp	t,$FF
+		j/eq	.unknown
+
 		jal	MathCopy_32
 
 		ld	t,11
@@ -62,6 +73,12 @@ printDevice:
 
 		popa
 		j	(hl)
+
+.unknown
+		MPrintString <"unknown\n">
+		popa
+		j	(hl)
+
 
 
 		SECTION	"Variables",BSS_S

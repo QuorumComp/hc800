@@ -234,7 +234,7 @@ BlockDeviceRead:
 BlockDeviceSize:
 		push	hl
 
-		push	ft	
+		push	ft
 		add	ft,bdev_Size
 		ld	l,(ft)
 		add	ft,1

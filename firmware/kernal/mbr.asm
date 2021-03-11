@@ -196,9 +196,28 @@ mbrWrite:
 		ld	f,FLAGS_NE
 		j	(hl)
 
+; ---------------------------------------------------------------------------
+; -- Get device size
+; --
+; -- Inputs:
+; --   ft - pointer to block device structure
+; --   bc - pointer to size in blocks
+; --
+; -- Returns:
+; --    f - "eq" condition if success
+; --
+		SECTION	"MbrSize",CODE
 mbrSize:
-		ld	f,FLAGS_NE
+		pusha
+
+		add	ft,mbrdev_Sectors
+		ld	de,ft
+		jal	MathCopy_32
+
+		popa
+		ld	f,FLAGS_EQ
 		j	(hl)
+
 
 ; ---------------------------------------------------------------------------
 ; -- Read block from device
@@ -211,7 +230,7 @@ mbrSize:
 ; -- Returns:
 ; --    f - "eq" condition if success
 ; --
-		SECTION	"ReadBlock",CODE
+		SECTION	"MbrReadBlock",CODE
 mbrRead:
 		pusha
 

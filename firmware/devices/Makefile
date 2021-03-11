@@ -1,9 +1,9 @@
 STD = ../stdlib/std.lib
 LOWLEVEL = ../lowlevel/lowlevel.lib
 LIBS = $(STD) $(LOWLEVEL)
-SRCS = sdtest.asm
+SRCS = devices.asm
 ASMFLAGS = -g -el -z0 -DBOOT -i../
-TARGET = sdtest
+TARGET = devices
 
 ASM = motorrc8
 LIB = xlib

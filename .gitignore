@@ -100,4 +100,4 @@ mist/hc800_mist.v*
 specnext/hc800_zxnext.v*
 mist/PLLJ_PLLSPE_INFO.txt
 mist/top.v
-firmware/sdtest/sdtest
+firmware/devices/devices

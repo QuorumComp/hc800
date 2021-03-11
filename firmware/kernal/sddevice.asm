@@ -103,6 +103,7 @@ readBlock:
 ; -- Get device size
 ; --
 ; -- Inputs:
+; --   ft - pointer to block device structure
 ; --   bc - pointer to size in blocks
 ; --
 ; -- Returns:

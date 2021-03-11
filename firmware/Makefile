@@ -5,7 +5,7 @@ TARGETS = \
 	kernal/kernal.bin \
 	ascii/ascii \
 	mathtest/mathtest \
-	sdtest/sdtest
+	devices/devices
 
 LIBS = stdlib/std.lib lowlevel/lowlevel.lib
 
