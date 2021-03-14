@@ -60,7 +60,7 @@ MDebugPrintR:	MACRO	;register
 .error\@	popa
 		ENDM
 
-MDebugNewline:	MACRO
+MDebugNewLine:	MACRO
 		pusha
 		ld	t,10
 		jal	ComPrintChar

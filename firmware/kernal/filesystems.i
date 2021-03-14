@@ -2,6 +2,8 @@
 
 FILESYSTEMS_I_INCLUDED_ = 1
 
+		INCLUDE	"stdlib/syscall.i"
+
 
 		GLOBAL	FileInitialize
 		GLOBAL	FileOpen
@@ -23,7 +25,9 @@ FFLAG_DIR	EQU	$01
 
 
 		RSRESET
-fs_Name		RW	1
+fs_Label	RB	MAX_LABEL_LENGTH
+fs_Volume	RB	MAX_VOLUME_NAME_LENGTH
+fs_BlockDevice	RB	1	; $FF if not blockdevice
 
 ; ---------------------------------------------------------------------------
 ; -- Open file. file_Flags, file_Error and file_Length are filled in.
@@ -64,5 +68,9 @@ fs_Close	RW	1
 fs_Read		RW	1
 
 fs_PRIVATE	RB	0
+
+	IF	fs_Open~=volinf_Free
+		FAIL	"First three members of filesystem and volume info structures must have the same size"
+	ENDC
 
 	ENDC

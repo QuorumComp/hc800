@@ -27,7 +27,7 @@ SdDeviceMake:
 		MDebugHexWord ft
 		MDebugPrint <" ">
 		MDebugHexWord bc
-		MDebugNewline
+		MDebugNewLine
 
 		ld	d,t
 		ld	t,IO_STAT_SELECT0

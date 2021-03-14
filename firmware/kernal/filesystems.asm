@@ -9,11 +9,70 @@
 		INCLUDE	"blockdevice.i"
 		INCLUDE	"fat32.i"
 		INCLUDE	"filesystems.i"
-		INCLUDE	"uart_commands.i"
 		INCLUDE	"uartfs.i"
+
+		INCLUDE	"uart_commands.i"
+		INCLUDE	"uart_commands_disabled.i"
 
 MAX_FILESYSTEMS = 10
 MAX_FAT_VOLUMES = 3
+
+; -- Get block device information
+; --    t - volume index
+; --   bc - volume information structure
+; -- Outputs:
+; --    f - "eq" condition if volume exists and information structure filled
+; --        "ne" condition when volume index and further indices do not exist
+		SECTION	"SysGetVolume",CODE
+SysGetVolume::
+		push	bc-de
+
+		MDebugPrint <"SysGetVolume\n">
+
+		ld	f,t
+
+		ld	de,totalFilesystems
+		ld	t,(de)
+		exg	f,t
+
+		MDebugPrint <"- 1\n">
+
+		cmp	t,f
+		j/geu	.invalid
+
+		add	t,t
+		ld	f,0
+		add	ft,filesystems
+
+		MDebugHexWord ft
+		MDebugNewLine
+
+		ld	e,(ft)
+		add	ft,1
+		ld	d,(ft)
+
+		MDebugHexWord de
+		MDebugNewLine
+
+		MDebugPrint <"- 2\n">
+
+		ld	f,fs_Open
+.copy_names	ld	t,(de)
+		ld	(bc),t
+		add	de,1
+		add	bc,1
+		dj	f,.copy_names
+
+		ld	f,FLAGS_EQ
+
+.exit		MDebugPrint <"- exit\n">
+
+		pop	bc-hl
+		reti
+
+.invalid	ld	f,FLAGS_NE
+		j	.exit
+
 
 ; ---------------------------------------------------------------------------
 ; -- Initialize file subsystem
@@ -22,42 +81,31 @@ MAX_FAT_VOLUMES = 3
 FileInitialize:
 		pusha
 
-		ld	t,0
-		push	ft
+		jal	UartInitialize
 
-		; t - device identifier
-		; t' - total filesystems
+		ld	t,0	; t - device identifier
 
 		ld	bc,filesystems
 		ld	de,fat32Filesystems
 
 .next_blockdevice
-		push	ft
-
 		jal	mountFat
 		j/ne	.no_fat
 
 		; success, store filesystem pointer
 
+		MDebugPrint <"Mounted FAT32 volume\n">
+
 		jal	.storeFsPointer
 
-		swap	ft
-		add	t,1	; increase total filesystems
-		swap	ft
+		add	de,fs_Fat32_SIZEOF
 
-.no_fat		pop	ft
-		add	t,1
+.no_fat		add	t,1
 		cmp	t,TOTAL_BLOCKDEVICES
 		j/ne	.next_blockdevice
 
 		ld	de,UartFilesystem
 		jal	.storeFsPointer
-
-		; restore total number of filesystems and store
-
-		pop	ft
-		ld	bc,totalFilesystems
-		ld	(bc),t
 
 		; de - UART filesystem, use as root
 
@@ -76,6 +124,10 @@ FileInitialize:
 		j	(hl)
 
 .storeFsPointer
+		push	ft/de/hl
+
+		; store pointer in table
+
 		exg	ft,bc
 		ld	(ft),e
 		add	ft,1
@@ -83,20 +135,50 @@ FileInitialize:
 		add	ft,1
 		exg	ft,bc
 
+		; create volume name
+
+		add	de,fs_Volume
+		ld	t,2
+		ld	(de),t
+		add	de,1
+		ld	t,'v'
+		ld	(de),t
+		add	de,1
+
+		ld	hl,totalFilesystems
+		ld	t,(hl)
+		add	t,'0'
+		ld	(de),t
+
+		add	t,1-'0'
+		ld	(hl),t
+
+		pop	ft/de/hl
 		j	(hl)
 
 
 ; t  - device identifier
 ; de - file system structure
 mountFat:
-		push	bc/hl
+		push	ft/bc/hl
 
 		jal	BlockDeviceGet
 		j/ne	.fail
 
 		jal	Fat32FsMake
+		j/ne	.fail
 
-.fail		pop	bc/hl
+		pop	ft
+		add	de,fs_BlockDevice
+		ld	(de),t
+		sub	de,fs_BlockDevice
+
+		ld	f,FLAGS_EQ
+		j	.exit
+
+.fail		pop	ft
+		ld	f,FLAGS_NE
+.exit		pop	bc/hl
 		j	(hl)
 
 
@@ -115,6 +197,10 @@ mountFat:
 FileOpen:
 		push	bc-hl
 
+		MDebugPrint <"FileOpen ">
+		MDebugPrintR de
+		MDebugNewLine
+
 		; clear file handle structure
 		push	de
 		ld	de,file_SIZEOF
@@ -128,6 +214,9 @@ FileOpen:
 		add	ft,1
 		ld	h,(ft)
 
+		MDebugHexWord hl
+		MDebugNewLine
+
 		; set filesystem pointer in file struct
 		ld	ft,bc
 		ld	(ft),l
@@ -136,10 +225,13 @@ FileOpen:
 
 		; get open function
 		add	hl,fs_Open+1
-		lco	t,(hl)
+		ld	t,(hl)
 		exg	f,t
 		sub	hl,1
-		lco	t,(hl)
+		ld	t,(hl)
+
+		MDebugHexWord ft
+		MDebugNewLine
 
 		jal	(ft)
 
@@ -157,6 +249,8 @@ FileOpen:
 FileClose:
 		push	bc-hl
 
+		MDebugPrint <"FileClose\n">
+
 		; get filesystem
 		ld	ft,bc
 		ld	c,(ft)
@@ -165,10 +259,10 @@ FileClose:
 
 		; get close function
 		add	bc,fs_Close+1
-		lco	t,(bc)
+		ld	t,(bc)
 		exg	f,t
 		sub	bc,1
-		lco	t,(bc)
+		ld	t,(bc)
 
 		jal	(ft)
 
@@ -222,6 +316,10 @@ FileSkip:
 FileRead:
 		push	bc-hl
 
+		MDebugPrint <"FileRead ">
+		MDebugHexWord ft
+		MDebugNewLine
+
 		push	ft-bc
 		; get filesystem
 		ld	ft,bc
@@ -231,10 +329,10 @@ FileRead:
 
 		; get read function
 		add	bc,fs_Read+1
-		lco	t,(bc)
+		ld	t,(bc)
 		exg	f,t
 		sub	bc,1
-		lco	t,(bc)
+		ld	t,(bc)
 		ld	hl,ft
 
 		pop	ft-bc

@@ -49,7 +49,7 @@ MakeMbrPartitionDevice:
 		MDebugHexWord bc
 		MDebugPrint <" ">
 		MDebugHexWord de
-		MDebugNewline
+		MDebugNewLine
 
 		; zero block number variable
 
@@ -180,7 +180,7 @@ MakeMbrPartitionDevice:
 		MDebugHexWord bc
 		MDebugPrint <" ">
 		MDebugHexWord de
-		MDebugNewline
+		MDebugNewLine
 
 		MStackFree 512
 		j	(hl)

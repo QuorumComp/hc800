@@ -10,6 +10,10 @@
 		SECTION	"SDTest",CODE
 
 Entry::
+		MSetColor 1
+		MPrintString <"Device  Size      \n">
+		MSetColor 0
+
 		jal	listDevices
 		sys	KExit
 
@@ -34,13 +38,11 @@ listDevices:
 printDevice:
 		pusha
 
-		MPrintString <"device: ">
-
-		ld	bc,deviceInfo
-		add	bc,bdinf_Name
+		ld	bc,deviceInfo+bdinf_Name
 		jal	StreamBssStringOut
 
-		MPrintString <"\tsize: ">
+		ld	t,9
+		sys	KCharacterOut
 
 		add	bc,bdinf_Size-bdinf_Name
 		ld	ft,bc

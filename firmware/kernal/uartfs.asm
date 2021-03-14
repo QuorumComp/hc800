@@ -2,18 +2,45 @@
 		INCLUDE	"lowlevel/uart.i"
 		INCLUDE	"stdlib/string.i"
 		INCLUDE	"filesystems.i"
-		INCLUDE	"uart_commands.i"
 		INCLUDE	"uartfs.i"
 
-		SECTION	"UartFilesystem",CODE
+		INCLUDE	"uart_commands.i"
+		INCLUDE	"uart_commands_disabled.i"
 
-UartFilesystem:
-		DW	uartName
+
+		RSSET	fs_PRIVATE
+ufs_SIZEOF	RB	0
+
+; ---------------------------------------------------------------------------
+; -- Initialize UART filesystem
+; --
+		SECTION	"UartInitialize",CODE
+UartInitialize:
+		pusha
+
+		ld	bc,UartFilesystem
+		ld	de,.fs
+		ld	f,.fs_end-.fs
+.copy		lco	t,(de)
+		ld	(bc),t
+		add	de,1
+		add	bc,1
+		dj	f,.copy
+
+		popa
+		j	(hl)
+
+.fs		DB	4,"uart",0,0,0,0,0,0,0,0,0,0,0
+		DB	0,0,0,0,0,0,0,0
+		DB	$FF
 		DW	uartOpen
 		DW	uartClose
 		DW	uartRead
+.fs_end
 
-uartName:	DC_STR	"uart"
+	IF .fs_end-.fs~=ufs_SIZEOF
+		FAIL	"UART filesystem template size mismatch ({.fs_end-.fs} vs {ufs_SIZEOF})"
+	ENDC
 
 
 ; ---------------------------------------------------------------------------
@@ -31,6 +58,10 @@ uartName:	DC_STR	"uart"
 		SECTION	"UartOpen",CODE
 uartOpen:	
 		push	bc-hl
+
+		MDebugPrint <"uart:Open ">
+		MDebugPrintR de
+		MDebugNewLine
 
 		push	bc
 		ld	bc,uartFile1
@@ -191,4 +222,5 @@ sendStatFileCommand:
 		SECTION	"UartFiles",BSS
 
 uartFile1:	DS_STR
+UartFilesystem:	DS	ufs_SIZEOF
 

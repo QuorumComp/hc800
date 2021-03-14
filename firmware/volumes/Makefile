@@ -1,9 +1,9 @@
 STD = ../stdlib/std.lib
 LOWLEVEL = ../lowlevel/lowlevel.lib
 LIBS = $(STD) $(LOWLEVEL)
-SRCS = mathtest.asm
+SRCS = volumes.asm
 ASMFLAGS = -g -el -z0 -i../
-TARGET = mathtest
+TARGET = volumes
 
 ASM = motorrc8
 LIB = xlib

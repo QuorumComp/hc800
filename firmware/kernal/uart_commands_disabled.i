@@ -12,8 +12,8 @@ MDebugPrint:	MACRO
 MDebugPrintR:	MACRO	;register
 		ENDM
 
-		PURGE	MDebugNewline
-MDebugNewline:	MACRO
+		PURGE	MDebugNewLine
+MDebugNewLine:	MACRO
 		ENDM
 
 		PURGE	MDebugHexWord

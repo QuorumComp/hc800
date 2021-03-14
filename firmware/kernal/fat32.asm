@@ -7,6 +7,9 @@
 		INCLUDE	"blockdevice.i"
 		INCLUDE	"fat32.i"
 
+		INCLUDE	"uart_commands.i"
+		INCLUDE	"uart_commands_disabled.i"
+
 FAT32_BOOT_SIG		EQU	$29
 
 BPB_SECTORS_PER_CLUSTER	EQU	$0D
@@ -43,11 +46,15 @@ Fat32FsMake:
 		jal	checkFat32
 		j/ne	.exit
 
+		MDebugPrint <"FAT32 found\n">
+
 		ld	ft,de
 		ld	bc,ft	; bc = volume boot record
 		swap	de	; restore fs structure
 		jal	fillFsStruct
 		swap	de	; put fs structure back in place
+
+		ld	f,FLAGS_EQ
 
 .exit		MStackFree 512
 		pop	bc-hl
@@ -212,6 +219,8 @@ fileRead:
 loadVolumeBootRecord:
 		push	bc-hl
 
+		MDebugPrint <"loadVolumeBootRecord\n">
+
 		; zero block number
 
 		ld	ft,sectorNumber
@@ -242,6 +251,8 @@ loadVolumeBootRecord:
 ; --
 		SECTION	"checkFat32",CODE
 checkFat32:	push	bc-hl
+
+		MDebugPrint <"checkFat32\n">
 
 		add	de,BS_BOOT_RECORD_SIG
 		ld	t,(de)

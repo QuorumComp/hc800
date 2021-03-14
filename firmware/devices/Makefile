@@ -2,7 +2,7 @@ STD = ../stdlib/std.lib
 LOWLEVEL = ../lowlevel/lowlevel.lib
 LIBS = $(STD) $(LOWLEVEL)
 SRCS = devices.asm
-ASMFLAGS = -g -el -z0 -DBOOT -i../
+ASMFLAGS = -g -el -z0 -i../
 TARGET = devices
 
 ASM = motorrc8

@@ -193,7 +193,7 @@ BlockDeviceRead:
 		MDebugHexWord bc
 		MDebugPrint <" ">
 		MDebugHexWord de
-		MDebugNewline
+		MDebugNewLine
 
 		push	hl
 
@@ -215,7 +215,7 @@ BlockDeviceRead:
 		MDebugHexWord bc
 		MDebugPrint <" ">
 		MDebugHexWord de
-		MDebugNewline
+		MDebugNewLine
 
 		jal	(hl)
 
