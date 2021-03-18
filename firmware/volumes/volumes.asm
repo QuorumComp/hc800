@@ -7,7 +7,7 @@
 		INCLUDE	"stdlib/string.i"
 		INCLUDE	"stdlib/syscall.i"
 
-		SECTION	"SDTest",CODE
+		SECTION	"Volumes",CODE
 
 Entry::
 		MSetColor 1
@@ -39,14 +39,20 @@ listVolumes:
 printVolume:
 		pusha
 
+		; print volume name (v?)
+
 		ld	bc,volumeInfo+volinf_Name
 		jal	StreamBssStringOut
 
 		ld	t,9
 		sys	KCharacterOut
 
+		; print volume label
+
 		add	bc,volinf_Label-volinf_Name
 		jal	StreamBssStringOut
+
+		; add spaces
 
 		ld	t,(bc)
 		sub	t,17
@@ -55,6 +61,8 @@ printVolume:
 .spaces		ld	t,' '
 		sys	KCharacterOut
 		dj	d,.spaces
+
+		; print block device name, if block device
 
 		add	bc,volinf_BlockDevice-volinf_Label
 		ld	t,(bc)
@@ -68,8 +76,7 @@ printVolume:
 		add	bc,bdinf_Name
 		jal	StreamBssStringOut
 
-.done
-		MNewLine
+.done		MNewLine
 
 		popa
 		j	(hl)

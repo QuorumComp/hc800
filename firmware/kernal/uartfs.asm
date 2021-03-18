@@ -11,6 +11,15 @@
 		RSSET	fs_PRIVATE
 ufs_SIZEOF	RB	0
 
+		RSSET	dir_PRIVATE
+udir_Index	RW	1
+udir_SIZEOF	RB	0
+
+	IF udir_SIZEOF>dir_SIZEOF
+		FAIL	"udir_SIZEOF too large"
+	ENDC
+
+
 ; ---------------------------------------------------------------------------
 ; -- Initialize UART filesystem
 ; --
@@ -36,6 +45,8 @@ UartInitialize:
 		DW	uartOpen
 		DW	uartClose
 		DW	uartRead
+		DW	uartOpenDir
+		DW	uartReadDir
 .fs_end
 
 	IF .fs_end-.fs~=ufs_SIZEOF
@@ -213,14 +224,158 @@ sendStatFileCommand:
 
 		ld	t,ERROR_SUCCESS
 		ld	f,FLAGS_EQ
-.exit
-		pop	hl
+
+.exit		pop	hl
 		j	(hl)
 
+
+; ---------------------------------------------------------------------------
+; -- Open directory
+; --
+; -- Inputs:
+; --   bc - pointer to directory struct
+; --   de - path
+; --
+; -- Output:
+; --    f - "eq" if directory could be opened. Directory struct is filled in
+; --        with information on first file
+; --
+		SECTION "UartOpenDir",CODE
+uartOpenDir:
+		push	bc-hl
+
+		ld	bc,uartDir1
+		jal	StringCopy
+
+		pop	bc
+		add	bc,udir_Index
+
+		ld	t,0
+		ld	(bc),t
+		add	bc,1
+		ld	(bc),t
+
+		sub	bc,udir_Index+1
+
+		jal	uartReadDir
+
+		pop	de-hl
+		j	(hl)
+
+
+; ---------------------------------------------------------------------------
+; -- Read next file information from directory
+; --
+; -- Inputs:
+; --   bc - pointer to directory struct
+; --
+; -- Output:
+; --    f - "eq" if next file information could be retrieved. Directory
+; --        struct is filled in with information on file.
+; --        "ne" when no more files present.
+; --
+		SECTION "UartReadDir",CODE
+uartReadDir:
+		push	bc-hl
+
+		ld	t,ERROR_SUCCESS
+		add	bc,dir_Error
+		ld	(bc),t
+
+		; fetch index
+		add	bc,udir_Index+1-dir_Error
+		ld	t,(bc)
+		exg	f,t
+		sub	bc,1
+		ld	t,(bc)
+
+		; increment index and store
+		push	ft
+		add	ft,1
+		ld	(bc),t
+		add	bc,1
+		exg	f,t
+		ld	(bc),t
+		pop	ft
+
+		; send read dir command
+		ld	bc,uartDir1
+		jal	sendReadDirCommand
+
+		; read response
+		jal	ComSyncResponse
+		j/ne	.error
+
+		; filename
+		pop	bc
+		push	bc
+
+		add	bc,dir_Filename
+		jal	ComReadDataString
+		j/ne	.error
+
+		; directory flag
+		jal	UartByteInSync
+		j/ne	.error
+
+		add	bc,dir_Flags-dir_Filename
+		and	t,FFLAG_DIR
+		ld	(bc),t
+
+		; file length
+
+		add	bc,dir_Length-dir_Flags
+		ld	de,4
+		jal	UartMemoryInSync
+
+.exit		pop	bc-hl
+		j	(hl)
+
+.error		pop	bc
+		push	bc
+		add	bc,dir_Error
+		ld	(bc),t
+		j	.exit
+
+
+; ---------------------------------------------------------------------------
+; -- Send read directory command
+; --
+; -- Inputs:
+; --   ft - index
+; --   bc - path name (Pascal string, data segment)
+; --
+; -- Returns:
+; --    t - error code, 0 is success
+; --    f - "eq" condition if success
+; --
+		SECTION "SendReadDirCommand",CODE
+sendReadDirCommand:
+		push	bc-hl
+
+		ld	de,ft
+
+		jal	ComIdentify
+		j/ne	.exit
+
+		ld	t,COMMAND_READ_DIR
+		jal	ComSendCommand
+
+		ld	ft,de
+		jal	UartWordOutSync
+
+		jal	ComSendDataString
+
+		ld	t,ERROR_SUCCESS
+		ld	f,FLAGS_EQ
+
+.exit		pop	bc-hl
+		j	(hl)
 
 
 		SECTION	"UartFiles",BSS
 
 uartFile1:	DS_STR
+uartDir1:	DS_STR
 UartFilesystem:	DS	ufs_SIZEOF
 

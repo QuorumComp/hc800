@@ -379,6 +379,96 @@ FileReadByte:
 		j	(hl)
 
 
+; ---------------------------------------------------------------------------
+; -- Open directory
+; --
+; -- Inputs:
+; --   bc - pointer to directory struct
+; --   de - path
+; --
+; -- Output:
+; --    f - "eq" if directory could be opened. Directory struct is filled in
+; --        with information on first file
+; --
+		SECTION	"DirectoryOpen",CODE
+DirectoryOpen:
+		push	bc-hl
+
+		; clear directory structure
+		ld	de,dir_SIZEOF
+		ld	t,0
+		jal	SetMemory
+
+		; get filesystem
+		ld	ft,rootFs
+		ld	l,(ft)
+		add	ft,1
+		ld	h,(ft)
+
+		; set filesystem pointer in directory struct
+		ld	ft,bc
+		ld	(ft),l
+		add	ft,1
+		ld	(ft),h
+
+		; get open function
+		add	hl,fs_OpenDir+1
+		ld	t,(hl)
+		exg	f,t
+		sub	hl,1
+		ld	t,(hl)
+
+		pop	de
+		push	de
+
+		jal	(ft)
+
+		pop	bc-hl
+		j	(hl)
+
+
+; ---------------------------------------------------------------------------
+; -- Read next file information from directory
+; --
+; -- Inputs:
+; --   bc - pointer to directory struct
+; --
+; -- Output:
+; --    f - "eq" if next file information could be retrieved. Directory
+; --        struct is filled in with information on file.
+; --        "ne" when no more files present.
+; --
+		SECTION	"DirectoryRead",CODE
+DirectoryRead:
+		push	bc-hl
+
+		push	bc
+
+		; get filesystem
+		ld	ft,bc
+		ld	c,(ft)
+		add	ft,1
+		ld	b,(ft)
+
+		; get read function
+		add	bc,fs_ReadDir+1
+		ld	t,(bc)
+		exg	f,t
+		sub	bc,1
+		ld	t,(bc)
+		ld	hl,ft
+
+		pop	bc
+		jal	(hl)
+
+		add	bc,dir_Error
+		ld	t,(bc)
+		cmp	t,ERROR_SUCCESS
+
+		pop	bc-hl
+		j	(hl)
+
+
 			SECTION	"FilesystemVars",BSS
 fat32Filesystems:	DS	fs_Fat32_SIZEOF*MAX_FAT_VOLUMES
 filesystems:		DS	MAX_FILESYSTEMS*2

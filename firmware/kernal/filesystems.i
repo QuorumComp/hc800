@@ -11,18 +11,8 @@ FILESYSTEMS_I_INCLUDED_ = 1
 		GLOBAL	FileReadByte
 		GLOBAL	FileSkip
 		GLOBAL	FileClose
-
-		RSRESET
-file_System	RW	1
-file_Length	RB	4
-file_Offset	RB	4
-file_Error	RB	1
-file_Flags	RB	1
-file_Private	RB	4
-file_SIZEOF	RB	0
-
-FFLAG_DIR	EQU	$01
-
+		GLOBAL	DirectoryOpen
+		GLOBAL	DirectoryRead
 
 		RSRESET
 fs_Label	RB	MAX_LABEL_LENGTH
@@ -67,7 +57,33 @@ fs_Close	RW	1
 ; --
 fs_Read		RW	1
 
+; ---------------------------------------------------------------------------
+; -- Open directory
+; --
+; -- Inputs:
+; --   bc - pointer to directory struct
+; --
+; -- Output:
+; --    f - "eq" if directory could be opened. Directory struct is filled in
+; --        with information on first file
+; --
+fs_OpenDir	RW	1
+
+; ---------------------------------------------------------------------------
+; -- Read next file information from directory
+; --
+; -- Inputs:
+; --   bc - pointer to directory struct
+; --
+; -- Output:
+; --    f - "eq" if next file information could be retrieved. Directory
+; --        struct is filled in with information on file.
+; --        "ne" when no more files present.
+; --
+fs_ReadDir	RW	1
+
 fs_PRIVATE	RB	0
+
 
 	IF	fs_Open~=volinf_Free
 		FAIL	"First three members of filesystem and volume info structures must have the same size"

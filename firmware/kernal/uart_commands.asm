@@ -241,21 +241,51 @@ ComSendCommand:
 ; -- Inputs:
 ; --   bc - Pascal string
 ; --
+		SECTION "ComSendDataString",CODE
 ComSendDataString:
 		pusha
 
 		ld	f,0
 		ld	t,(bc)
 		add	bc,1
+
 		jal	UartWordOutSync		; filename length
 
-		ld	f,t
-.write_string	ld	t,(bc)
-		jal	UartByteOutSync
-		add	bc,1
-		dj	f,.write_string
+		ld	de,ft
+		jal	UartMemoryOutSync
 
 		popa
+		j	(hl)
+
+
+; --
+; -- Read string in UART format
+; --
+; -- Inputs:
+; --   bc - Pascal string destination
+; --
+; -- Outputs:
+; --    f - "eq" condition if success
+; --
+		SECTION "ComReadDataString",CODE
+ComReadDataString:
+		push	bc-hl
+
+		ld	ft,bc
+		ld	de,ft
+
+		jal	UartWordInSync
+		j/ne	.error
+
+		exg	bc,de
+
+		ld	t,e
+		ld	(bc),t
+		add	bc,1
+
+		jal	UartMemoryInSync
+
+.error		pop	bc-hl		
 		j	(hl)
 
 

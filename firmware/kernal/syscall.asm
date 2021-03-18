@@ -7,6 +7,7 @@
 		INCLUDE	"kernal/keyboard.i"
 
 		INCLUDE	"editor.i"
+		INCLUDE	"filesystems.i"
 		INCLUDE	"main.i"
 		INCLUDE	"mmu.i"
 		INCLUDE	"text.i"
@@ -55,7 +56,23 @@ KVector:	MACRO
 		KVector charIn
 		KVector SysGetBlockDevice
 		KVector SysGetVolume
+		KVector	openDirectory
+		KVector	readDirectory
 
+
+		SECTION "OpenDirectory",CODE
+openDirectory:
+		jal	DirectoryOpen
+		pop	hl
+		reti
+		
+
+		SECTION "ReadDirectory",CODE
+readDirectory:
+		jal	DirectoryRead
+		pop	hl
+		reti
+		
 
 		SECTION "DebugCharOut",CODE
 debugCharOut:
@@ -85,7 +102,6 @@ charIn:
 		jal	KeyboardRead
 		pop	hl
 		reti
-
 
 		SECTION "SetAttribute",CODE
 textSetAttributes:

@@ -5,6 +5,7 @@ TARGETS = \
 	kernal/kernal.bin \
 	ascii/ascii \
 	devices/devices \
+	dir/dir \
 	mathtest/mathtest \
 	volumes/volumes
 
