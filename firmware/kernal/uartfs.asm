@@ -169,10 +169,19 @@ uartRead:
 		push	bc
 		jal	UartWordInSync
 		ld	ft,bc
+		ld	hl,ft
 		pop	bc
+
+		tst	hl
+		j/eq	.error
 
 		push	bc
 
+		; de <- hl
+		; bc <- de
+		; ft <- bc
+
+		exg	ft,hl
 		exg	ft,de
 		exg	ft,bc
 

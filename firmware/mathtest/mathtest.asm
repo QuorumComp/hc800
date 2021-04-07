@@ -8,7 +8,7 @@
 Entry::
 		ld	ft,$0102
 		ld	bc,.op1
-		jal	MathMultiplyUnsigned_32_16
+		jal	MathMultiplyUnsigned_32x16_p32
 		jal	.print_bc
 
 		ld	ft,31245
