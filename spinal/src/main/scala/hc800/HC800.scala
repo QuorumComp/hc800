@@ -33,7 +33,7 @@ case class CPU(memoryDomain: ClockDomain) extends Component {
 
 	io.io := cpu.io.io
 	io.code := cpu.io.code
-	io.system := cpu.io.intActive
+	io.system := cpu.io.int
 }
 
 
