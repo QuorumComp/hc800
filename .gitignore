@@ -103,3 +103,4 @@ mist/top.v
 firmware/devices/devices
 firmware/volumes/volumes
 firmware/dir/dir
+spinal/RC811.v

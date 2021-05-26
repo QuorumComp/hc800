@@ -151,7 +151,6 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 
 		private val lowCycleCounter = cycleCounter(2 downto 0)
 
-		val cpuClockEnable = cycleCounter(0)
 		val cpuBusMaster = (lowCycleCounter === 1) || (lowCycleCounter === 5)
 		val chipsetBusMaster = !cpuBusMaster
 	}
@@ -201,8 +200,6 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 		val uartEnable     = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.uart))
 		val sdEnable       = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.sd))
 		val intCtrlEnable  = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.intCtrl))
-
-		val dataFromMaster = (cpuArea.cpuBus.dataFromMaster | cpuArea.ioBus.dataFromMaster)
 
 		val chipSource  = MMU.MapSource()
 		val source = mainArea.cpuBusMaster ? MMU.MapSource.cpu | chipSource
@@ -287,7 +284,7 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 		sd.io.sd_do <> io.sd_do
 
 		val memDataIn =
-			machineBus.wireClient(bootROM.io.bus, bootEnable) |
+			machineBus.wireClient(bootROM.io, bootEnable) |
 			machineBus.wireClient(kernal.io, kernalEnable) |
 			machineBus.wireClient(font.io, fontEnable) |
 			machineBus.wireClient(attributeMemBus, attrMemEnable) |
