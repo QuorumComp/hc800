@@ -47,7 +47,7 @@ case class Ps2ToScanCode() extends Component {
 		U"x00", U"x00", U"x0B", U"x00", U"x00", U"x0F", U"x00", U"x00", // 79-7F
 	))
 
-	io.scanCode := codes.readAsync(io.ps2Code.asUInt.resized).asBits
+	io.scanCode := codes.readSync(io.ps2Code.asUInt.resized).asBits
 }
 
 
@@ -77,7 +77,7 @@ case class MistKeyboard() extends Keyboard(MistKeyboardBusIO()) {
 			capsLockState := !capsLockState
 		}
 	}.otherwise {
-		fifoPush := io.keyStrobe && (scanCodeConverter.io.scanCode =/= 0)
+		fifoPush := Delay(io.keyStrobe,1) && (scanCodeConverter.io.scanCode =/= 0)
 		fifoPayload := io.keyMake ## scanCodeConverter.io.scanCode
 	}
 
