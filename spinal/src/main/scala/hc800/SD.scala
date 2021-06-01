@@ -102,7 +102,7 @@ class SD extends Component {
 
 
 object SD {
-	object Register extends SpinalEnum {
+	object Register extends SpinalEnum(defaultEncoding = binarySequential) {
 		val data, status = newElement()
 	}
 

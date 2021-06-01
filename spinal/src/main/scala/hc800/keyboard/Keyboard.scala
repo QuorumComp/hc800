@@ -50,7 +50,7 @@ abstract class Keyboard[T <: KeyboardBusIO](ioIn: => T) extends Component {
 
 
 object Keyboard {
-	object Register extends SpinalEnum {
+	object Register extends SpinalEnum(defaultEncoding = binarySequential) {
 		val data, status = newElement()
 	}
 }
