@@ -11,6 +11,22 @@
             "mainClass": "hc800.HC800TopLevel",
             "args": [],
             "jvmOptions": []
+        },
+        {
+            "type": "scala",
+            "request": "launch",
+            "name": "Decoder",
+            "mainClass": "rc800.decoder.DecoderSim",
+            "args": [],
+            "jvmOptions": []
+        },
+        {
+            "type": "scala",
+            "request": "launch",
+            "name": "RC800",
+            "mainClass": "rc800.TopLevelSim",
+            "args": [],
+            "jvmOptions": []
         }
 
     ]

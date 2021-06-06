@@ -68,8 +68,8 @@ class VideoGenerator(scanDoubleDomain: ClockDomain) extends Component {
 	private val native = new Area {
 		private val vDisp      = Constants.totalVideolines
 		private val vSyncStart = 3+vDisp
-		private val vSyncEnd   = 7+vSyncStart
-		private val vTotal     = 6+vSyncEnd
+		private val vSyncEnd   = 4+vSyncStart
+		private val vTotal     = 9+vSyncEnd
 
 		private val sync = new VideoSync(initialHPos = 0, initialVPos = 0)
 		sync.io.hDisp      := hDisp

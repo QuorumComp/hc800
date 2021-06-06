@@ -103,5 +103,7 @@ mist/top.v
 firmware/devices/devices
 firmware/volumes/volumes
 firmware/dir/dir
+spinal/RC811.v
+spinal/RC811.v_toplevel_decodeArea_decoderUnit_decoder_1_signalMem.bin
 .metals/metals.h2.db
 .metals/metals.log

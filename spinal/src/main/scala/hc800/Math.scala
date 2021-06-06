@@ -91,7 +91,7 @@ case class Math() extends Component {
 
 
 object Math {
-	object Register extends SpinalEnum {
+	object Register extends SpinalEnum(defaultEncoding = binarySequential) {
 		val	status,
 			operation,
 			x,
@@ -99,7 +99,7 @@ object Math {
 			z = newElement()
 	}
 
-	object Operation extends SpinalEnum {
+	object Operation extends SpinalEnum(defaultEncoding = binarySequential) {
 		val signedMultiply,
 			unsignedMultiply,
 			signedDivision,

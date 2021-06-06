@@ -9,11 +9,9 @@ import java.io.File
 import java.io.FileInputStream
 
 class BootROM extends Component {
-	val io = new Bundle {
-		val bus = slave(ReadOnlyBus(addressWidth = 11))
-	}
+	val io = slave(ReadOnlyBus(addressWidth = 11))
 
-	def readBootROM(): Array[Byte] = {
+	private def readBootROM(): Array[Byte] = {
 		val file = new File("../firmware/boot/boot.bin")
 		using (new FileInputStream(file)) { fis =>
 			val size = file.length()
@@ -23,15 +21,14 @@ class BootROM extends Component {
 		}
 	}
 	
-	val data = Reg(Bits(8 bits))
-	io.bus.dataToMaster := data
+	private val content = readBootROM()
+	private val memory = Mem(Bits(8 bits), content.map(v => B(v.asInstanceOf[Int] & 0xFF))) 
 
-	val content = readBootROM()
-	val memory = Mem(Bits(8 bits), content.map(v => B(v.asInstanceOf[Int] & 0xFF))) 
+	private val dataOut = memory.readSync(io.address, io.enable)
 
-	when (io.bus.enable) {
-		data := memory.readAsync(io.bus.address)
+	when (Delay(io.enable, 1)) {
+		io.dataToMaster := dataOut
 	} otherwise {
-		data := 0
+		io.dataToMaster := 0
 	}
 }

@@ -148,7 +148,7 @@ fillFsStruct:
 		ld	f,0
 
 		exg	bc,de
-		jal	MathMultiplyUnsigned_32_16
+		jal	MathMultiplyUnsigned_32x16_p32
 
 		; bc - destination
 		; de - volume boot record

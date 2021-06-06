@@ -48,7 +48,7 @@ class BoardId(board: Int) extends Component {
 
 
 object BoardId {
-	object Board extends SpinalEnum {
+	object Board extends SpinalEnum(defaultEncoding = binarySequential) {
 		val zxNext,
 			nexys3,
 			mist = newElement()
