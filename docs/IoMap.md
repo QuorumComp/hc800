@@ -82,6 +82,8 @@ The system banks are in effect when handling interrupts and the SYS instruction.
 |-------|-----------|
 | 0     | Signed multiplication, z = x * y   |
 | 1     | Unsigned multiplication, z = x * y |
+| 2     | Signed division, x (quotient) y (remainder) = z / y |
+| 3     | Unsigned division, x (quotient) y (remainder) = z / y |
 
 ## Keyboard
 | Address | Content |
