@@ -185,13 +185,13 @@ handleKeyboardInput:
 
 		jal	ComRequestChar
 		j/nz	.exit
-		j	.out
+		j	.char_out
 
 .not_emulator
 		jal	KeyboardRead
 		j/z	.exit_f
 
-.out		push	ft
+.char_out	push	ft
 		jal	insertCharacter
 		pop	ft
 		cmp	t,KEY_RETURN

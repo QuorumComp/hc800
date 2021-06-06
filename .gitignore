@@ -103,3 +103,5 @@ mist/top.v
 firmware/devices/devices
 firmware/volumes/volumes
 firmware/dir/dir
+.metals/metals.h2.db
+.metals/metals.log
