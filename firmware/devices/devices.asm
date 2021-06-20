@@ -61,9 +61,10 @@ printDevice:
 
 		ld	b,11
 		jal	MathShiftRight_32
-
 		pop	ft
 		jal	StreamDecimalWordOut
+
+		pop	ft
 		MPrintString <" MiB\n">
 		pop	ft
 
@@ -82,7 +83,6 @@ printDevice:
 
 		SECTION	"Variables",BSS_S
 deviceInfo	DS	bdinf_SIZEOF
-sectors		DS	4
 
 
 
@@ -301,7 +301,7 @@ printBc:	push	hl
 		SECTION	"Data",DATA
 sectorNumber:	MInt32	0
 
-		SECTION	"Sector",BSS
+		SECTION	"Sector",BSS_S
 mbrDevice	DS	mbrdev_SIZEOF
 sdDevice	DS	sddev_SIZEOF
 fat32		DS	fs_Fat32_SIZEOF
