@@ -56,7 +56,7 @@ printVolume:
 
 		ld	t,(bc)
 		sub	t,17
-		neg	t
+		neg	t	; 17 - label length
 		ld	d,t
 .spaces		ld	t,' '
 		sys	KCharacterOut

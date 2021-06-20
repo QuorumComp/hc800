@@ -130,6 +130,8 @@ fillFsStruct:
 .template	DW	fileOpen
 		DW	fileClose
 		DW	fileRead
+		DW	dirOpen
+		DW	dirRead
 .template_end
 
 		; -- Calc data base cluster
@@ -179,6 +181,22 @@ fillFsStruct:
 dirOpen:
 		MStackAlloc 
 		jal	followPath
+
+
+; ---------------------------------------------------------------------------
+; -- Read next file information from directory
+; --
+; -- Inputs:
+; --   bc - pointer to directory struct
+; --
+; -- Output:
+; --    f - "eq" if next file information could be retrieved. Directory
+; --        struct is filled in with information on file.
+; --        "ne" when no more files present.
+; --
+		SECTION "Fat32DirRead",CODE
+dirRead:
+		j	(hl)
 
 
 ; ---------------------------------------------------------------------------

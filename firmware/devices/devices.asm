@@ -7,7 +7,7 @@
 		INCLUDE	"stdlib/string.i"
 		INCLUDE	"stdlib/syscall.i"
 
-		SECTION	"SDTest",CODE
+		SECTION	"Devices",CODE
 
 Entry::
 		MSetColor 1
@@ -45,38 +45,35 @@ printDevice:
 		sys	KCharacterOut
 
 		add	bc,bdinf_Size-bdinf_Name
-		ld	ft,bc
-		ld	de,ft
-		ld	bc,sectors
-		ld	f,$FF
-		ld	l,4
-.copy		ld	t,(de)
-		ld	(bc),t
-		and	t,f
-		ld	f,t
-		dj	l,.copy
+		jal	MathLoadLong
 
-		cmp	t,$FF
+		; push $FFFFFFFF onto BC stack
+		push	bc
+		ld	bc,$FFFF
+		push	bc
+
+		jal	MathDupLong
+		jal	MathCompareLong
+		pop	bc	; remove $FFFFFFFF from BC
+		pop	bc
 		j/eq	.unknown
+		pop	ft	; remove compare result
 
-		jal	MathCopy_32
-
-		ld	t,11
+		ld	b,11
 		jal	MathShiftRight_32
 
-		ld	t,(bc)
-		exg	f,t
-		add	bc,1
-		ld	t,(bc)
-		exg	f,t
-
+		pop	ft
 		jal	StreamDecimalWordOut
 		MPrintString <" MiB\n">
+		pop	ft
 
 		popa
 		j	(hl)
 
 .unknown
+		pop	ft
+		pop	ft
+		pop	ft
 		MPrintString <"unknown\n">
 		popa
 		j	(hl)
