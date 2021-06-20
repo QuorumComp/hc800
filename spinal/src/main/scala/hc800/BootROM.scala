@@ -1,6 +1,6 @@
 package hc800
 
-import rc800.Utils._
+import rc800.utils._
 
 import spinal.core._
 import spinal.lib._

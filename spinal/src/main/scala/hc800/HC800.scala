@@ -9,7 +9,7 @@ import hc800.nexys3.Nexys3
 import hc800.keyboard.Keyboard
 
 
-case class CPU(memoryDomain: ClockDomain) extends Component {
+case class CPU(memoryDomain: ClockDomain)(implicit lpmComponents: rc800.lpm.Components) extends Component {
 	val io = new Bundle {
 		val irq = in Bool
 
@@ -37,7 +37,7 @@ case class CPU(memoryDomain: ClockDomain) extends Component {
 }
 
 
-case class BusCPU(memoryDomain: ClockDomain) extends Component {
+case class BusCPU(memoryDomain: ClockDomain)(implicit lpmComponents: rc800.lpm.Components) extends Component {
 	val io = new Bundle {
 		val irq = in Bool
 
@@ -61,7 +61,7 @@ case class BusCPU(memoryDomain: ClockDomain) extends Component {
 }
 
 
-class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
+class HC800(boardIndex: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.Components) extends Component {
 
 	val board = BoardId.Board.elements(boardIndex)
 	val boardIsZxNext = board == BoardId.Board.zxNext
@@ -201,7 +201,7 @@ class HC800(boardIndex: Int, vendor: Vendor.Value) extends Component {
 		val sdEnable       = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.sd))
 		val intCtrlEnable  = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.intCtrl))
 
-		val chipSource  = MMU.MapSource()
+		val chipSource = MMU.MapSource()
 		val source = mainArea.cpuBusMaster ? MMU.MapSource.cpu | chipSource
 
 		val chipMemBus = ReadOnlyBus(addressWidth = 16)
@@ -372,7 +372,7 @@ object HC800TopLevel {
 		new SpinalConfig(
 			defaultClockDomainFrequency = FixedFrequency(Constants.baseFrequency * 2),
 			netlistFileName = name
-		).generateVerilog(new HC800(board, vendor)).printPruned()
+		).generateVerilog(new HC800(board, vendor)(rc800.lpm.blackbox.Components)).printPruned()
 	}
 
 	def main(args: Array[String]) {

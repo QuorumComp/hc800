@@ -11,5 +11,8 @@
     },
     "files.exclude": {
         "**/*.obj": true
+    },
+    "files.watcherExclude": {
+        "**/target": true
     }
 }
