@@ -129,34 +129,22 @@ SdGetTotalBlocks:
 
 		lio	t,(bc)
 		MHexByteOut
-		ld	f,0
 		and	t,$1F	; 60:56
-		ls	ft,8
+		exg	f,t
 		lio	t,(bc)	; 55:48
 		MHexByteOut
 
+		ls	ft,3
 		push	ft
+
 		jal	sdSkipBytes4
 		jal	sdInLast
-		pop	ft
+
+		ld	ft,0
+		swap	ft	; ft:ft' 13 bits << 19
 
 		pop	bc
-		push	bc
-		exg	ft,bc
-
-		ld	(ft),c
-		add	ft,1
-		ld	(ft),b
-		add	ft,1
-		ld	c,0
-		ld	(ft),c
-		add	ft,1
-		ld	(ft),c
-		sub	ft,3
-
-		ld	bc,ft
-		ld	ft,19
-		jal	MathShiftLeft_32
+		jal	MathStoreLong
 
 		pop	hl
 		j	(hl)
@@ -197,33 +185,24 @@ SdGetTotalBlocks:
 		lio	t,(bc)
 		rs	ft,7	; ft = C_SIZE_MULT
 		add	ft,2
-
 		add	ft,hl	; ft = shift amount for C_SIZE
+		ld	bc,ft
 
-		push	ft
+		push	bc
 		jal	sdSkipBytes5
 		jal	sdInLast
-		pop	ft
-
 		pop	bc
-		push	bc
-		exg	ft,bc
 
+		push	ft
+		ld	ft,0
+
+		; ft:ft' = C_SIZE
 		; bc = shift amount for C_SIZE
-		; ft = pointer to size
+		; bc' = pointer to size
 
-		ld	(ft),e
-		add	ft,1
-		ld	(ft),d
-		add	ft,1
-		ld	e,0
-		ld	(ft),e
-		add	ft,1
-		ld	(ft),e
-		sub	ft,3
-
-		exg	ft,bc
 		jal	MathShiftLeft_32
+		pop	bc
+		jal	MathStoreLong
 
 		pop	hl
 		j	(hl)
@@ -659,7 +638,7 @@ sdSendOpCond:
 		cmp	t,0
 		j/eq	.done
 
-		DELAY	2000
+		MDelay	2000
 
 		dj	e,.idle
 
@@ -886,12 +865,12 @@ sdStuffBits4:
 		SECTION	"sdInPacket",CODE
 sdInPacket:	push	de/hl
 
-		LDLOOP	de,1000
+		MLDLoop	de,1000
 .wait_packet	lio	t,(bc)
 		MHexByteOut
 		cmp	t,$FF
 		j/ne	.got_packet
-		DELAY	100
+		MDelay	100
 		dj	e,.wait_packet	
 		dj	d,.wait_packet	
 

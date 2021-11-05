@@ -288,10 +288,16 @@ FileClose:
 FileSkip:
 		push	bc-hl
 
-		jal	MathLoadOperand16U
-
+		MZeroExtend ft
 		add	bc,file_Offset
-		jal	MathAdd_32_Operand
+		jal	MathLoadLong
+		MMove32	bc,ft
+
+		jal	MathAdd_32_32
+		pop	bc
+		pop	bc
+
+		jal	MathStoreLong
 
 		ld	t,ERROR_SUCCESS
 		ld	f,FLAGS_EQ
@@ -338,20 +344,35 @@ FileRead:
 		pop	ft-bc
 		jal	(hl)
 
-		jal	MathLoadOperand16U
+		push	ft
 
 		add	bc,file_Error
 		ld	t,(bc)
 		cmp	t,ERROR_SUCCESS
-		j/ne	.exit
+		j/eq	.no_error
+
+		swap	ft
+		popa
+		j	(hl)
+
+.no_error	ld	ft,0	; zero extend bytes read (in ft')
 
 		add	bc,file_Offset-file_Error
-		jal	MathAdd_32_Operand
+		push	bc
+
+		jal	MathLoadLong
+		MMove32	bc,ft
+
+		jal	MathAdd_32_32
+		pop	bc
+		pop	bc
+		pop	bc
+		jal	MathStoreLong
 
 		ld	t,ERROR_SUCCESS
 		ld	f,FLAGS_EQ
 
-.exit		pop	bc-hl
+		pop	bc-hl
 		j	(hl)
 
 

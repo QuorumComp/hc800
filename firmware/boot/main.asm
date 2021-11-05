@@ -90,7 +90,7 @@ CheckKernal:
 		push	bc-hl
 
 		ld	bc,$4000
-		LDLOOP	de,$4000
+		MLDLoop	de,$4000
 		ld	ft,0
 .checksum	ld	t,(bc)
 		add	bc,1

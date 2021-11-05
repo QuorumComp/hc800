@@ -161,9 +161,14 @@ fillFsStruct:
 		sub	de,1
 		ld	t,(de)
 
-		jal	MathLoadOperand16U
+		push	bc
+		ld	bc,ft
+		MZeroExtend bc
+		jal	MathAdd_32_32
+		pop	bc
+		pop	bc
 
-		jal	MathAdd_32_Operand
+		jal	MathStoreLong
 
 		popa
 		j	(hl)

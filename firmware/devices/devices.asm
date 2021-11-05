@@ -7,6 +7,7 @@
 		INCLUDE	"stdlib/string.i"
 		INCLUDE	"stdlib/syscall.i"
 
+
 		SECTION	"Devices",CODE
 
 Entry::
@@ -48,9 +49,7 @@ printDevice:
 		jal	MathLoadLong
 
 		; push $FFFFFFFF onto BC stack
-		push	bc
-		ld	bc,$FFFF
-		push	bc
+		MPush32	bc,$FFFFFFFF
 
 		jal	MathDupLong
 		jal	MathCompareLong

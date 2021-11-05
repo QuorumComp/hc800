@@ -7,12 +7,13 @@
     },
     "[asm.rc8]": {
         "editor.tabSize": 8,
-        "editor.insertSpaces": false
+        "editor.insertSpaces": false,
+        "editor.quickSuggestions": false
     },
     "files.exclude": {
         "**/*.obj": true
     },
     "files.watcherExclude": {
         "**/target": true
-    }
+    },
 }

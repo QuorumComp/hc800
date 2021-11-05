@@ -178,8 +178,8 @@ BlockDeviceInit:
 ; -- Read block from device
 ; --
 ; -- Inputs:
-; --   ft - pointer to block device structure
-; --   bc - pointer to block number
+; --   ft:ft' - block number
+; --   bc - pointer to block device structure
 ; --   de - pointer to destination
 ; --
 ; -- Returns:
@@ -195,19 +195,18 @@ BlockDeviceRead:
 		MDebugHexWord de
 		MDebugNewLine
 
-		push	hl
+		push	bc/hl
 
-		push	ft	
+		exg	ft,bc
 		add	ft,bdev_Read
 		ld	l,(ft)
 		add	ft,1
 		ld	h,(ft)
-
-		pop	ft
+		exg	ft,bc
 
 		jal	(hl)
 
-		pop	hl
+		pop	bc/hl
 
 		MDebugPrint <"BlockDeviceRead exit ">
 		MDebugHexWord ft

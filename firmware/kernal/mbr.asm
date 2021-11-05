@@ -210,9 +210,14 @@ mbrWrite:
 mbrSize:
 		pusha
 
-		add	ft,mbrdev_Sectors
-		ld	de,ft
-		jal	MathCopy_32
+		push	bc
+
+		ld	bc,ft
+		add	bc,mbrdev_Sectors
+		jal	MathLoadLong
+
+		pop	bc
+		jal	MathStoreLong
 
 		popa
 		ld	f,FLAGS_EQ
@@ -234,24 +239,18 @@ mbrSize:
 mbrRead:
 		pusha
 
-		ld	de,blockNumber
-		ld	f,4
-.copy_number	ld	t,(bc)
-		ld	(de),t
-		add	bc,1
-		add	de,1
-		dj	f,.copy_number
-
-		sub	de,4
-		pop	ft
+		exg	bc,de
 		add	ft,mbrdev_Offset
-		exg	ft,de
-		exg	ft,bc
 
-		; bc = blockNumber
-		; de = mbrdev_Offset
+		MPush32	bc,(ft)
+		MPush32	ft,(de)
 
 		jal	MathAdd_32_32
+
+		; ft:ft' = block number
+		; ft'' = mbrdev_Offset
+		; bc = pointer to dest
+		; de = pointer to block number
 
 		add	de,mbrdev_Underlying+1-mbrdev_Offset
 		ld	t,(de)
@@ -271,7 +270,6 @@ mbrRead:
 		pop	bc/hl
 		j	(hl)
 
-
-		SECTION "MbrVars",BSS
-blockNumber:	DS	4
 	
+		SECTION "MbrVars",BSS
+blockNumber	DS	4
