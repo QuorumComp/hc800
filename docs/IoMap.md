@@ -7,7 +7,8 @@
 | $020x   | 16   | Multiplier |
 | $030x   | 16   | Keyboard   |
 | $040x   | 16   | UART       |
-| $050x   | 16   | Display controller |
+| $05xx   | 256  | Display controller |
+| $060x   | 16   | SD card |
 | $7FFx   | 16   | Board ID   |
 | $8000   | $8000 | Board specific functions |
 
@@ -122,6 +123,20 @@ To read the string reliably, the register should be read until a byte with the s
 |-----|---------|
 | 0   | Byte available to read |
 | 1   | Write allowed          | 
+
+## SD card
+| Address | Content |
+|---------|---------|
+| 0       | Data    |
+| 1       | Status  |
+
+### Status
+| Bit | Content | Function |
+|-----|---------|----------|
+| 0   | In active | Set to retrieve bytes. The byte will be available when 16 machine cycles have elapsed (two instructions). When data register is read and active bit is set, the next byte will be retrieved. |
+| 1   | Out active (read only) | Will be set when data register is written. The byte will be transmitted in 16 machine cycles (two instructions) |
+| 2   | Card select #0 | Selects card #0 |
+| 3   | Card select #1 | Selects card #1 |
 
 # Nexys 3 I/O
 | Address | Size | Content         |
