@@ -43,11 +43,12 @@ SELECT:		MACRO
 DESELECT:	MACRO
 		push	ft
 		ld	t,0
+		ld	c,IO_SD_STATUS
 		lio	(bc),t
 		pop	ft
 		ENDM
 
-	IF 1 ; 1 = disable debug
+	IF 0 ; 1 = disable debug
 		PURGE	MPrintString
 MPrintString:	MACRO
 		ENDM
@@ -87,7 +88,7 @@ SdGetTotalBlocks:
 		ld	t,9|$40		;CMD9
 		lio	(bc),t
 
-		jal	sdStuffBits5	;arg, CRC
+		jal	sdFinalBits5	;arg, CRC
 
 		jal	sdInFirst
 		j/ne	.error
@@ -299,7 +300,7 @@ SdInit:		push	bc-hl
 
 		jal	sdGoIdleState
 		cmp	t,REPLY_IDLE
-		j/ne	.handle_status
+		j/ne	.fail
 
 		jal	sdSendIfCond
 		j/eq	.v2_card
@@ -390,7 +391,7 @@ sdSendBlockNumber:
 
 
 ; ---------------------------------------------------------------------------
-; -- Set block length to 512 bytes
+; -- Set block length to 512 bytes (CMD16)
 ; --
 ; -- Inputs:
 ; --   	b - IO_SDCARD_BASE
@@ -417,7 +418,7 @@ sdSetBlockLen512:
 		pop	de/hl
 		j	(hl)
 
-.bytes		DB	16|$40,0,0,BLOCKLEN>>8,0,0
+.bytes		DB	16|$40,0,0,BLOCKLEN>>8,0,1
 
 
 ; ---------------------------------------------------------------------------
@@ -577,7 +578,7 @@ sdReadOcr:
 		ld	t,58|$40	;CMD58
 		lio	(bc),t
 
-		jal	sdStuffBits5
+		jal	sdFinalBits5
 
 		jal	sdInFirst
 		j/ne	.fail
@@ -631,7 +632,7 @@ sdSendOpCond:
 		ld	t,d
 		lio	(bc),t
 
-		jal	sdStuffBits4
+		jal	sdFinalBits4
 
 		jal	sdInFirst
 		and	t,REPLY_IDLE
@@ -667,7 +668,7 @@ sdAppCommand:
 		lio	(bc),t
 
 		; argument
-		jal	sdStuffBits5
+		jal	sdFinalBits5
 
 		jal	sdInFirst
 
@@ -696,6 +697,7 @@ sdSendIfCond:
 		jal	sdSendBytes6
 
 		jal	sdInFirst
+		j/ne	.fail
 
 		lio	t,(bc)		;R7[31:24]
 
@@ -773,7 +775,7 @@ sdInFirst:
 		ld	c,IO_SD_STATUS
 		lio	(bc),t
 
-		ld	f,100
+		ld	e,100
 .loop		ld	c,IO_SD_DATA
 		lio	t,(bc)
 		MHexByteOut
@@ -781,7 +783,7 @@ sdInFirst:
 		and	t,$80
 		cmp	t,$00
 		j/eq	.done
-		dj	f,.loop
+		dj	e,.loop
 		ld	f,FLAGS_NE
 		j	.exit
 
@@ -833,22 +835,25 @@ sdInLast:
 ; -- Inputs:
 ; --   	b - IO_SDCARD_BASE
 ; --
-		SECTION	"sdStuffBits",CODE
-sdStuffBits5:
+		SECTION	"sdFinalBits",CODE
+sdFinalBits5:
 		; argument, stuff bits
-		ld	f,5
-		j	sdStuffBits4\.entry
-sdStuffBits2:
+		ld	f,5-1
+		j	sdFinalBits4\.entry
+sdFinalBits2:
 		; argument, stuff bits
-		ld	f,2
-		j	sdStuffBits4\.entry
-sdStuffBits4:
+		ld	f,2-1
+		j	sdFinalBits4\.entry
+sdFinalBits4:
 		; argument, stuff bits
-		ld	f,4
-.entry		ld	t,$00
+		ld	f,4-1
+.entry		; f contains the number of bytes to write - 1 to account for final CRC
+		ld	t,$00
 .arg		lio	(bc),t
 		nop
 		dj	f,.arg
+		ld	t,$01
+		lio	(bc),t
 
 		j	(hl)
 
