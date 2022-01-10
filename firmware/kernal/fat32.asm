@@ -258,6 +258,8 @@ loadVolumeBootRecord:
 
 		; load volume boot record
 
+		MDebugPrint <"loadVolumeBootRecord read\n">
+
 		ld	ft,bc		; block device structure
 		ld	bc,sectorNumber	; block number
 		jal	BlockDeviceRead

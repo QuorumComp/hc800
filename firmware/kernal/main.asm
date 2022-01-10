@@ -35,7 +35,7 @@ Main:
 		jal	InitializePalette
 		jal	KeyboardInitialize
 		jal	TextInitialize
-		;jal	BlockDeviceInit
+		jal	BlockDeviceInit
 		jal	FileInitialize
 
 		sys	KClearScreen

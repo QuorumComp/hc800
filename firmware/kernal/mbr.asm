@@ -51,30 +51,26 @@ MakeMbrPartitionDevice:
 		MDebugHexWord de
 		MDebugNewLine
 
-		; zero block number variable
-
-		ld	bc,blockNumber
-		ld	t,0
-		ld	(bc),t
-		add	bc,1
-		ld	(bc),t
-		add	bc,1
-		ld	(bc),t
-		add	bc,1
-		ld	(bc),t
-		sub	bc,3
-
 		MStackAlloc 512
 		exg	ft,de
+		exg	ft,bc
 
-		; ft = underlying device
-		; bc = blockNumber
+		; ft = block device to fill in
+		; bc = block device
 		; de = sector buffer
 
-		;MDebugPrint <"  - load MBR\n">
+		; block number 0
+		push	ft
+		ld	ft,0
+		push	ft
+
+		; ft:ft' - block number
+		; ft'' - block device to fil in
+
+		MDebugPrint <"  - load MBR\n">
 		jal	BlockDeviceRead
 
-		;MDebugPrint <"  - loaded MBR\n">
+		MDebugPrint <"  - loaded MBR\n">
 		j/ne	.fail_popa
 
 		; check signature
@@ -89,17 +85,18 @@ MakeMbrPartitionDevice:
 		j/ne	.fail_popa
 		add	de,mbr_Partition0-511
 
-		;MDebugPrint <"  - mbr signature ok\n">
+		MDebugPrint <"  - mbr signature ok\n">
 
 		; point to partition entry
 
+		pop	ft
 		pop	ft
 		ld	f,0
 		ls	ft,4
 		add	ft,de
 		ld	de,ft	; de = partition entry
 
-		; ft has been popped
+		; ft:ft' (sector number) has been popped
 
 		; check status
 
@@ -170,6 +167,7 @@ MakeMbrPartitionDevice:
 		j	.exit
 
 .fail_popa	pop	ft
+		pop	ft
 .fail_pop_bc_to_hl
 		ld	f,FLAGS_NE
 		pop	bc-hl

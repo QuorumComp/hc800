@@ -39,6 +39,7 @@ SdDeviceMake:
 		ld	(bc),t
 
 		jal	SdInit
+		MDebugPrint <"SdInit done\n">
 		j/ne	.exit
 
 		add	de,SdType-SdSelect
@@ -91,6 +92,8 @@ writeBlock:
 ; --
 readBlock:
 		push	hl
+
+		MDebugPrint <"SD readBlock\n">
 
 		jal	setSdVariables
 		jal	SdReadSingleBlock
