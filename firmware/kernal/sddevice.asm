@@ -83,8 +83,8 @@ writeBlock:
 ; -- Read block from device
 ; --
 ; -- Inputs:
-; --   ft - pointer to block device structure
-; --   bc - pointer to block number
+; --   ft:ft' - block number
+; --   bc - pointer to block device structure
 ; --   de - pointer to destination
 ; --
 ; -- Returns:
@@ -128,9 +128,21 @@ getSize:
 
 
 
+; ---------------------------------------------------------------------------
+; -- Read block from device
+; --
+; -- Inputs:
+; --   ft:ft' - block number
+; --   bc - pointer to block device structure
+; --
+; -- Returns:
+; --    f - "eq" condition if success
+; --
 setSdVariables:
 		pusha
 
+		ld	ft,bc
+		
 		add	ft,sddev_Select
 		ld	b,(ft)
 		add	ft,sddev_Type-sddev_Select

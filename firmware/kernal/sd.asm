@@ -229,7 +229,7 @@ SdWriteSingleBlock:
 ; -- Read block from SD card (CMD17)
 ; --
 ; -- Inputs:
-; --   bc - pointer to 32 bit block number
+; --   ft:ft' - block number
 ; --   de - pointer to destination
 ; --
 ; -- Returns:
@@ -239,24 +239,17 @@ SdWriteSingleBlock:
 SdReadSingleBlock:	
 		push	bc-hl
 
-		push	de
-		ld	ft,bc
-		ld	de,ft
-
-		; de = pointer to block number
-
 		SELECT
+
+		push	ft/de
 
 		ld	c,IO_SD_DATA
 		ld	t,17|$40	;CMD17
 		lio	(bc),t
 
-		ld	hl,SdType
-		ld	t,(hl)
+		ld	ft,SdType
+		ld	d,(ft)
 		jal	sdSendBlockNumber
-		pop	de
-
-		jal	sdInFirst
 		j/ne	.error
 
 		jal	sdInPacket
@@ -332,61 +325,33 @@ SdInit:		push	bc-hl
 ; -- Send block number
 ; --
 ; -- Inputs:
-; --    t - SD card type
-; --   	b - IO_SDCARD_BASE
-; --   de - pointer to block number
+; --   ft:ft' - block number
+; --       b  - IO_SDCARD_BASE
+; --       d  - SD type
 ; --
 sdSendBlockNumber:
 		MPrintString <"sdSendBlockNumber ">
-
-		pusha
+		push	bc-hl
+		jal	MathDupLong
 
 		ld	c,IO_SD_DATA
-
-		add	de,3
-
-		cmp	t,SDTYPE_V2_HC
+		push	ft
+		cmp	d,SDTYPE_V2_HC
 		j/eq	.hc
 
 		; standard capacity, send blockNumber*512
+		pop	ft
+		ld	b,9
+		jal	MathShiftLeft_32
+		j	.continue
 
-		sub	de,1
-		ld	l,2
-.sc_arg		ld	t,(de)
-		exg	f,t
-		sub	de,1
-		ld	t,(de)
-		ls	ft,1
-		exg	f,t
-		lio	(bc),t
-		MHexByteOut
-		dj	l,.sc_arg
+.hc		pop	ft
+.continue	jal	sdSendInt32
 
-		ld	t,(de)
-		ls	ft,1
+		ld	t,$01	; CRC
 		lio	(bc),t
 
-		ld	l,2
-.sc_term	ld	t,0
-		lio	(bc),t
-		dj	l,.sc_term
-
-		j	.done
-
-		; high capacity, send blockNumber
-
-.hc		ld	l,4
-.hc_arg		ld	t,(de)
-		sub	de,1
-		lio	(bc),t
-		MHexByteOut
-		dj	l,.hc_arg
-
-		ld	t,0	;CRC
-		lio	(bc),t
-
-.done		MNewLine
-		popa
+		pop	bc-hl
 		j	(hl)
 
 
@@ -419,6 +384,41 @@ sdSetBlockLen512:
 		j	(hl)
 
 .bytes		DB	16|$40,0,0,BLOCKLEN>>8,0,1
+
+
+; ---------------------------------------------------------------------------
+; -- Send 32 bit integer to card
+; --
+; -- Inputs:
+; --   ft:ft' - integer to send
+; --       b - IO_SDCARD_BASE
+; --
+; -- Outputs:
+; --   ft:ft' consumed
+; --
+sdSendInt32:
+		push	bc
+
+		ld	c,IO_SD_DATA
+
+		exg	f,t
+		lio	(bc),t
+		exg	f,t
+		nop
+		lio	(bc),t
+
+		pop	ft
+
+		exg	f,t
+		lio	(bc),t
+		exg	f,t
+		nop
+		lio	(bc),t
+
+		pop	ft
+
+		pop	bc
+		j	(hl)
 
 
 ; ---------------------------------------------------------------------------
