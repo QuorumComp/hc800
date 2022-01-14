@@ -6,7 +6,7 @@
 		INCLUDE	"sddevice.i"
 		INCLUDE	"uart_commands.i"
 
-		INCLUDE	"uart_commands_disabled.i"
+		;INCLUDE	"uart_commands_disabled.i"
 
 
 ; ---------------------------------------------------------------------------
@@ -37,6 +37,10 @@ SdDeviceMake:
 
 		add	bc,sddev_Select
 		ld	(bc),t
+
+		MDebugPrint <"sddev_Select address ">		
+		MDebugHexWord bc
+		MDebugNewLine
 
 		jal	SdInit
 		MDebugPrint <"SdInit done\n">
@@ -148,7 +152,10 @@ setSdVariables:
 
 		ld	ft,bc
 
-		add	ft,sddev_Select
+ 		add	ft,sddev_Select
+		MDebugPrint <"sddev_Select address ">		
+		MDebugHexWord ft
+		MDebugNewLine
 		ld	b,(ft)
 		add	ft,sddev_Type-sddev_Select
 		ld	c,(ft)
