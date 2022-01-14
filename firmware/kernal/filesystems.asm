@@ -81,6 +81,8 @@ SysGetVolume::
 FileInitialize:
 		pusha
 
+		MDebugPrint <"FileInitialize\n">
+
 		jal	UartInitialize
 
 		ld	t,0	; t - device identifier

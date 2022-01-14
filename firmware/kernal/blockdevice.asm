@@ -104,7 +104,7 @@ BlockDeviceInit:
 		ld	d,1
 		jal	.init_devices
 
-		MPrintString <"Block devices initialized\n">
+		MDebugPrint <"Block devices initialized\n">
 
 		popa
 		j	(hl)
@@ -130,6 +130,7 @@ BlockDeviceInit:
 
 		pop	ft
 		popa
+		MDebugPrint <"BlockDeviceInit.init_devices exit\n">
 		j	(hl)
 
 .sd_ok	
@@ -206,6 +207,7 @@ BlockDeviceRead:
 		ld	l,(ft)
 		add	ft,1
 		ld	h,(ft)
+		sub	ft,bdev_Read+1
 		exg	ft,bc
 
 		MDebugPrint <"BlockDeviceRead call ">

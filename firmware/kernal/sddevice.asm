@@ -6,7 +6,7 @@
 		INCLUDE	"sddevice.i"
 		INCLUDE	"uart_commands.i"
 
-		;INCLUDE	"uart_commands_disabled.i"
+		INCLUDE	"uart_commands_disabled.i"
 
 
 ; ---------------------------------------------------------------------------
@@ -102,6 +102,8 @@ readBlock:
 		swap	ft
 		MDebugHexWord ft
 		swap	ft
+		MDebugPrint <" ">
+		MDebugHexWord bc
 		MDebugNewLine
 
 		jal	setSdVariables

@@ -35,6 +35,7 @@ BS_BOOT_RECORD_SIG	EQU	$1FE
 ; --
 		SECTION	"Fat32FsMake",CODE
 Fat32FsMake:
+		MDebugPrint <"Fat32FsMake enter\n">
 		push	bc-hl
 
 		MStackAlloc 512
@@ -232,7 +233,7 @@ fileRead:
 		j	(hl)
 
 ; ---------------------------------------------------------------------------
-; -- Read block from device
+; -- Read volume boot record
 ; --
 ; -- Inputs:
 ; --   bc - pointer to block device structure
@@ -240,31 +241,18 @@ fileRead:
 ; --
 		SECTION	"loadVolumeBootRecord",CODE
 loadVolumeBootRecord:
-		push	bc-hl
+		pusha
 
 		MDebugPrint <"loadVolumeBootRecord\n">
 
-		; zero block number
-
-		ld	ft,sectorNumber
-		ld	l,0
-		ld	(ft),l
-		add	ft,1
-		ld	(ft),l
-		add	ft,1
-		ld	(ft),l
-		add	ft,1
-		ld	(ft),l
-
 		; load volume boot record
 
-		MDebugPrint <"loadVolumeBootRecord read\n">
-
-		ld	ft,bc		; block device structure
-		ld	bc,sectorNumber	; block number
+		ld	ft,0
+		push	ft
 		jal	BlockDeviceRead
+		pop	ft
 
-		pop	bc-hl
+		popa
 		j	(hl)
 
 
@@ -315,5 +303,4 @@ checkFat32:	push	bc-hl
 		SECTION	"Fat32Vars",BSS
 fs:		DS	2
 sectorDirty:	DS	1
-sectorNumber:	DS	4
 sectorData:	DS	512
