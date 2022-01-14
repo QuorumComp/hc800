@@ -190,6 +190,9 @@ BlockDeviceInit:
 BlockDeviceRead:
 		MDebugPrint <"BlockDeviceRead enter ">
 		MDebugHexWord ft
+		swap	ft
+		MDebugHexWord ft
+		swap	ft
 		MDebugPrint <" ">
 		MDebugHexWord bc
 		MDebugPrint <" ">

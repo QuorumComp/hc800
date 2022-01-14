@@ -237,19 +237,20 @@ SdWriteSingleBlock:
 ; --
 		SECTION	"SdReadSingleBlock",CODE
 SdReadSingleBlock:	
-		push	bc-hl
+		pusha
 
 		SELECT
-
-		push	ft/de
 
 		ld	c,IO_SD_DATA
 		ld	t,17|$40	;CMD17
 		lio	(bc),t
 
 		ld	ft,SdType
+		push	de
 		ld	d,(ft)
+		pop	ft		; FT popped
 		jal	sdSendBlockNumber
+		pop	de
 		j/ne	.error
 
 		jal	sdInPacket
@@ -330,8 +331,15 @@ SdInit:		push	bc-hl
 ; --       d  - SD type
 ; --
 sdSendBlockNumber:
-		MPrintString <"sdSendBlockNumber ">
+		MDebugPrint <"sdSendBlockNumber ">
+		MDebugHexWord ft
+		swap	ft
+		MDebugHexWord ft
+		swap	ft
+		MDebugNewLine
+
 		push	bc-hl
+
 		jal	MathDupLong
 
 		ld	c,IO_SD_DATA
@@ -343,6 +351,7 @@ sdSendBlockNumber:
 		pop	ft
 		ld	b,9
 		jal	MathShiftLeft_32
+		ld	b,IO_SDCARD_BASE
 		j	.continue
 
 .hc		pop	ft

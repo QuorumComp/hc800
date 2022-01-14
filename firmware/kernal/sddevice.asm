@@ -93,7 +93,12 @@ writeBlock:
 readBlock:
 		push	hl
 
-		MDebugPrint <"SD readBlock\n">
+		MDebugPrint <"SD readBlock ">
+		MDebugHexWord ft
+		swap	ft
+		MDebugHexWord ft
+		swap	ft
+		MDebugNewLine
 
 		jal	setSdVariables
 		jal	SdReadSingleBlock
@@ -142,7 +147,7 @@ setSdVariables:
 		pusha
 
 		ld	ft,bc
-		
+
 		add	ft,sddev_Select
 		ld	b,(ft)
 		add	ft,sddev_Type-sddev_Select
