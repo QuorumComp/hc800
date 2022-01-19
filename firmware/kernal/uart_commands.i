@@ -19,28 +19,16 @@ ERROR_TIMEOUT		EQU	$FF
 		PURGE	MDebugPrint
 
 MDebugPrint:	MACRO
-		pusha
-		jal	__Print\@
-		popa
-		
 		PUSHS
-		SECTION "Strings",CODE
-__Print\@:
-		push	hl
-		ld	d,.skip\@-.string\@
-		ld	bc,.string\@
-.next\@		lco	t,(bc)
-		add	bc,1
-		jal	ComPrintChar
-		j/ne	.error\@
-		dj	d,.next\@
-		pop	hl
-		j	(hl)
-.error\@	pop	hl
-		j	(hl)
+		SECTION "DebugStrings",CODE
 .string\@	DB	\1
 .skip\@
 		POPS
+		pusha
+		ld	t,.skip\@-.string\@
+		ld	bc,.string\@
+		jal	ComPrintCodeChars
+		popa
 		ENDM
 
 MDebugPrintR:	MACRO	;register
@@ -131,6 +119,7 @@ MDebugMemory:	MACRO	;memory,size
 	GLOBAL	ComPrintHexByte
 	GLOBAL	ComPrintHexWord
 	GLOBAL	ComPrintChar
+	GLOBAL	ComPrintCodeChars
 	GLOBAL	ComSendCommand
 	GLOBAL	ComSendDataString
 	GLOBAL	ComReadDataString

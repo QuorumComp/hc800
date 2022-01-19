@@ -91,6 +91,28 @@ ComPrintDigit:
 		j	(hl)
 
 ; --
+; -- Print characters to attached terminal
+; --
+; -- Inputs:
+; --    t - count
+; --   bc - characters (code)
+; --
+; -- Outputs:
+; --    f - "eq" condition if success
+; --
+		SECTION	"ComPrintChar",CODE
+ComPrintCodeChars:
+		pusha
+		ld	d,t
+.next		lco	t,(bc)
+		add	bc,1
+		jal	ComPrintChar
+		j/ne	.error
+		dj	d,.next
+.error		popa
+		j	(hl)
+
+; --
 ; -- Print character to attached terminal
 ; --
 ; -- Inputs:

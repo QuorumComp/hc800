@@ -9,17 +9,16 @@ ERROR_PROTOCOL		EQU	$FE
 ERROR_TIMEOUT		EQU	$FF
 
 MDebugPrint:	MACRO
-		pusha
-		j	.skip\@
+		PUSHS
+		SECTION "DebugStrings",CODE
 .string\@	DB	\1
-.skip\@		ld	d,.skip\@-.string\@
+.skip\@
+		POPS
+		pusha
+		ld	t,.skip\@-.string\@
 		ld	bc,.string\@
-.next\@		lco	t,(bc)
-		add	bc,1
-		jal	ComPrintChar
-		j/ne	.error\@
-		dj	d,.next\@
-.error\@	popa
+		jal	ComPrintCodeChars
+		popa
 		ENDM
 
 	GLOBAL	ComIdentify
@@ -28,6 +27,7 @@ MDebugPrint:	MACRO
 	GLOBAL	ComReadFile
 	GLOBAL	ComRequestChar
 	GLOBAL	ComPrintHexByte
+	GLOBAL	ComPrintCodeChars
 	GLOBAL	ComPrintChar
 	GLOBAL	ComSyncResponse
 

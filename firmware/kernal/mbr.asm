@@ -65,15 +65,25 @@ MakeMbrPartitionDevice:
 		push	ft
 
 		; ft:ft' - block number
-		; ft'' - block device to fil in
+		; ft'' - block device to fill in
 
 		MDebugPrint <"  - load MBR\n">
 		jal	BlockDeviceRead
-
-		MDebugPrint <"  - loaded MBR\n">
 		j/ne	.fail_popa
 
+		pop	ft
+		pop	ft
+		; sector number has been popped
+
+		;MDebugPrint <"  - loaded MBR\n">
+
+		exg	ft,bc
+		; bc = block device to fill in
+		; de = sector buffer
+
 		; check signature
+
+		;MDebugPrint <"  - check signature\n">
 
 		add	de,510
 		ld	t,(de)
@@ -85,18 +95,16 @@ MakeMbrPartitionDevice:
 		j/ne	.fail_popa
 		add	de,mbr_Partition0-511
 
-		MDebugPrint <"  - mbr signature ok\n">
+		;MDebugPrint <"  - mbr signature ok\n">
 
 		; point to partition entry
 
-		pop	ft
-		pop	ft
+		pop	ft ; restore partition index
+
 		ld	f,0
 		ls	ft,4
 		add	ft,de
 		ld	de,ft	; de = partition entry
-
-		; ft:ft' (sector number) has been popped
 
 		; check status
 
@@ -111,8 +119,11 @@ MakeMbrPartitionDevice:
 
 		add	de,part_Type
 		ld	t,(de)
+		;jal	ComPrintHexByte
 		cmp	t,TYPE_FAT32_LBA
 		j/ne	.fail_pop_bc_to_hl
+
+		MDebugPrint <"  - partition is FAT32\n">
 
 		; copy underlying pointer to structure
 
@@ -169,10 +180,11 @@ MakeMbrPartitionDevice:
 .fail_popa	pop	ft
 		pop	ft
 .fail_pop_bc_to_hl
+		MDebugPrint <"MakeMbrPartitionDevice failed\n">
 		ld	f,FLAGS_NE
 		pop	bc-hl
 .exit
-		MDebugPrint <"MakeMbrPartitionDevice exit ">
+		MDebugPrint <"MakeMbrPartitionDevice exit\n">
 		MDebugHexWord ft
 		MDebugPrint <" ">
 		MDebugHexWord bc

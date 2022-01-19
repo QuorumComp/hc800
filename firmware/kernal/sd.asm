@@ -8,7 +8,7 @@
 		INCLUDE	"sd.i"
 		INCLUDE	"uart_commands.i"
 
-		INCLUDE	"uart_commands_disabled.i"
+		;INCLUDE	"uart_commands_disabled.i"
 
 
 CMD0_CRC	EQU	$95
@@ -48,9 +48,9 @@ DESELECT:	MACRO
 		pop	ft
 		ENDM
 
-	IF 1 ; 1 = disable debug
-		PURGE	MPrintString
-MPrintString:	MACRO
+	IF 0 ; 1 = disable debug
+		PURGE	MDebugPrint
+MDebugPrint:	MACRO
 		ENDM
 
 		PURGE	MNewLine
@@ -79,7 +79,7 @@ MHexByteOut:	MACRO
 ; --
 		SECTION	"SdGetTotalBlocks",CODE
 SdGetTotalBlocks:
-		MPrintString <"SdGetTotalBlocks\n">
+		MDebugPrint <"SdGetTotalBlocks\n">
 		push	bc-hl
 
 		SELECT
@@ -121,7 +121,7 @@ SdGetTotalBlocks:
 		j	(hl)
 
 .handle_v2	push	hl
-		MPrintString <"CSD v2\n">
+		MDebugPrint <"CSD v2\n">
 
 		; 13 bits []
 		; shift 19
@@ -152,7 +152,7 @@ SdGetTotalBlocks:
 
 .handle_v1	push	hl
 
-		MPrintString <"CSD v1\n">
+		MDebugPrint <"CSD v1\n">
 		jal	sdSkipBytes4
 
 		; READ_BL_LEN [83:80]
@@ -236,7 +236,7 @@ SdWriteSingleBlock:
 ; --    f - "eq" condition if success
 ; --
 		SECTION	"SdReadSingleBlock",CODE
-SdReadSingleBlock:	
+SdReadSingleBlock:
 		pusha
 
 		SELECT
@@ -251,12 +251,14 @@ SdReadSingleBlock:
 		pop	ft		; FT popped
 		jal	sdSendBlockNumber
 		pop	de
+
+		jal	sdInFirst
 		j/ne	.error
 
 		jal	sdInPacket
 		j/ne	.error
 
-		MPrintString <"  do read\n">
+		MDebugPrint <"  do read\n">
 
 		ld	l,BLOCKLEN/8
 .read_loop	REPT	8
@@ -266,7 +268,7 @@ SdReadSingleBlock:
 		ENDR
 		dj	l,.read_loop
 
-		MPrintString <"  did read\n">
+		MDebugPrint <"  did read\n">
 
 		; CRC
 		lio	t,(bc)
@@ -376,7 +378,7 @@ sdSendBlockNumber:
 ; --
 		SECTION	"sdSetBlockLen512",CODE
 sdSetBlockLen512:
-		MPrintString <"sdSetBlockLen512\n">
+		MDebugPrint <"sdSetBlockLen512\n">
 
 		push	de/hl
 
@@ -494,7 +496,7 @@ sdSkipBytes6:
 ; --
 		SECTION	"sdInitV1",CODE
 sdInitV1:
-		MPrintString <"sdInitV1\n">
+		MDebugPrint <"sdInitV1\n">
 		push	de/hl
 
 		ld	d,HCS
@@ -518,7 +520,7 @@ sdInitV1:
 ; --
 		SECTION	"sdInitV2",CODE
 sdInitV2:
-		MPrintString <"sdInitV2\n">
+		MDebugPrint <"sdInitV2\n">
 		push	de/hl
 
 		ld	d,HCS
@@ -549,7 +551,7 @@ sdInitV2:
 ; --
 		SECTION	"sdReadCcsBit",CODE
 sdReadCcsBit:
-		MPrintString <"sdReadCcsBit\n">
+		MDebugPrint <"sdReadCcsBit\n">
 		push	hl
 
 		jal	sdReadOcr
@@ -578,7 +580,7 @@ sdReadCcsBit:
 ; --
 		SECTION	"sdReadOcr",CODE
 sdReadOcr:
-		MPrintString <"sdReadOcr\n">
+		MDebugPrint <"sdReadOcr\n">
 		push	hl
 
 		SELECT
@@ -624,7 +626,7 @@ sdReadOcr:
 ; --
 		SECTION	"sdSendOpCond",CODE
 sdSendOpCond:
-		MPrintString <"sdSendOpCond\n">
+		MDebugPrint <"sdSendOpCond\n">
 
 		push	de/hl
 
@@ -667,7 +669,7 @@ sdSendOpCond:
 ; --
 		SECTION	"sdAppCommand",CODE
 sdAppCommand:
-		MPrintString <"sdAppCommand\n">
+		MDebugPrint <"sdAppCommand\n">
 		push	hl
 
 		SELECT
@@ -697,7 +699,7 @@ sdAppCommand:
 ; --
 		SECTION	"sdSendIfCond",CODE
 sdSendIfCond:
-		MPrintString <"sdSendIfCond\n">
+		MDebugPrint <"sdSendIfCond\n">
 		push	de/hl
 
 		SELECT
@@ -745,7 +747,7 @@ sdSendIfCond:
 ; --
 		SECTION	"sdGoIdleState",CODE
 sdGoIdleState:
-		MPrintString <"sdGoIdleState\n">
+		MDebugPrint <"sdGoIdleState\n">
 		push	hl
 
 		SELECT
@@ -775,7 +777,7 @@ sdGoIdleState:
 ; --
 		SECTION	"sdInFirst",CODE
 sdInFirst:
-		MPrintString <"sdInFirst\n">
+		MDebugPrint <"sdInFirst\n">
 		push	de/hl
 
 		ld	ft,SdSelect

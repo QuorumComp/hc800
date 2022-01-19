@@ -8,6 +8,28 @@ COMMAND_REQUEST_CHAR	EQU	2
 COMMAND_PRINT_CHAR	EQU	3
 
 ; --
+; -- Print characters to attached terminal
+; --
+; -- Inputs:
+; --    t - count
+; --   bc - characters (code)
+; --
+; -- Outputs:
+; --    f - "eq" condition if success
+; --
+		SECTION	"ComPrintChar",CODE
+ComPrintCodeChars:
+		pusha
+		ld	d,t
+.next		lco	t,(bc)
+		add	bc,1
+		jal	ComPrintChar
+		j/ne	.error
+		dj	d,.next
+.error		popa
+		j	(hl)
+
+; --
 ; -- Print single digit
 ; --
 ; --    t - digit ($0-$F)
