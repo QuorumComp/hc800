@@ -180,7 +180,7 @@ BlockDeviceInit:
 ; -- Read block from device
 ; --
 ; -- Inputs:
-; --   ft:ft' - block number
+; --   ft:ft' - block number (consumed)
 ; --   bc - pointer to block device structure
 ; --   de - pointer to destination
 ; --

@@ -229,7 +229,7 @@ SdWriteSingleBlock:
 ; -- Read block from SD card (CMD17)
 ; --
 ; -- Inputs:
-; --   ft:ft' - block number
+; --   ft:ft' - block number (consumed)
 ; --   de - pointer to destination
 ; --
 ; -- Returns:
@@ -250,6 +250,8 @@ SdReadSingleBlock:
 		ld	d,(ft)
 		pop	ft		; FT popped
 		jal	sdSendBlockNumber
+		pop	ft
+		pop	ft
 		pop	de
 
 		jal	sdInFirst
@@ -328,7 +330,7 @@ SdInit:		push	bc-hl
 ; -- Send block number
 ; --
 ; -- Inputs:
-; --   ft:ft' - block number
+; --   ft:ft' - block number (preserved)
 ; --       b  - IO_SDCARD_BASE
 ; --       d  - SD type
 ; --

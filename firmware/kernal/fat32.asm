@@ -8,7 +8,7 @@
 		INCLUDE	"fat32.i"
 
 		INCLUDE	"uart_commands.i"
-		INCLUDE	"uart_commands_disabled.i"
+		;INCLUDE	"uart_commands_disabled.i"
 
 FAT32_BOOT_SIG		EQU	$29
 
@@ -241,7 +241,7 @@ fileRead:
 ; --
 		SECTION	"loadVolumeBootRecord",CODE
 loadVolumeBootRecord:
-		pusha
+		push	hl
 
 		MDebugPrint <"loadVolumeBootRecord\n">
 
@@ -250,9 +250,8 @@ loadVolumeBootRecord:
 		ld	ft,0
 		push	ft
 		jal	BlockDeviceRead
-		pop	ft
 
-		popa
+		pop	hl
 		j	(hl)
 
 

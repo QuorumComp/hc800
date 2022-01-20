@@ -71,9 +71,7 @@ MakeMbrPartitionDevice:
 		jal	BlockDeviceRead
 		j/ne	.fail_popa
 
-		pop	ft
-		pop	ft
-		; sector number has been popped
+		pop	ft  ; restore block device
 
 		;MDebugPrint <"  - loaded MBR\n">
 

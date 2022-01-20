@@ -12,7 +12,7 @@
 		INCLUDE	"uartfs.i"
 
 		INCLUDE	"uart_commands.i"
-		INCLUDE	"uart_commands_disabled.i"
+		;INCLUDE	"uart_commands_disabled.i"
 
 MAX_FILESYSTEMS = 10
 MAX_FAT_VOLUMES = 3
@@ -162,10 +162,14 @@ FileInitialize:
 ; t  - device identifier
 ; de - file system structure
 mountFat:
-		push	ft/bc/hl
+		pusha
+
+		MDebugPrint <"mountFat\n">
 
 		jal	BlockDeviceGet
 		j/ne	.fail
+
+		MDebugPrint <" - got block device\n">
 
 		jal	Fat32FsMake
 		j/ne	.fail
@@ -175,12 +179,12 @@ mountFat:
 		ld	(de),t
 		sub	de,fs_BlockDevice
 
+		pop	bc-hl
 		ld	f,FLAGS_EQ
-		j	.exit
+		j	(hl)
 
-.fail		pop	ft
+.fail		popa
 		ld	f,FLAGS_NE
-.exit		pop	bc/hl
 		j	(hl)
 
 
