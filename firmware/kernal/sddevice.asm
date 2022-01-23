@@ -23,10 +23,8 @@
 SdDeviceMake:
 		push	bc-hl
 
-		MDebugPrint <"SdDeviceMake ">
-		MDebugHexWord ft
-		MDebugPrint <" ">
-		MDebugHexWord bc
+		MDebugPrint <"SdDeviceMake card $">
+		MDebugHexByte t
 		MDebugNewLine
 
 		ld	d,t

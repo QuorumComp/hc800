@@ -8,7 +8,7 @@
 		INCLUDE	"sd.i"
 		INCLUDE	"uart_commands.i"
 
-		;INCLUDE	"uart_commands_disabled.i"
+		INCLUDE	"uart_commands_disabled.i"
 
 
 CMD0_CRC	EQU	$95

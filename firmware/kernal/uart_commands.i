@@ -65,6 +65,15 @@ MDebugHexWord:	MACRO	;register
 		popa
 		ENDM
 
+MDebugHexByte:	MACRO	;register
+		pusha
+		IF	"\1".lower.compareto("t")~=0
+		ld	t,\1
+		ENDC
+		jal	ComPrintHexByte
+		popa
+		ENDM
+
 MDebugRegisters: MACRO
 		pusha
 		pusha

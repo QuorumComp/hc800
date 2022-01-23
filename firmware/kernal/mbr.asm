@@ -9,7 +9,7 @@
 		INCLUDE	"mbr.i"
 		INCLUDE	"uart_commands.i"
 
-;		INCLUDE	"uart_commands_disabled.i"
+		;INCLUDE	"uart_commands_disabled.i"
 
 TYPE_FAT32_LBA	EQU	$0C
 
@@ -60,7 +60,6 @@ MakeMbrPartitionDevice:
 		; de = sector buffer
 
 		; block number 0
-		push	ft
 		ld	ft,0
 		push	ft
 
@@ -69,7 +68,7 @@ MakeMbrPartitionDevice:
 
 		MDebugPrint <"  - load MBR\n">
 		jal	BlockDeviceRead
-		j/ne	.fail_popa
+		j/ne	.fail_popa_ft2
 
 		pop	ft  ; restore block device
 
@@ -175,14 +174,14 @@ MakeMbrPartitionDevice:
 		ld	f,FLAGS_EQ
 		j	.exit
 
+.fail_popa_ft2	pop	ft
 .fail_popa	pop	ft
-		pop	ft
 .fail_pop_bc_to_hl
 		MDebugPrint <"MakeMbrPartitionDevice failed\n">
 		ld	f,FLAGS_NE
 		pop	bc-hl
 .exit
-		MDebugPrint <"MakeMbrPartitionDevice exit\n">
+		MDebugPrint <"MakeMbrPartitionDevice exit ">
 		MDebugHexWord ft
 		MDebugPrint <" ">
 		MDebugHexWord bc

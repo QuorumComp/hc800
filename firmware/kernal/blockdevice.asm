@@ -96,9 +96,13 @@ SysGetBlockDevice::
 BlockDeviceInit:
 		pusha
 
+		MDebugPrint <"Init sda\n">
+
 		ld	bc,blockDevicePointers
 		ld	d,0
 		jal	.init_devices
+
+		MDebugPrint <"Init sdb\n">
 
 		add	bc,4*2
 		ld	d,1
@@ -125,15 +129,15 @@ BlockDeviceInit:
 
 		ld	t,d
 		jal	SdDeviceMake
-		MDebugPrint <"SdDeviceMake done\n">
 		j/eq	.sd_ok
 
 		pop	ft
 		popa
-		MDebugPrint <"BlockDeviceInit.init_devices exit\n">
 		j	(hl)
 
 .sd_ok	
+		MDebugPrint <"SD card present, find partitions\n">
+
 		pop	ft
 
 		; ft - block device pointers
@@ -153,9 +157,15 @@ BlockDeviceInit:
 		ld	bc,ft
 		pop	ft
 
+		MDebugPrint <"Call MakeMbrPartitionDevice ">
+		MDebugHexWord ft
+		MDebugNewLine
 		push	ft
 		jal	MakeMbrPartitionDevice
 		pop	ft
+		MDebugPrint <"After MakeMbrPartitionDevice ">
+		MDebugHexWord ft
+		MDebugNewLine
 
 		pop	bc
 		
