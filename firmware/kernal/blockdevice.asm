@@ -9,7 +9,7 @@
 		INCLUDE	"sddevice.i"
 		INCLUDE	"uart_commands.i"
 
-		INCLUDE	"uart_commands_disabled.i"
+		;INCLUDE	"uart_commands_disabled.i"
 
 MAX_PARTITIONS = 3
 
@@ -158,14 +158,14 @@ BlockDeviceInit:
 		pop	ft
 
 		MDebugPrint <"Call MakeMbrPartitionDevice ">
-		MDebugHexWord ft
 		MDebugNewLine
+		MDebugStacks
 		push	ft
 		jal	MakeMbrPartitionDevice
 		pop	ft
 		MDebugPrint <"After MakeMbrPartitionDevice ">
-		MDebugHexWord ft
 		MDebugNewLine
+		MDebugStacks
 
 		pop	bc
 		
@@ -221,18 +221,14 @@ BlockDeviceRead:
 		exg	ft,bc
 
 		MDebugPrint <"BlockDeviceRead call ">
-		MDebugHexWord hl
+		MDebugStacks
 		MDebugNewLine
 		jal	(hl)
 
 		pop	bc/hl
 
 		MDebugPrint <"BlockDeviceRead exit ">
-		MDebugHexWord ft
-		MDebugPrint <" ">
-		MDebugHexWord bc
-		MDebugPrint <" ">
-		MDebugHexWord de
+		MDebugStacks
 		MDebugNewLine
 
 		jal	(hl)

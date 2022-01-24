@@ -1,8 +1,41 @@
 		INCLUDE	"lowlevel/uart.i"
+		INCLUDE	"lowlevel/rc800.i"
 		INCLUDE	"stdlib/string.i"
 		INCLUDE	"uart_commands.i"
 
 IDENT_NONCE	EQU	$1234
+
+
+; -- Print all stack pointers
+; --
+		SECTION	"ComPrintStackPointers",CODE
+ComPrintStackPointers:
+		pusha
+
+		ld	c,RC8_SP_FT
+		lcr	t,(c)
+		MDebugPrint "FT:$"
+		MDebugHexByte t
+
+		add	c,1
+		lcr	t,(c)
+		MDebugPrint " BC:$"
+		MDebugHexByte t
+
+		add	c,1
+		lcr	t,(c)
+		MDebugPrint " DE:$"
+		MDebugHexByte t
+
+		add	c,1
+		lcr	t,(c)
+		MDebugPrint " HL:$"
+		MDebugHexByte t
+
+		MDebugNewLine
+		popa
+
+		j	(hl)
 
 
 ; -- Print value as hexadecimal

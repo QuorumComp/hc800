@@ -56,8 +56,11 @@ MakeMbrPartitionDevice:
 		exg	ft,bc
 
 		; ft = block device to fill in
+		; ft' = partition index
 		; bc = block device
 		; de = sector buffer
+
+		push	ft
 
 		; block number 0
 		ld	ft,0
@@ -65,10 +68,13 @@ MakeMbrPartitionDevice:
 
 		; ft:ft' - block number
 		; ft'' - block device to fill in
+		; ft''' - partition index
 
 		MDebugPrint <"  - load MBR\n">
+		;MDebugStacks
 		jal	BlockDeviceRead
-		j/ne	.fail_popa_ft2
+		j/ne	.fail_popa_ft
+		;MDebugStacks
 
 		pop	ft  ; restore block device
 
@@ -175,6 +181,7 @@ MakeMbrPartitionDevice:
 		j	.exit
 
 .fail_popa_ft2	pop	ft
+.fail_popa_ft	pop	ft
 .fail_popa	pop	ft
 .fail_pop_bc_to_hl
 		MDebugPrint <"MakeMbrPartitionDevice failed\n">
@@ -191,7 +198,6 @@ MakeMbrPartitionDevice:
 
 		MStackFree 512
 		j	(hl)
-
 
 .template	DW	mbrRead
 		DW	mbrWrite
@@ -235,8 +241,8 @@ mbrSize:
 ; -- Read block from device
 ; --
 ; -- Inputs:
-; --   ft - pointer to block device structure
-; --   bc - pointer to block number
+; --   ft:ft' - block number (consumed)
+; --   bc - pointer to block device structure
 ; --   de - pointer to destination
 ; --
 ; -- Returns:
@@ -246,35 +252,35 @@ mbrSize:
 mbrRead:
 		pusha
 
-		exg	bc,de
+		ld	ft,bc
 		add	ft,mbrdev_Offset
-
 		MPush32	bc,(ft)
-		MPush32	ft,(de)
+
+		pop	ft
 
 		jal	MathAdd_32_32
+		pop	bc
+		pop	bc
 
 		; ft:ft' = block number
-		; ft'' = mbrdev_Offset
-		; bc = pointer to dest
-		; de = pointer to block number
+		; bc - pointer to block device structure
+		; de - pointer to destination
 
-		add	de,mbrdev_Underlying+1-mbrdev_Offset
-		ld	t,(de)
-		sub	de,1
+		push	ft
+		add	bc,mbrdev_Underlying+1
+		ld	t,(bc)
+		sub	bc,1
 		exg	f,t
-		ld	t,(de)
+		ld	t,(bc)
+		ld	bc,ft
+		pop	ft
 
-		; ft = underlying block device
-		; bc = blockNumber
-		
-		pop	de
-
+		; ft:ft' = block number
+		; bc = underlying block device
 		; de = destination
-
 		jal	BlockDeviceRead
 
-		pop	bc/hl
+		pop	bc-hl
 		j	(hl)
 
 	

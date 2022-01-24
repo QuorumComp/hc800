@@ -67,9 +67,9 @@ MDebugHexWord:	MACRO	;register
 
 MDebugHexByte:	MACRO	;register
 		pusha
-		IF	"\1".lower.compareto("t")~=0
+	IF	"\1".lower.compareto("t")~=0
 		ld	t,\1
-		ENDC
+	ENDC
 		jal	ComPrintHexByte
 		popa
 		ENDM
@@ -104,6 +104,12 @@ MDebugRegisters: MACRO
 		popa
 		ENDM
 
+MDebugStacks:	MACRO
+		pusha
+		jal	ComPrintStackPointers
+		popa
+		ENDM
+
 MDebugMemory:	MACRO	;memory,size
 		pusha
 	IF	"\1".lower.compareto("de")==0
@@ -125,6 +131,7 @@ MDebugMemory:	MACRO	;memory,size
 	GLOBAL	ComReadFile
 	GLOBAL	ComRequestChar
 	GLOBAL	ComDumpMemory
+	GLOBAL	ComPrintStackPointers
 	GLOBAL	ComPrintHexByte
 	GLOBAL	ComPrintHexWord
 	GLOBAL	ComPrintChar

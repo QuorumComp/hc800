@@ -250,8 +250,6 @@ SdReadSingleBlock:
 		ld	d,(ft)
 		pop	ft		; FT popped
 		jal	sdSendBlockNumber
-		pop	ft
-		pop	ft
 		pop	de
 
 		jal	sdInFirst
@@ -330,7 +328,7 @@ SdInit:		push	bc-hl
 ; -- Send block number
 ; --
 ; -- Inputs:
-; --   ft:ft' - block number (preserved)
+; --   ft:ft' - block number (consumed)
 ; --       b  - IO_SDCARD_BASE
 ; --       d  - SD type
 ; --
@@ -342,19 +340,18 @@ sdSendBlockNumber:
 		swap	ft
 		MDebugNewLine
 
-		push	bc-hl
+		pusha
 
-		jal	MathDupLong
-
-		ld	c,IO_SD_DATA
 		push	ft
+		ld	c,IO_SD_DATA
 		cmp	d,SDTYPE_V2_HC
 		j/eq	.hc
+		pop	ft
 
 		; standard capacity, send blockNumber*512
-		pop	ft
 		ld	b,9
 		jal	MathShiftLeft_32
+
 		ld	b,IO_SDCARD_BASE
 		j	.continue
 
@@ -364,7 +361,7 @@ sdSendBlockNumber:
 		ld	t,$01	; CRC
 		lio	(bc),t
 
-		pop	bc-hl
+		popa
 		j	(hl)
 
 
@@ -403,11 +400,8 @@ sdSetBlockLen512:
 ; -- Send 32 bit integer to card
 ; --
 ; -- Inputs:
-; --   ft:ft' - integer to send
+; --   ft:ft' - integer to send (consumed)
 ; --       b - IO_SDCARD_BASE
-; --
-; -- Outputs:
-; --   ft:ft' consumed
 ; --
 sdSendInt32:
 		push	bc
@@ -427,8 +421,6 @@ sdSendInt32:
 		exg	f,t
 		nop
 		lio	(bc),t
-
-		pop	ft
 
 		pop	bc
 		j	(hl)
