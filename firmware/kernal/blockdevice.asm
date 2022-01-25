@@ -9,7 +9,7 @@
 		INCLUDE	"sddevice.i"
 		INCLUDE	"uart_commands.i"
 
-		;INCLUDE	"uart_commands_disabled.i"
+		INCLUDE	"uart_commands_disabled.i"
 
 MAX_PARTITIONS = 3
 
@@ -157,15 +157,16 @@ BlockDeviceInit:
 		ld	bc,ft
 		pop	ft
 
-		MDebugPrint <"Call MakeMbrPartitionDevice ">
-		MDebugNewLine
-		MDebugStacks
+		;MDebugPrint <"Call MakeMbrPartitionDevice ">
+		;MDebugNewLine
+		;MDebugStacks
 		push	ft
 		jal	MakeMbrPartitionDevice
+		;MDebugMemory bc,mbrdev_SIZEOF
 		pop	ft
-		MDebugPrint <"After MakeMbrPartitionDevice ">
-		MDebugNewLine
-		MDebugStacks
+		;MDebugPrint <"After MakeMbrPartitionDevice ">
+		;MDebugNewLine
+		;MDebugStacks
 
 		pop	bc
 		

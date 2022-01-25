@@ -48,7 +48,7 @@ DESELECT:	MACRO
 		pop	ft
 		ENDM
 
-	IF 0 ; 1 = disable debug
+	IF 1 ; 1 = disable debug
 		PURGE	MDebugPrint
 MDebugPrint:	MACRO
 		ENDM

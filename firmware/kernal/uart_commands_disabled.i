@@ -16,6 +16,10 @@ MDebugPrintR:	MACRO	;register
 MDebugNewLine:	MACRO
 		ENDM
 
+		PURGE	MDebugHexByte
+MDebugHexByte:	MACRO
+		ENDM
+
 		PURGE	MDebugHexWord
 MDebugHexWord:	MACRO	;register
 		ENDM
@@ -28,5 +32,8 @@ MDebugRegisters: MACRO
 MDebugMemory:	MACRO	;memory,size
 		ENDM
 
+		PURGE	MDebugStacks
+MDebugStacks:	MACRO
+		ENDM
 
 	ENDC

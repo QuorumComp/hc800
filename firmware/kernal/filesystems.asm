@@ -12,7 +12,7 @@
 		INCLUDE	"uartfs.i"
 
 		INCLUDE	"uart_commands.i"
-		;INCLUDE	"uart_commands_disabled.i"
+		INCLUDE	"uart_commands_disabled.i"
 
 MAX_FILESYSTEMS = 10
 MAX_FAT_VOLUMES = 3

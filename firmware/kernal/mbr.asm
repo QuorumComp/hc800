@@ -9,7 +9,7 @@
 		INCLUDE	"mbr.i"
 		INCLUDE	"uart_commands.i"
 
-		;INCLUDE	"uart_commands_disabled.i"
+		INCLUDE	"uart_commands_disabled.i"
 
 TYPE_FAT32_LBA	EQU	$0C
 
