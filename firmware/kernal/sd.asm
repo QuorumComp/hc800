@@ -49,10 +49,6 @@ DESELECT:	MACRO
 		ENDM
 
 	IF 1 ; 1 = disable debug
-		PURGE	MDebugPrint
-MDebugPrint:	MACRO
-		ENDM
-
 		PURGE	MNewLine
 MNewLine:	MACRO
 		ENDM
@@ -342,7 +338,6 @@ sdSendBlockNumber:
 
 		pusha
 
-		push	ft
 		ld	c,IO_SD_DATA
 		cmp	d,SDTYPE_V2_HC
 		j/eq	.hc
@@ -352,16 +347,31 @@ sdSendBlockNumber:
 		ld	b,9
 		jal	MathShiftLeft_32
 
+		MDebugPrint <"sdSendBlockNumber byte ">
+		MDebugHexWord ft
+		swap	ft
+		MDebugHexWord ft
+		swap	ft
+		MDebugNewLine
+
 		ld	b,IO_SDCARD_BASE
 		j	.continue
 
 .hc		pop	ft
-.continue	jal	sdSendInt32
+.continue
+		MDebugPrint <"sdSendBlockNumber ">
+		MDebugHexWord ft
+		swap	ft
+		MDebugHexWord ft
+		swap	ft
+		MDebugNewLine
+
+		jal	sdSendInt32
 
 		ld	t,$01	; CRC
 		lio	(bc),t
 
-		popa
+		pop	bc-hl
 		j	(hl)
 
 

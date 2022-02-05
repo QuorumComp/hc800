@@ -257,7 +257,6 @@ mbrRead:
 		MPush32	bc,(ft)
 
 		pop	ft
-
 		jal	MathAdd_32_32
 		pop	bc
 		pop	bc
@@ -278,11 +277,8 @@ mbrRead:
 		; ft:ft' = block number
 		; bc = underlying block device
 		; de = destination
+
 		jal	BlockDeviceRead
 
 		pop	bc-hl
 		j	(hl)
-
-	
-		SECTION "MbrVars",BSS
-blockNumber	DS	4

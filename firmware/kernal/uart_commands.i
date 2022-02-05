@@ -65,6 +65,13 @@ MDebugHexWord:	MACRO	;register
 		popa
 		ENDM
 
+MDebugHexLong:	MACRO	;register
+		MDebugHexWord \1
+		swap	\1
+		MDebugHexWord \1
+		swap	\1
+		ENDM
+
 MDebugHexByte:	MACRO	;register
 		pusha
 	IF	"\1".lower.compareto("t")~=0

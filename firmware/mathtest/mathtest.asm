@@ -139,14 +139,20 @@ TestShift:
 		MPush32	ft,$1235ABCD
 		ld	b,5
 		jal	MathShiftLeft_32
-
 		MPrintString "0x1235ABCD << 5 = (expect 46B579A0) "
 		jal	StreamHexLongOut
 		MNewLine
 
+		MPush32	ft,$1234ABCD
+		ld	b,9
+		jal	MathShiftLeft_32
+		MPrintString "0x1234ABCD << 9 = (expect 69579A00) "
+		jal	StreamHexLongOut
+		MNewLine
+
+		MPush32	ft,$46B579A0
 		ld	b,17
 		jal	MathShiftLeft_32
-
 		MPrintString "0x46B579A0 << 17 = (expect 0ABC0000) "
 		jal	StreamHexLongOut
 		MNewLine

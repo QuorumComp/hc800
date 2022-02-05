@@ -96,10 +96,7 @@ readBlock:
 		push	hl
 
 		MDebugPrint <"SD readBlock ">
-		MDebugHexWord ft
-		swap	ft
-		MDebugHexWord ft
-		swap	ft
+		MDebugHexLong ft
 		MDebugPrint <" ">
 		MDebugHexWord bc
 		MDebugNewLine
