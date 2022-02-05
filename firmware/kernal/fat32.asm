@@ -109,10 +109,18 @@ fillFsStruct:
 
 		; calculate data base
 		sub	bc,BPB_FAT_BASE
-		add	de,fs_DataBase-fs_FatBase
 		jal	.calcDataBase
 
-		popa
+		swap	de	; get fs structure
+		add	de,fs_DataBase
+
+		; this pops one FT too many, the popa at the end of this function is therefore on bc-hl
+		MPop32	(de),ft
+
+		sub	de,fs_DataBase
+		swap	de
+
+		pop	bc-hl
 		j	(hl)
 
 .copy2		pusha
@@ -137,41 +145,38 @@ fillFsStruct:
 
 		; -- Calc data base cluster
 		; -- bc - volume boot record
-		; -- de - destination
 		; --
 		; BPB_FAT_BASE(2) + BPB_FAT_SIZE32(4)*BPB_TOTAL_FAT_SECTORS(1)
 .calcDataBase:
-		pusha
+		push	bc-hl
 
-		add	bc,BPB_FAT_SIZE32
-		jal	.copy4
+		ld	ft,bc
+		ld	de,ft
 
-		add	bc,BPB_TOTAL_FAT_SECTORS-BPB_FAT_SIZE32
-		ld	t,(bc)
+		add	de,BPB_TOTAL_FAT_SECTORS
+		ld	t,(de)
 		ld	f,0
+		ld	bc,ft
 
-		exg	bc,de
+		add	de,BPB_FAT_SIZE32-BPB_TOTAL_FAT_SECTORS
+		MLoad32	ft,(de)
+
 		jal	MathMultiplyUnsigned_32x16_p32
 
-		; bc - destination
-		; de - volume boot record
-
-		add	de,BPB_FAT_BASE+1-BPB_TOTAL_FAT_SECTORS
+		push	ft
+		add	de,BPB_FAT_BASE+1-BPB_FAT_SIZE32
 		ld	t,(de)
-		exg	f,t
+		ld	f,t
 		sub	de,1
 		ld	t,(de)
-
-		push	bc
 		ld	bc,ft
+		pop	ft
+
 		MZeroExtend bc
 		jal	MathAdd_32_32
 		pop	bc
-		pop	bc
 
-		jal	MathStoreLong
-
-		popa
+		pop	bc-hl
 		j	(hl)
 
 
