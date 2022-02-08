@@ -19,8 +19,11 @@ BPB_FAT_SIZE32		EQU	$24
 BPB_ROOT_CLUSTER	EQU	$2C
 
 BS_BOOT_SIG32		EQU	$42
+BS_LABEL		EQU	$47
 BS_FSTYPE32		EQU	$52
 BS_BOOT_RECORD_SIG	EQU	$1FE
+
+BS_LABEL_SIZEOF		EQU	11
 
 
 ; ---------------------------------------------------------------------------
@@ -86,9 +89,31 @@ fillFsStruct:
 		add	de,1
 		dj	f,.copy_template
 
+		; copy volume label
+		add	de,fs_Label+BS_LABEL_SIZEOF-fs_PRIVATE
+		add	bc,BS_LABEL+BS_LABEL_SIZEOF
+		ld	l,BS_LABEL_SIZEOF
+.find_label_end	sub	bc,1
+		sub	de,1
+		ld	t,(bc)
+		cmp	t,' '
+		j/ne	.label_end_found
+		dj	l,.find_label_end
+		j	.no_label
+.label_end_found
+		ld	(de),t
+		j	.label_copy_entry
+.label_copy	sub	bc,1
+		sub	de,1
+		ld	t,(bc)
+		ld	(de),t
+.label_copy_entry
+		dj	l,.find_label_end
+.no_label
+		MDebugMemory de,16
 		; determine how much to shift a cluster number to get sector
 
-		add	bc,BPB_SECTORS_PER_CLUSTER
+		add	bc,BPB_SECTORS_PER_CLUSTER-BS_LABEL
 		add	de,fs_ClusterToSector-fs_PRIVATE
 		ld	t,(bc)
 		ld	f,0
