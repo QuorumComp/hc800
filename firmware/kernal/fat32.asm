@@ -56,6 +56,7 @@ Fat32FsMake:
 		ld	bc,ft	; bc = volume boot record
 		swap	de	; restore fs structure
 		jal	fillFsStruct
+		MDebugMemory de,32
 		swap	de	; put fs structure back in place
 
 		ld	f,FLAGS_EQ
@@ -90,7 +91,7 @@ fillFsStruct:
 		dj	f,.copy_template
 
 		; copy volume label
-		add	de,fs_Label+BS_LABEL_SIZEOF-fs_PRIVATE
+		add	de,fs_Label+BS_LABEL_SIZEOF+1-fs_PRIVATE
 		add	bc,BS_LABEL+BS_LABEL_SIZEOF
 		ld	l,BS_LABEL_SIZEOF
 .find_label_end	sub	bc,1
@@ -101,6 +102,7 @@ fillFsStruct:
 		dj	l,.find_label_end
 		j	.no_label
 .label_end_found
+		push	hl
 		ld	(de),t
 		j	.label_copy_entry
 .label_copy	sub	bc,1
@@ -108,13 +110,17 @@ fillFsStruct:
 		ld	t,(bc)
 		ld	(de),t
 .label_copy_entry
-		dj	l,.find_label_end
+		dj	l,.label_copy
+		pop	hl
+		sub	de,1
+		ld	t,l
+		ld	(de),t
 .no_label
 		MDebugMemory de,16
 		; determine how much to shift a cluster number to get sector
 
 		add	bc,BPB_SECTORS_PER_CLUSTER-BS_LABEL
-		add	de,fs_ClusterToSector-fs_PRIVATE
+		add	de,fs_ClusterToSector-fs_Label
 		ld	t,(bc)
 		ld	f,0
 		jal	MathLog2_16

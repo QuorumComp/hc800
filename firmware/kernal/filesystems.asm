@@ -100,6 +100,7 @@ FileInitialize:
 
 		jal	.storeFsPointer
 
+		MDebugMemory de,fs_Fat32_SIZEOF
 		add	de,fs_Fat32_SIZEOF
 
 .no_fat		add	t,1
