@@ -334,6 +334,45 @@ checkFat32:	push	bc-hl
 
 .signature	DB	"FAT32   "
 
+; ---------------------------------------------------------------------------
+; -- Convert cluster number to sector number
+; --
+; -- Inputs:
+; --   ft:ft' - cluster
+; --   bc     - pointer to filesystem structure
+; --
+; -- Outputs:
+; --   ft:ft' - sector
+; --
+clusterToSector:
+		pusha
+
+		; move bc to de, restore cluster#
+		ld	ft,bc
+		ld	de,ft
+		pop	ft
+
+		MLoad32 bc,-2
+		jal	MathAdd_32_32
+		pop	bc
+
+		; load cluster-to-sector 
+		push	ft
+		add	de,fs_ClusterToSector
+		ld	t,(de)
+		ld	b,t
+		pop	ft
+		jal	MathShiftLeft_32
+
+		add	de,fs_DataBase-fs_ClusterToSector
+		MLoad32	bc,(de)
+		jal	MathAdd_32_32
+		pop	bc
+		
+		pop	bc-hl
+		j	(hl)
+
+
 
 		SECTION	"Fat32Vars",BSS
 fs:		DS	2

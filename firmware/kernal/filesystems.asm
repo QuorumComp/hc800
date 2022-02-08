@@ -236,11 +236,13 @@ FileOpen:
 		exg	f,t
 		sub	hl,1
 		ld	t,(hl)
+		sub	hl,fs_Open
+		exg	ft,hl
 
-		MDebugHexWord ft
+		MDebugHexWord hl
 		MDebugNewLine
 
-		jal	(ft)
+		jal	(hl)
 
 		pop	bc-hl
 		j	(hl)
@@ -270,6 +272,7 @@ FileClose:
 		exg	f,t
 		sub	bc,1
 		ld	t,(bc)
+		sub	bc,fs_Close
 
 		jal	(ft)
 
