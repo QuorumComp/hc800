@@ -23,9 +23,9 @@ fs_BlockDevice	RB	1	; $FF if not blockdevice
 ; -- Open file. file_Flags, file_Error and file_Length are filled in.
 ; --
 ; -- Inputs:
-; --   ft - pointer to filesystem struct
-; --   bc - pointer to file struct
-; --   de - pointer to filename (Pascal string)
+; --   ft - file struct
+; --   bc - filename path
+; --   de - pointer to filesystem struct
 ; --
 ; -- Output:
 ; --    t - Error code

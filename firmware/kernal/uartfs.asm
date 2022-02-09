@@ -59,8 +59,9 @@ UartInitialize:
 ; -- in.
 ; --
 ; -- Inputs:
-; --   bc - pointer to file struct
-; --   de - pointer to filename (Pascal string)
+; --   ft - file name path
+; --   bc - file struct
+; --   de - pointer to filesystem struct
 ; --
 ; -- Output:
 ; --    t - Error code
@@ -74,11 +75,11 @@ uartOpen:
 		MDebugPrintR de
 		MDebugNewLine
 
-		push	bc
 		ld	bc,uartFile1
+		ld	de,ft
+
 		jal	StringCopy
 		jal	sendStatFileCommand
-		pop	bc
 
 		jal	ComSyncResponse
 		j/ne	.done
@@ -86,10 +87,12 @@ uartOpen:
 		jal	UartByteInSync
 		j/ne	.timeout
 
-		add	bc,file_Flags
-		ld	(bc),t
+		add	de,file_Flags
+		ld	(de),t
 
-		add	bc,file_Length-file_Flags
+		add	de,file_Length-file_Flags
+		ld	ft,de
+		ld	bc,ft
 		ld	de,4
 		jal	UartMemoryInSync
 		sub	bc,file_Length

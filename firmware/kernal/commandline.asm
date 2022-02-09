@@ -103,6 +103,7 @@ SysExit::
 readExecutable:
 		push	bc-hl
 
+		ld	ft,de
 		ld	bc,exeFileHandle
 		jal	FileOpen
 		j/ne	.error

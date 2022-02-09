@@ -193,8 +193,8 @@ mountFat:
 ; -- Open file
 ; --
 ; -- Inputs:
+; --   ft - file name path
 ; --   bc - file struct
-; --   de - file name path
 ; --
 ; -- Outputs:
 ; --    t - Error code
@@ -202,49 +202,47 @@ mountFat:
 ; --
 		SECTION	"FileOpen",CODE
 FileOpen:
-		push	bc-hl
+		pusha
 
-		MDebugPrint <"FileOpen ">
-		MDebugPrintR de
-		MDebugNewLine
+		MDebugPrint <"FileOpen\n">
 
 		; clear file handle structure
-		push	de
 		ld	de,file_SIZEOF
 		ld	t,0
 		jal	SetMemory
-		pop	de
 
 		; get filesystem
 		ld	ft,rootFs
-		ld	l,(ft)
+		ld	e,(ft)
 		add	ft,1
-		ld	h,(ft)
+		ld	d,(ft)
+		push	de
 
-		MDebugHexWord hl
+		MDebugHexWord de
 		MDebugNewLine
 
 		; set filesystem pointer in file struct
 		ld	ft,bc
-		ld	(ft),l
+		ld	(ft),e
 		add	ft,1
-		ld	(ft),h
+		ld	(ft),d
 
 		; get open function
-		add	hl,fs_Open+1
-		ld	t,(hl)
-		exg	f,t
-		sub	hl,1
-		ld	t,(hl)
-		sub	hl,fs_Open
-		exg	ft,hl
+		add	de,fs_Open+1
+		ld	t,(de)
+		ld	f,t
+		sub	de,1
+		ld	t,(de)
+		sub	de,fs_Open
+		ld	hl,ft
 
 		MDebugHexWord hl
 		MDebugNewLine
 
+		pop	ft/bc
 		jal	(hl)
 
-		pop	bc-hl
+		pop	de/hl
 		j	(hl)
 
 
@@ -294,7 +292,7 @@ FileClose:
 ; --    t - Error code
 ; --    f - "eq" if success
 ; --
-		SECTION	"FileRead",CODE
+		SECTION	"FileSkip",CODE
 FileSkip:
 		push	bc-hl
 
