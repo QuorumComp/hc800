@@ -250,29 +250,28 @@ FileOpen:
 ; -- Close file
 ; --
 ; -- Inputs:
-; --   bc - file struct
+; --   ft - file struct
 ; --
 		SECTION	"FileClose",CODE
 FileClose:
-		push	bc-hl
+		pusha
 
 		MDebugPrint <"FileClose\n">
 
 		; get filesystem
-		ld	ft,bc
 		ld	c,(ft)
 		add	ft,1
 		ld	b,(ft)
 
 		; get close function
-		add	bc,fs_Close+1
-		ld	t,(bc)
-		exg	f,t
-		sub	bc,1
-		ld	t,(bc)
-		sub	bc,fs_Close
+		ld	ft,bc
+		add	ft,fs_Close
+		ld	l,(ft)
+		sub	ft,1
+		ld	h,(ft)
 
-		jal	(ft)
+		pop	ft
+		jal	(hl)
 
 		ld	t,ERROR_SUCCESS
 		ld	f,FLAGS_EQ
@@ -412,8 +411,8 @@ FileReadByte:
 ; -- Open directory
 ; --
 ; -- Inputs:
-; --   bc - pointer to directory struct
-; --   de - path
+; --   ft - pointer to directory struct
+; --   bc - path
 ; --
 ; -- Output:
 ; --    f - "eq" if directory could be opened. Directory struct is filled in
@@ -421,38 +420,39 @@ FileReadByte:
 ; --
 		SECTION	"DirectoryOpen",CODE
 DirectoryOpen:
-		push	bc-hl
+		pusha
+
+		MDebugPrint <"DirectoryOpen\n">
 
 		; clear directory structure
+		ld	bc,ft
 		ld	de,dir_SIZEOF
 		ld	t,0
 		jal	SetMemory
 
 		; get filesystem
 		ld	ft,rootFs
+		ld	e,(ft)
+		add	ft,1
+		ld	d,(ft)
+
+		; set filesystem pointer in directory struct
+		ld	ft,bc
+		ld	(ft),e
+		add	ft,1
+		ld	(ft),d
+
+		; get open function
+		ld	ft,de
+		add	ft,fs_OpenDir
 		ld	l,(ft)
 		add	ft,1
 		ld	h,(ft)
 
-		; set filesystem pointer in directory struct
-		ld	ft,bc
-		ld	(ft),l
-		add	ft,1
-		ld	(ft),h
+		pop	ft/bc
+		jal	(hl)
 
-		; get open function
-		add	hl,fs_OpenDir+1
-		ld	t,(hl)
-		exg	f,t
-		sub	hl,1
-		ld	t,(hl)
-
-		pop	de
-		push	de
-
-		jal	(ft)
-
-		pop	bc-hl
+		pop	de/hl
 		j	(hl)
 
 
@@ -460,7 +460,7 @@ DirectoryOpen:
 ; -- Read next file information from directory
 ; --
 ; -- Inputs:
-; --   bc - pointer to directory struct
+; --   ft - pointer to directory struct
 ; --
 ; -- Output:
 ; --    f - "eq" if next file information could be retrieved. Directory
@@ -469,30 +469,25 @@ DirectoryOpen:
 ; --
 		SECTION	"DirectoryRead",CODE
 DirectoryRead:
-		push	bc-hl
+		pusha
 
-		push	bc
+		MDebugPrint <"DirectoryRead\n">
 
 		; get filesystem
-		ld	ft,bc
 		ld	c,(ft)
 		add	ft,1
 		ld	b,(ft)
 
 		; get read function
-		add	bc,fs_ReadDir+1
-		ld	t,(bc)
-		exg	f,t
-		sub	bc,1
-		ld	t,(bc)
-		ld	hl,ft
+		ld	ft,bc
+		add	ft,fs_ReadDir
+		ld	l,(ft)
+		add	ft,1
+		ld	h,(ft)
+		sub	ft,fs_ReadDir
 
-		pop	bc
+		pop	ft
 		jal	(hl)
-
-		add	bc,dir_Error
-		ld	t,(bc)
-		cmp	t,ERROR_SUCCESS
 
 		pop	bc-hl
 		j	(hl)

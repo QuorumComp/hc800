@@ -12,16 +12,16 @@
 Entry::
 		pusha
 
-		ld	bc,dirInfo
-		ld	de,path
+		ld	ft,dirInfo
+		ld	bc,path
 		sys	KOpenDirectory
 		j/ne	.error
 
-.print_dir	add	bc,dir_Filename
+.print_dir	ld	bc,dirInfo+dir_Filename
 		jal	StreamBssStringOut
 		MNewLine
 
-		sub	bc,dir_Filename
+		ld	ft,dirInfo
 		sys	KReadDirectory
 		j/eq	.print_dir
 

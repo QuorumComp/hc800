@@ -111,6 +111,8 @@ readExecutable:
 		jal	readFile
 		j/ne	.error
 
+		ld	ft,bc
+
 		jal	FileClose
 
 .error		pop	bc-hl

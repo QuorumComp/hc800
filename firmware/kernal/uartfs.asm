@@ -114,7 +114,7 @@ uartOpen:
 ; -- Close file
 ; --
 ; -- Inputs:
-; --   bc - pointer to file struct
+; --   ft - pointer to file struct
 ; --
 ; -- Output:
 ; --    t - Error code
@@ -245,8 +245,9 @@ sendStatFileCommand:
 ; -- Open directory
 ; --
 ; -- Inputs:
-; --   bc - pointer to directory struct
-; --   de - path
+; --   ft - pointer to directory struct
+; --   bc - path
+; --   de - pointer to filesystem struct
 ; --
 ; -- Output:
 ; --    f - "eq" if directory could be opened. Directory struct is filled in
@@ -254,24 +255,31 @@ sendStatFileCommand:
 ; --
 		SECTION "UartOpenDir",CODE
 uartOpenDir:
-		push	bc-hl
+		pusha
 
+		ld	ft,bc
+		ld	de,ft
 		ld	bc,uartDir1
 		jal	StringCopy
 
-		pop	bc
-		add	bc,udir_Index
+		pop	ft
+		push	ft
 
-		ld	t,0
-		ld	(bc),t
-		add	bc,1
-		ld	(bc),t
+		; clear file index
+		add	ft,udir_Index
+		ld	b,0
+		ld	(ft),b
+		add	ft,1
+		ld	(ft),b
 
-		sub	bc,udir_Index+1
+		pop	de
+		ld	ft,de
+		ld	bc,ft
+		pop	ft
 
 		jal	uartReadDir
 
-		pop	de-hl
+		pop	bc/hl
 		j	(hl)
 
 
@@ -279,7 +287,8 @@ uartOpenDir:
 ; -- Read next file information from directory
 ; --
 ; -- Inputs:
-; --   bc - pointer to directory struct
+; --   ft - pointer to directory struct
+; --   bc - pointer to filesystem struct
 ; --
 ; -- Output:
 ; --    f - "eq" if next file information could be retrieved. Directory
@@ -288,29 +297,35 @@ uartOpenDir:
 ; --
 		SECTION "UartReadDir",CODE
 uartReadDir:
-		push	bc-hl
+		pusha
 
-		ld	t,ERROR_SUCCESS
-		add	bc,dir_Error
-		ld	(bc),t
+		MDebugPrint <"uartReadDir ">
+		MDebugHexWord ft
+		MDebugPrint <" ">
+		MDebugHexWord bc
+		MDebugNewLine
+
+		ld	d,ERROR_SUCCESS
+		add	ft,dir_Error
+		ld	(ft),d
 
 		; fetch index
-		add	bc,udir_Index+1-dir_Error
-		ld	t,(bc)
-		exg	f,t
-		sub	bc,1
-		ld	t,(bc)
+		add	ft,udir_Index+1-dir_Error
+		ld	d,(ft)
+		sub	ft,1
+		ld	e,(ft)
+		MDebugHexWord de
+		MDebugNewLine
 
 		; increment index and store
-		push	ft
+		add	de,1
+		ld	(ft),e
 		add	ft,1
-		ld	(bc),t
-		add	bc,1
-		exg	f,t
-		ld	(bc),t
-		pop	ft
+		ld	(ft),d
+		sub	de,1
 
 		; send read dir command
+		ld	ft,de
 		ld	bc,uartDir1
 		jal	sendReadDirCommand
 
@@ -319,9 +334,9 @@ uartReadDir:
 		j/ne	.error
 
 		; filename
-		pop	bc
-		push	bc
+		pop	ft
 
+		ld	bc,ft
 		add	bc,dir_Filename
 		jal	ComReadDataString
 		j/ne	.error
@@ -344,10 +359,10 @@ uartReadDir:
 		j	(hl)
 
 .error		pop	bc
-		push	bc
 		add	bc,dir_Error
 		ld	(bc),t
-		j	.exit
+		pop	de/hl
+		j	(hl)
 
 
 ; ---------------------------------------------------------------------------

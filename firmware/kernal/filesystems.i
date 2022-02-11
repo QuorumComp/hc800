@@ -23,8 +23,8 @@ fs_BlockDevice	RB	1	; $FF if not blockdevice
 ; -- Open file. file_Flags, file_Error and file_Length are filled in.
 ; --
 ; -- Inputs:
-; --   ft - file struct
-; --   bc - filename path
+; --   ft - file name path
+; --   bc - file struct
 ; --   de - pointer to filesystem struct
 ; --
 ; -- Output:
@@ -37,7 +37,8 @@ fs_Open		RW	1
 ; -- Close file
 ; --
 ; -- Inputs:
-; --   bc - pointer to file struct
+; --   ft - pointer to file struct
+; --   bc - pointer to filesystem struct
 ; --
 ; -- Output:
 ; --    t - Error code
@@ -62,7 +63,9 @@ fs_Read		RW	1
 ; -- Open directory
 ; --
 ; -- Inputs:
-; --   bc - pointer to directory struct
+; --   ft - pointer to directory struct
+; --   bc - path
+; --   de - pointer to filesystem struct
 ; --
 ; -- Output:
 ; --    f - "eq" if directory could be opened. Directory struct is filled in
@@ -74,7 +77,8 @@ fs_OpenDir	RW	1
 ; -- Read next file information from directory
 ; --
 ; -- Inputs:
-; --   bc - pointer to directory struct
+; --   ft - pointer to directory struct
+; --   bc - pointer to filesystem struct
 ; --
 ; -- Output:
 ; --    f - "eq" if next file information could be retrieved. Directory
