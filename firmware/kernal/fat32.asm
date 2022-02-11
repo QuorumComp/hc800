@@ -26,6 +26,14 @@ BS_BOOT_RECORD_SIG	EQU	$1FE
 BS_LABEL_SIZEOF		EQU	11
 
 
+		RSSET	fs_PRIVATE
+ufs_SIZEOF	RB	0
+
+		RSSET	dir_PRIVATE
+udir_Index	RW	1
+udir_SIZEOF	RB	0
+
+
 ; ---------------------------------------------------------------------------
 ; -- Make FAT32 file system jump table
 ; --
@@ -217,19 +225,41 @@ fillFsStruct:
 ; -- Open a directory for iterating
 ; --
 ; -- Inputs:
-; --   bc - FAT32 directory structure to fill in
-; --   de - pointer to path
+; --   ft - pointer to directory struct
+; --   bc - path
+; --   de - pointer to filesystem struct
+; --
+; -- Output:
+; --    f - "eq" if directory could be opened. Directory struct is filled in
+; --        with information on first file
 ; --
 dirOpen:
-		MStackAlloc 
-		jal	followPath
+		pusha
+
+		; clear file index
+		add	ft,udir_Index
+		ld	b,0
+		ld	(ft),b
+		add	ft,1
+		ld	(ft),b
+
+		; bc = filesystem
+		ld	ft,de
+		ld	bc,ft
+
+		pop	ft
+		jal	dirRead
+
+		pop	bc-hl
+		j	(hl)
 
 
 ; ---------------------------------------------------------------------------
 ; -- Read next file information from directory
 ; --
 ; -- Inputs:
-; --   bc - pointer to directory struct
+; --   ft - pointer to directory struct
+; --   bc - pointer to filesystem struct
 ; --
 ; -- Output:
 ; --    f - "eq" if next file information could be retrieved. Directory

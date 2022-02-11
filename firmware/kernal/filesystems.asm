@@ -349,6 +349,7 @@ FileRead:
 		ld	hl,ft
 
 		pop	ft-bc
+
 		jal	(hl)
 
 		push	ft
@@ -450,7 +451,10 @@ DirectoryOpen:
 		ld	h,(ft)
 
 		pop	ft/bc
+		MDebugMemory de,32
 		jal	(hl)
+		MDebugMemory de,32
+		
 
 		pop	de/hl
 		j	(hl)
@@ -487,7 +491,9 @@ DirectoryRead:
 		sub	ft,fs_ReadDir
 
 		pop	ft
+		MDebugMemory bc,32
 		jal	(hl)
+		MDebugMemory bc,32
 
 		pop	bc-hl
 		j	(hl)

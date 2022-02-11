@@ -335,6 +335,7 @@ uartReadDir:
 
 		; filename
 		pop	ft
+		push	ft
 
 		ld	bc,ft
 		add	bc,dir_Filename
@@ -345,12 +346,15 @@ uartReadDir:
 		jal	UartByteInSync
 		j/ne	.error
 
-		add	bc,dir_Flags-dir_Filename
 		and	t,FFLAG_DIR
-		ld	(bc),t
+		ld	b,t
+		pop	ft
+		add	ft,dir_Flags
+		ld	(ft),b
 
 		; file length
 
+		ld	bc,ft
 		add	bc,dir_Length-dir_Flags
 		ld	de,4
 		jal	UartMemoryInSync
@@ -358,11 +362,11 @@ uartReadDir:
 .exit		pop	bc-hl
 		j	(hl)
 
-.error		pop	bc
-		add	bc,dir_Error
-		ld	(bc),t
-		pop	de/hl
-		j	(hl)
+.error		ld	b,t
+		pop	ft
+		add	ft,dir_Error
+		ld	(ft),b
+		j	.exit
 
 
 ; ---------------------------------------------------------------------------
