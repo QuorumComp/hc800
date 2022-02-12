@@ -42,6 +42,7 @@ UartInitialize:
 .fs		DB	4,"uart",0,0,0,0,0,0,0,0,0,0,0
 		DB	0,0,0,0,0,0,0,0
 		DB	$FF
+		DW	$0000
 		DW	uartOpen
 		DW	uartClose
 		DW	uartRead

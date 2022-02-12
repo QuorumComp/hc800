@@ -56,7 +56,7 @@ SysGetVolume::
 
 		MDebugPrint <"- 2\n">
 
-		ld	f,fs_Open
+		ld	f,fs_CommonSize
 .copy_names	ld	t,(de)
 		ld	(bc),t
 		add	de,1
@@ -176,9 +176,9 @@ mountFat:
 		j/ne	.fail
 
 		pop	ft
-		add	de,fs_BlockDevice
+		add	de,fs_DeviceId
 		ld	(de),t
-		sub	de,fs_BlockDevice
+		sub	de,fs_DeviceId
 
 		pop	bc-hl
 		ld	f,FLAGS_EQ

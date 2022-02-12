@@ -17,7 +17,9 @@ FILESYSTEMS_I_INCLUDED_ = 1
 		RSRESET
 fs_Label	RB	MAX_LABEL_LENGTH
 fs_Volume	RB	MAX_VOLUME_NAME_LENGTH
-fs_BlockDevice	RB	1	; $FF if not blockdevice
+fs_DeviceId	RB	1	; $FF if not blockdevice
+fs_CommonSize	RB	0	; the size of data in common with volinf_
+fs_BlockDevice	RB	2
 
 ; ---------------------------------------------------------------------------
 ; -- Open file. file_Flags, file_Error and file_Length are filled in.
@@ -90,7 +92,7 @@ fs_ReadDir	RW	1
 fs_PRIVATE	RB	0
 
 
-	IF	fs_Open~=volinf_Free
+	IF	fs_CommonSize~=volinf_CommonSize
 		FAIL	"First three members of filesystem and volume info structures must have the same size"
 	ENDC
 
