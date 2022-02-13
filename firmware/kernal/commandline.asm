@@ -7,8 +7,10 @@
 
 		INCLUDE	"filesystems.i"
 		INCLUDE	"mmu.i"
-		INCLUDE	"uart_commands.i"
 		INCLUDE	"video.i"
+
+		INCLUDE	"uart_commands.i"
+		INCLUDE	"uart_commands_disabled.i"
 
 HUNK_MMU	EQU	0
 HUNK_END	EQU	1
@@ -111,9 +113,11 @@ readExecutable:
 		jal	readFile
 		j/ne	.error
 
+		push	ft
 		ld	ft,bc
-
 		jal	FileClose
+		popa
+		j	(hl)
 
 .error		pop	bc-hl
 		j	(hl)
@@ -151,6 +155,7 @@ readHunk:
 		ld	d,t
 		jal	FileReadByte
 		j/ne	.exit
+
 		exg	f,t
 		ld	t,d		; ft = length
 
@@ -204,7 +209,7 @@ readHunkData:
 		add	l,IO_MMU_DATA_BANK3-IO_MMU_UPDATE_INDEX
 		lio	(hl),t
 
-		;MDebugMemory exeFileHandle,file_SIZEOF
+		MDebugMemory exeFileHandle,file_SIZEOF
 
 		; load data
 

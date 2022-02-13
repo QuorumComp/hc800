@@ -123,6 +123,7 @@ uartOpen:
 ; --
 		SECTION	"UartClose",CODE
 uartClose:
+		MDebugPrint <"uartClose\n">
 		ld	f,FLAGS_EQ
 		ld	t,ERROR_SUCCESS
 		j	(hl)
