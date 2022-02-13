@@ -100,8 +100,8 @@ FileInitialize:
 
 		jal	.storeFsPointer
 
-		MDebugMemory de,fs_Fat32_SIZEOF
-		add	de,fs_Fat32_SIZEOF
+		MDebugMemory de,fat32_SIZEOF
+		add	de,fat32_SIZEOF
 
 .no_fat		add	t,1
 		cmp	t,TOTAL_BLOCKDEVICES
@@ -179,6 +179,19 @@ mountFat:
 		add	de,fs_DeviceId
 		ld	(de),t
 		sub	de,fs_DeviceId
+
+	IF 0
+		ld	ft,bc
+		add	de,fs_BlockDevice
+		ld	(de),t
+		add	de,1
+		ld	t,f
+		ld	(de),t
+
+		add	de,fs_DeviceId-(fs_BlockDevice+1)
+		pop	ft
+		ld	(de),t
+	ENDC
 
 		pop	bc-hl
 		ld	f,FLAGS_EQ
@@ -500,7 +513,7 @@ DirectoryRead:
 
 
 			SECTION	"FilesystemVars",BSS
-fat32Filesystems:	DS	fs_Fat32_SIZEOF*MAX_FAT_VOLUMES
+fat32Filesystems:	DS	fat32_SIZEOF*MAX_FAT_VOLUMES
 filesystems:		DS	MAX_FILESYSTEMS*2
 totalFilesystems:	DS	1
 readBuffer:		DS	2

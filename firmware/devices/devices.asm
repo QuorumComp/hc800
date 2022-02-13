@@ -172,26 +172,6 @@ printFile:
 .exit		popa
 		j	(hl)
 
-; bc = cluster/result
-; de = fat32 structure
-clusterToSector:
-		pusha
-		ld	ft,-2
-		jal	MathLoadOperand16S
-
-		jal	MathAdd_32_Operand
-
-		add	de,fs_ClusterToSector
-		ld	t,(de)
-		ld	t,3
-		jal	MathShiftLeft_32
-
-		add	de,fs_DataBase-fs_ClusterToSector
-		jal	MathAdd_32_32
-		
-		popa
-		j	(hl)
-
 printStringArray:
 		pusha
 

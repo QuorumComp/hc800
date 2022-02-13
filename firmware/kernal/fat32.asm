@@ -26,11 +26,9 @@ BS_BOOT_RECORD_SIG	EQU	$1FE
 BS_LABEL_SIZEOF		EQU	11
 
 
-		RSSET	fs_PRIVATE
-ufs_SIZEOF	RB	0
-
 		RSSET	dir_PRIVATE
-udir_Index	RW	1
+udir_Cluster	RB	4
+udir_FileIndex	RB	2
 udir_SIZEOF	RB	0
 
 
@@ -92,7 +90,7 @@ fillFsStruct:
 		add	de,fs_Open
 		ld	hl,.template
 		ld	f,fs_PRIVATE-fs_Open
-.copy_template	ld	t,(hl)
+.copy_template	lco	t,(hl)
 		ld	(de),t
 		add	hl,1
 		add	de,1
@@ -128,7 +126,7 @@ fillFsStruct:
 		; determine how much to shift a cluster number to get sector
 
 		add	bc,BPB_SECTORS_PER_CLUSTER-BS_LABEL
-		add	de,fs_ClusterToSector-fs_Label
+		add	de,fat32_ClusterToSector-fs_Label
 		ld	t,(bc)
 		ld	f,0
 		jal	MathLog2_16
@@ -137,13 +135,13 @@ fillFsStruct:
 		; get root directory cluster
 
 		add	bc,BPB_ROOT_CLUSTER-BPB_SECTORS_PER_CLUSTER
-		add	de,fs_RootCluster-fs_ClusterToSector
+		add	de,fat32_RootCluster-fat32_ClusterToSector
 		jal	.copy4
 
 		; get FAT base cluster
 
 		add	bc,BPB_FAT_BASE-BPB_ROOT_CLUSTER
-		add	de,fs_FatBase-fs_RootCluster
+		add	de,fat32_FatBase-fat32_RootCluster
 		jal	.copy2
 
 		; calculate data base
@@ -151,12 +149,12 @@ fillFsStruct:
 		jal	.calcDataBase
 
 		swap	de	; get fs structure
-		add	de,fs_DataBase
+		add	de,fat32_DataBase
 
 		; this pops one FT too many, the popa at the end of this function is therefore on bc-hl
 		MPop32	(de),ft
 
-		sub	de,fs_DataBase
+		sub	de,fat32_DataBase
 		swap	de
 
 		pop	bc-hl
@@ -237,7 +235,11 @@ dirOpen:
 		pusha
 
 		; clear file index
-		add	ft,udir_Index
+		add	ft,udir_Cluster
+		add	de,fat32_RootCluster
+		MCopy	ft,de,4
+
+		add	ft,udir_FileIndex-udir_Cluster
 		ld	b,0
 		ld	(ft),b
 		add	ft,1
@@ -268,6 +270,51 @@ dirOpen:
 ; --
 		SECTION "Fat32DirRead",CODE
 dirRead:
+		pusha
+		ld	de,ft
+
+	IF 0
+		; TODO: move to next cluster if done with current
+
+		; calc sector number for next file
+		add	de,udir_FileIndex+1
+		ld	t,(de)
+		ld	f,t
+		sub	de,1
+		ld	t,(de)
+		push	ft
+		rs	ft,4	; 16 entries per sector
+		ld	hl,ft	; hl = sector# in cluster
+
+		push	hl
+		push	bc
+
+		add	de,udir_Cluster-udir_FileIndex
+		add	bc,fat32_ClusterToSector
+		ld	t,(bc)
+		ld	b,t
+		MLoad32	ft,(de)
+		jal	MathShiftLeft_32
+
+		pop	hl
+		exg	bc,hl
+		push	bc
+		ld	bc,0
+		jal	MathAdd_32_32
+		pop	bc
+
+		; ft:ft' = sector number
+
+		pop	bc
+		push	ft
+		add	bc,fs_BlockDevice
+
+		MStackAlloc 512
+
+
+	ENDC
+
+		popa
 		j	(hl)
 
 
@@ -388,13 +435,13 @@ clusterToSector:
 
 		; load cluster-to-sector 
 		push	ft
-		add	de,fs_ClusterToSector
+		add	de,fat32_ClusterToSector
 		ld	t,(de)
 		ld	b,t
 		pop	ft
 		jal	MathShiftLeft_32
 
-		add	de,fs_DataBase-fs_ClusterToSector
+		add	de,fat32_DataBase-fat32_ClusterToSector
 		MLoad32	bc,(de)
 		jal	MathAdd_32_32
 		pop	bc
@@ -402,9 +449,3 @@ clusterToSector:
 		pop	bc-hl
 		j	(hl)
 
-
-
-		SECTION	"Fat32Vars",BSS
-fs:		DS	2
-sectorDirty:	DS	1
-sectorData:	DS	512
