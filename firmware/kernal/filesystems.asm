@@ -178,20 +178,13 @@ mountFat:
 		pop	ft
 		add	de,fs_DeviceId
 		ld	(de),t
-		sub	de,fs_DeviceId
 
-	IF 0
 		ld	ft,bc
-		add	de,fs_BlockDevice
+		add	de,fs_BlockDevice-fs_DeviceId
 		ld	(de),t
 		add	de,1
 		ld	t,f
 		ld	(de),t
-
-		add	de,fs_DeviceId-(fs_BlockDevice+1)
-		pop	ft
-		ld	(de),t
-	ENDC
 
 		pop	bc-hl
 		ld	f,FLAGS_EQ

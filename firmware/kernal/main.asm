@@ -18,6 +18,9 @@
 		INCLUDE "text.i"
 		INCLUDE "video.i"
 
+		INCLUDE	"uart_commands.i"
+		INCLUDE	"uart_commands_disabled.i"
+
 
 		SECTION	"Main",CODE
 Main:
@@ -32,11 +35,13 @@ Main:
 
 		MStackInit 1024
 
+		MDebugStacks
 		jal	InitializePalette
 		jal	KeyboardInitialize
 		jal	TextInitialize
 		jal	BlockDeviceInit
 		jal	FileInitialize
+		MDebugStacks
 
 		sys	KClearScreen
 

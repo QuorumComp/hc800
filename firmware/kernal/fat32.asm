@@ -273,7 +273,6 @@ dirRead:
 		pusha
 		ld	de,ft
 
-	IF 0
 		; TODO: move to next cluster if done with current
 
 		; calc sector number for next file
@@ -309,10 +308,7 @@ dirRead:
 		push	ft
 		add	bc,fs_BlockDevice
 
-		MStackAlloc 512
-
-
-	ENDC
+;		MStackAlloc 512
 
 		popa
 		j	(hl)
