@@ -399,17 +399,9 @@ TextScrollLinesUp:
 		ld	l,0
 		dj	b,.loop
 
-		ld	de,VideoCursor+csr_Attribute
-		ld	t,(de)
-		ld	d,t
-		ld	e,0
-
-		ld	f,CHARS_PER_LINE
-.clear_loop	ld	t,e
-		ld	(hl),t
-		add	hl,1
-		ld	t,d
-		ld	(hl),t
+		ld	t,0
+		ld	f,CHARS_PER_LINE*2
+.clear_loop	ld	(hl),t
 		add	hl,1
 		dj	f,.clear_loop
 
