@@ -299,37 +299,57 @@ moveCursor:
 
 		jal	hideCursor
 
-		; scroll screen down if necessary
-		cmp	c,0
-		j/ge	.no_scroll_down		; skip if cursor doesn't move up
+		jal	TextGetCursor
+		add	t,c
+		exg	f,t
+		add	t,b
 
-		jal	isCursorOnFirstLine
-		j/nz	.no_scroll_down		; skip if cursor is not on line 0
+		; f = new y
+		; t = new x
+
+		push	ft
+		ld	d,0
+
+		cmp	t,0
+		j/ge	.left_ok
+		add	t,CHARS_PER_LINE
+		ld	d,-1	; move y up
+		j	.check_y
+.left_ok	cmp	t,CHARS_PER_LINE
+		j/lt	.check_y
+		sub	t,CHARS_PER_LINE
+		ld	d,1	; move y down
+
+.check_y	ld	b,t	; save new x pos
+
+		pop	ft
+		exg	f,t
+		add	t,d
+
+		cmp	t,0
+		j/ge	.no_scroll_down
 
 		jal	scrollScreenDown
+		ld	t,0
 		j	.exit
-.no_scroll_down
 
-		cmp	c,0
-		j/le	.no_scroll_up		; skip if cursor doesn't move down
-
-		jal	isCursorOnLastLine
-		j/ne	.no_scroll_up		; skip if cursor is not on line 0
+.no_scroll_down	cmp	t,LINES_ON_SCREEN
+		j/lt	.exit		; skip if cursor doesn't move down
 
 		jal	scrollScreenUp
-		j	.exit
-.no_scroll_up
+		ld	t,LINES_ON_SCREEN-1
 
-		jal	TextMoveCursor
+.exit		ld	c,t		; new y pos
 
-.exit
+		jal	TextSetCursor
 		jal	restartCursor
+
 		popa
 		j	(hl)
 
 
 scrollScreenDown:
-		push	hl
+		pusha
 
 		ld	t,0
 		jal	TextScrollLinesDown
@@ -337,18 +357,18 @@ scrollScreenDown:
 		ld	bc,lineLengths
 		ld	(bc),t
 
-		pop	hl
+		popa
 		j	(hl)
 
 
 scrollScreenUp:
-		push	hl
+		pusha
 
 		ld	t,0
 		jal	TextScrollLinesUp
 		jal	scrollLinesLengthsUp
 
-		pop	hl
+		popa
 		j	(hl)
 
 
