@@ -34,4 +34,4 @@ dirInfo		DS	dir_SIZEOF
 
 
 		SECTION	"Data",DATA_S
-path		DC_STR	<".">
+path		DC_STR	<":v0">

@@ -432,13 +432,15 @@ DirectoryOpen:
 		MDebugPrint <"DirectoryOpen\n">
 
 		; clear directory structure
+		push	ft
 		ld	bc,ft
 		ld	de,dir_SIZEOF
 		ld	t,0
 		jal	SetMemory
+		pop	ft
 
 		; get filesystem
-		ld	ft,rootFs
+		jal	getFileSystemFromPath
 		ld	e,(ft)
 		add	ft,1
 		ld	d,(ft)
@@ -502,6 +504,138 @@ DirectoryRead:
 		MDebugMemory bc,32
 
 		pop	bc-hl
+		j	(hl)
+
+
+; --
+; -- Private functions
+; --
+
+
+; ---------------------------------------------------------------------------
+; -- Determine to which volume a path belongs
+; --
+; -- Inputs:
+; --   ft - pointer to path
+; --
+; -- Output:
+; --   ft - volume
+; --
+		SECTION	"getFileSystemFromPath",CODE
+getFileSystemFromPath:
+		push	bc-hl
+
+		ld	bc,ft
+
+		ld	t,(bc)
+		ld	e,t	; e = remaining chars
+		add	bc,1
+
+		cmp	e,0
+		j/eq	.current_fs
+
+		ld	t,(bc)
+		cmp	t,':'
+		j/ne	.current_fs
+
+		add	bc,1
+		sub	e,1
+
+		push	bc	
+		; bc' = start of volume name
+
+.find_end	cmp	e,0
+		j/eq	.found_end
+		ld	t,(bc)
+		cmp	t,'/'
+		j/eq	.found_end
+		add	bc,1
+		sub	e,1
+		j	.find_end
+
+.found_end	; bc = end of volume name
+		ld	ft,bc
+		pop	bc
+		sub	ft,bc
+		ld	d,t	; d = volume name length
+
+		ld	ft,totalFilesystems
+		ld	e,(ft)	; e = total filesystems
+		ld	hl,filesystems
+		j	.loop_entry
+
+.check_filesystem
+		ld	t,(hl)
+		exg	f,t
+		add	hl,1
+		ld	t,(hl)
+		exg	f,t
+		add	hl,1
+
+		push	ft/hl
+		jal	check_filesystem_match
+		j/eq	.match
+
+.loop_entry	dj	e,.check_filesystem
+
+		; not found
+
+		popa
+		pop	hl
+		ld	ft,0
+		j	(hl)
+
+.match		popa
+		pop	hl
+		j	(hl)
+
+.current_fs	pop	bc-hl
+		j	(hl)
+
+; -- Check filesystem name match
+; --
+; -- Inputs:
+; --   ft - filesystem
+; --   bc - name
+; --    d - name length
+; --
+; -- Outputs:
+; --    f = "eq" if match
+
+check_filesystem_match
+		push	bc-hl
+		ld	hl,ft
+
+		ld	e,2
+
+.check_string	ld	t,(hl)
+		cmp	t,d
+		j/ne	.check_done
+
+		pusha
+		add	hl,1
+
+.check_char	ld	t,(hl)
+		add	hl,1
+		ld	f,t
+		ld	t,(bc)
+		add	bc,1
+
+		cmp	t,f
+		j/ne	.no_match
+		dj	d,.check_char
+
+		popa
+		ld	t,FLAGS_EQ
+		j	.exit
+
+.no_match	popa
+
+.check_done	add	hl,fs_Volume
+		dj	e,.check_string
+
+		ld	t,FLAGS_NE
+.exit		pop	bc-hl
 		j	(hl)
 
 
