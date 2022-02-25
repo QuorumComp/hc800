@@ -1,6 +1,7 @@
 		INCLUDE	"lowlevel/math.i"
 		INCLUDE	"lowlevel/memory.i"
 		INCLUDE	"lowlevel/rc800.i"
+		INCLUDE	"lowlevel/stack.i"
 
 		INCLUDE	"stdlib/stream.i"
 		INCLUDE	"stdlib/string.i"
@@ -110,16 +111,16 @@ FileInitialize:
 		ld	de,UartFilesystem
 		jal	.storeFsPointer
 
-		; de - UART filesystem, use as root
+		; de - UART filesystem, set as current
 
-		ld	ft,rootFs
+		ld	ft,currentFs
 		ld	(ft),e
 		add	ft,1
 		ld	(ft),d
 
-		; initialize root
+		; initialize current path
 
-		ld	ft,rootPath
+		ld	ft,currentPath
 		ld	b,0
 		ld	(ft),b
 
@@ -218,7 +219,7 @@ FileOpen:
 		jal	SetMemory
 
 		; get filesystem
-		ld	ft,rootFs
+		ld	ft,currentFs
 		ld	e,(ft)
 		add	ft,1
 		ld	d,(ft)
@@ -273,7 +274,7 @@ FileClose:
 		ld	ft,bc
 		add	ft,fs_Close
 		ld	l,(ft)
-		sub	ft,1
+		add	ft,1
 		ld	h,(ft)
 
 		pop	ft
@@ -302,12 +303,14 @@ FileSkip:
 		push	bc-hl
 
 		MZeroExtend ft
+
+		push	ft
 		add	bc,file_Offset
-		jal	MathLoadLong
-		MMove32	bc,ft
+		ld	ft,bc
+		MLoad32	bc,(ft)
+		pop	ft
 
 		jal	MathAdd_32_32
-		pop	bc
 		pop	bc
 
 		jal	MathStoreLong
@@ -333,11 +336,10 @@ FileSkip:
 ; --
 		SECTION	"FileRead",CODE
 FileRead:
-		push	bc-hl
+		MDebugPrint <"FileRead entry ">
+		MDebugStacks
 
-		MDebugPrint <"FileRead ">
-		MDebugHexWord ft
-		MDebugNewLine
+		push	bc-hl
 
 		push	ft-bc
 		; get filesystem
@@ -367,18 +369,19 @@ FileRead:
 
 		swap	ft
 		popa
+
+		MDebugPrint <"FileRead fail ">
+		MDebugStacks
+
 		j	(hl)
 
-.no_error	ld	ft,0	; zero extend bytes read (in ft')
+.no_error	add	bc,file_Offset-file_Error
+		ld	ft,bc
+		MPush32	bc,(ft)
 
-		add	bc,file_Offset-file_Error
-		push	bc
-
-		jal	MathLoadLong
-		MMove32	bc,ft
+		ld	ft,0	; zero extend bytes read (in ft')
 
 		jal	MathAdd_32_32
-		pop	bc
 		pop	bc
 		pop	bc
 		jal	MathStoreLong
@@ -387,6 +390,10 @@ FileRead:
 		ld	f,FLAGS_EQ
 
 		pop	bc-hl
+
+		MDebugPrint <"FileRead success ">
+		MDebugStacks
+
 		j	(hl)
 
 
@@ -427,29 +434,42 @@ FileReadByte:
 ; --
 		SECTION	"DirectoryOpen",CODE
 DirectoryOpen:
+		;MDebugStacks
 		pusha
 
-		MDebugPrint <"DirectoryOpen\n">
+		MDebugPrint <"DirectoryOpen ">
+		MDebugPrintR bc
+		MDebugNewLine
 
 		; clear directory structure
-		push	ft
+		push	ft-bc
 		ld	bc,ft
 		ld	de,dir_SIZEOF
 		ld	t,0
 		jal	SetMemory
-		pop	ft
+		pop	ft-bc
 
-		; get filesystem
+		ld	ft,bc
 		jal	getFileSystemFromPath
-		ld	e,(ft)
-		add	ft,1
-		ld	d,(ft)
+		j/eq	.found_filesystem
+
+		popa
+		ld	f,FLAGS_NE
+		j	(hl)
+		
+.found_filesystem
+		pop	ft
+		MDebugMemory ft,16
+
+		ld	de,ft
 
 		; set filesystem pointer in directory struct
-		ld	ft,bc
+		pop	ft
+		push	ft
 		ld	(ft),e
 		add	ft,1
 		ld	(ft),d
+		sub	ft,1
 
 		; get open function
 		ld	ft,de
@@ -459,12 +479,9 @@ DirectoryOpen:
 		ld	h,(ft)
 
 		pop	ft/bc
-		MDebugMemory de,32
 		jal	(hl)
-		MDebugMemory de,32
-		
 
-		pop	de/hl
+		pop	de-hl
 		j	(hl)
 
 
@@ -516,14 +533,20 @@ DirectoryRead:
 ; -- Determine to which volume a path belongs
 ; --
 ; -- Inputs:
-; --   ft - pointer to path
+; --   ft - source pointer to path
 ; --
-; -- Output:
-; --   ft - volume
+; -- Outputs:
+; --    f - "eq" if found
+; --  ft' - pointer to character or non existant if f "ne"
 ; --
 		SECTION	"getFileSystemFromPath",CODE
 getFileSystemFromPath:
 		push	bc-hl
+
+		MDebugPrint <"getFileSystemFromPath entry\n">
+		MDebugPrint <" - source: ">
+		MDebugHexWord ft
+		MDebugNewLine
 
 		ld	bc,ft
 
@@ -541,30 +564,33 @@ getFileSystemFromPath:
 		add	bc,1
 		sub	e,1
 
-		push	bc	
-		; bc' = start of volume name
+		; MDebugPrint <"getFileSystemFromPath determine volume name length\n">
 
-.find_end	cmp	e,0
-		j/eq	.found_end
-		ld	t,(bc)
-		cmp	t,'/'
-		j/eq	.found_end
-		add	bc,1
-		sub	e,1
-		j	.find_end
+		; find position of / character
 
-.found_end	; bc = end of volume name
-		ld	ft,bc
+		push	bc
+		ld	t,e
+		exg	ft,bc
+		ld	b,'/'
+		jal	MemoryCharN
 		pop	bc
+		j/eq	.found_slash
+		ld	t,e
+		j	.found_length
+.found_slash	pop	ft
 		sub	ft,bc
-		ld	d,t	; d = volume name length
+.found_length
+		; bc = start of volume name
+		; t = length
 
+		ld	d,t
 		ld	ft,totalFilesystems
 		ld	e,(ft)	; e = total filesystems
 		ld	hl,filesystems
-		j	.loop_entry
 
-.check_filesystem
+		MDebugPrint <"getFileSystemFromPath find filesystem\n">
+
+.check_filesystem_loop
 		ld	t,(hl)
 		exg	f,t
 		add	hl,1
@@ -573,25 +599,42 @@ getFileSystemFromPath:
 		add	hl,1
 
 		push	ft/hl
-		jal	check_filesystem_match
+		jal	checkFilesystemMatch
+		pop	hl
 		j/eq	.match
-
-.loop_entry	dj	e,.check_filesystem
+		pop	ft
+		dj	e,.check_filesystem_loop
 
 		; not found
+		MDebugPrint <"getFileSystemFromPath exit: no match\n">
 
-		popa
-		pop	hl
-		ld	ft,0
+		pop	bc-hl
+		ld	ft,FLAGS_NE
 		j	(hl)
 
-.match		popa
-		pop	hl
+.match		; ft' - file system
+		pop	bc-hl
+		ld	f,FLAGS_EQ
+
+		MDebugPrint <"getFileSystemFromPath exit: found match\n">
 		j	(hl)
 
-.current_fs	pop	bc-hl
+.current_fs	ld	bc,currentFs+1
+		ld	t,(bc)
+		exg	f,t
+		sub	bc,1
+		ld	t,(bc)
+
+		push	ft
+		ld	f,FLAGS_EQ
+
+		;MDebugPrint <"getFileSystemFromPath exit: use current fs\n">
+
+		pop	bc-hl
 		j	(hl)
 
+
+; ---------------------------------------------------------------------------
 ; -- Check filesystem name match
 ; --
 ; -- Inputs:
@@ -601,41 +644,36 @@ getFileSystemFromPath:
 ; --
 ; -- Outputs:
 ; --    f = "eq" if match
-
-check_filesystem_match
+; --
+		SECTION	"checkFilesystemMatch",CODE
+checkFilesystemMatch:
+		MDebugPrint <"checkFilesystemMatch entry\n">
+		;MDebugStacks
+		MDebugMemory bc,16
+		MDebugRegisters
 		push	bc-hl
-		ld	hl,ft
 
+		ld	hl,ft
 		ld	e,2
 
-.check_string	ld	t,(hl)
+.check_string
+		ld	t,(hl)
 		cmp	t,d
-		j/ne	.check_done
+		j/ne	.skip
 
-		pusha
+		push	hl
 		add	hl,1
+		ld	ft,hl
+		MDebugMemory hl,16
+		jal	MemoryCompareN
+		pop	hl
+		j/eq	.found
 
-.check_char	ld	t,(hl)
-		add	hl,1
-		ld	f,t
-		ld	t,(bc)
-		add	bc,1
-
-		cmp	t,f
-		j/ne	.no_match
-		dj	d,.check_char
-
-		popa
-		ld	t,FLAGS_EQ
-		j	.exit
-
-.no_match	popa
-
-.check_done	add	hl,fs_Volume
+.skip		add	hl,fs_Volume
 		dj	e,.check_string
 
 		ld	t,FLAGS_NE
-.exit		pop	bc-hl
+.found		pop	bc-hl
 		j	(hl)
 
 
@@ -644,7 +682,7 @@ fat32Filesystems:	DS	fat32_SIZEOF*MAX_FAT_VOLUMES
 filesystems:		DS	MAX_FILESYSTEMS*2
 totalFilesystems:	DS	1
 readBuffer:		DS	2
-rootFs:			DS	2
-rootPath:		DS_STR
+currentFs:		DS	2
+currentPath:		DS_STR
 filePath:		DS_STR
 

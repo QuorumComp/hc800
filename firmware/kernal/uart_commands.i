@@ -83,31 +83,8 @@ MDebugHexByte:	MACRO	;register
 
 MDebugRegisters: MACRO
 		pusha
-		pusha
-
-		pop	ft
-		jal	ComPrintHexWord
-		ld	t,' '
-		jal	ComPrintChar
-
-		pop	bc
-		ld	ft,bc
-		jal	ComPrintHexWord
-		ld	t,' '
-		jal	ComPrintChar
-
-		pop	de
-		ld	ft,de
-		jal	ComPrintHexWord
-		ld	t,' '
-		jal	ComPrintChar
-
-		pop	hl
-		ld	ft,hl
-		jal	ComPrintHexWord
-		ld	t,10
-		jal	ComPrintChar
-
+		push	hl
+		jal	ComPrintRegisters
 		popa
 		ENDM
 
@@ -119,13 +96,11 @@ MDebugStacks:	MACRO
 
 MDebugMemory:	MACRO	;memory,size
 		pusha
-	IF	"\1".lower.compareto("de")==0
-		ld	ft,\1
-		ld	bc,ft
-	ELSE
-		IF	"\1".lower.compareto("bc")~=0
-			ld	bc,\1
+	IF	"\1".lower.compareto("bc")~=0
+		IF	"\1".lower.compareto("ft")~=0
+			ld	ft,\1
 		ENDC
+		ld	bc,ft
 	ENDC
 		ld	de,\2
 		jal	ComDumpMemory
@@ -147,6 +122,7 @@ MDebugMemory:	MACRO	;memory,size
 	GLOBAL	ComSendDataString
 	GLOBAL	ComReadDataString
 	GLOBAL	ComSyncResponse
+	GLOBAL	ComPrintRegisters
 
 
 

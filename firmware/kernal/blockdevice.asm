@@ -48,7 +48,7 @@ SysGetBlockDevice::
 
 		pop	ft
 		push	ft
-
+		
 		; ft = ft*5
 		ld	f,0
 		ld	de,ft
@@ -323,7 +323,7 @@ TOTAL_DEVICES	EQU	(@-blockDevicePointers)/2
 
 
 		SECTION	"BlockDevices",BSS
-sda::		DS	sddev_SIZEOF
+sda:		DS	sddev_SIZEOF
 sda0:		DS	mbrdev_SIZEOF
 sda1:		DS	mbrdev_SIZEOF
 sda2:		DS	mbrdev_SIZEOF

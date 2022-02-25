@@ -345,6 +345,46 @@ ComReadDataString:
 
 
 ; --
+; -- Print registers to UART
+; --
+; -- ft - FT
+; -- bc - BC
+; -- de - DE
+; -- hl' - HL
+; --
+		SECTION "ComPrintRegisters",CODE
+ComPrintRegisters:
+		swap	hl
+		pusha
+
+		pop	ft
+		jal	ComPrintHexWord
+		ld	t,' '
+		jal	ComPrintChar
+
+		pop	bc
+		ld	ft,bc
+		jal	ComPrintHexWord
+		ld	t,' '
+		jal	ComPrintChar
+
+		pop	de
+		ld	ft,de
+		jal	ComPrintHexWord
+		ld	t,' '
+		jal	ComPrintChar
+
+		pop	hl
+		ld	ft,hl
+		jal	ComPrintHexWord
+		ld	t,10
+		jal	ComPrintChar
+
+		pop	hl
+		j	(hl)
+
+
+; --
 ; -- Internal functions
 ; --
 

@@ -72,9 +72,7 @@ UartInitialize:
 uartOpen:	
 		push	bc-hl
 
-		MDebugPrint <"uart:Open ">
-		MDebugPrintR de
-		MDebugNewLine
+		MDebugPrint <"uartOpen entry\n">
 
 		ld	bc,uartFile1
 		ld	de,ft
@@ -142,6 +140,8 @@ uartClose:
 ; --
 		SECTION	"UartRead",CODE
 uartRead:
+		MDebugPrint <"uartRead entry\n">
+
 		push	bc-hl
 
 		; send command
@@ -259,9 +259,13 @@ sendStatFileCommand:
 uartOpenDir:
 		pusha
 
+		MDebugPrint <"uartOpenDir ">
+		MDebugRegisters
+		MDebugMemory bc,16
+
 		ld	ft,bc
 		ld	de,ft
-		ld	bc,uartDir1
+		ld	bc,uartDir1 
 		jal	StringCopy
 
 		pop	ft
@@ -279,7 +283,10 @@ uartOpenDir:
 		ld	bc,ft
 		pop	ft
 
+		MDebugPrint <"call uartReadDir\n">
+		MDebugRegisters
 		jal	uartReadDir
+		MDebugRegisters
 
 		pop	bc/hl
 		j	(hl)
@@ -301,11 +308,7 @@ uartOpenDir:
 uartReadDir:
 		pusha
 
-		MDebugPrint <"uartReadDir ">
-		MDebugHexWord ft
-		MDebugPrint <" ">
-		MDebugHexWord bc
-		MDebugNewLine
+		MDebugPrint "uartReadDir entry\n"
 
 		ld	d,ERROR_SUCCESS
 		add	ft,dir_Error
@@ -316,8 +319,6 @@ uartReadDir:
 		ld	d,(ft)
 		sub	ft,1
 		ld	e,(ft)
-		MDebugHexWord de
-		MDebugNewLine
 
 		; increment index and store
 		add	de,1
@@ -335,6 +336,8 @@ uartReadDir:
 		jal	ComSyncResponse
 		j/ne	.error
 
+		;MDebugPrint "uartReadDir 2\n"
+
 		; filename
 		pop	ft
 		push	ft
@@ -343,6 +346,8 @@ uartReadDir:
 		add	bc,dir_Filename
 		jal	ComReadDataString
 		j/ne	.error
+
+		;MDebugPrint "uartReadDir 1\n"
 
 		; directory flag
 		jal	UartByteInSync
@@ -362,12 +367,15 @@ uartReadDir:
 		jal	UartMemoryInSync
 
 .exit		pop	bc-hl
+		MDebugPrint <"uartReadDir exit\n">
 		j	(hl)
 
-.error		ld	b,t
+.error		MDebugPrint <"uartReadDir error\n">
+		ld	b,t
 		pop	ft
 		add	ft,dir_Error
 		ld	(ft),b
+		ld	f,FLAGS_NE
 		j	.exit
 
 
@@ -384,25 +392,38 @@ uartReadDir:
 ; --
 		SECTION "SendReadDirCommand",CODE
 sendReadDirCommand:
+		MDebugPrint <"sendReadDirCommand entry, path=">
+		MDebugPrintR bc
+		MDebugNewLine
+		MDebugMemory bc,16
+
 		push	bc-hl
 
 		ld	de,ft
 
 		jal	ComIdentify
 		j/ne	.exit
+		MDebugPrint <"sendReadDirCommand 1\n">
+		MDebugRegisters
 
 		ld	t,COMMAND_READ_DIR
 		jal	ComSendCommand
+		;MDebugPrint <"sendReadDirCommand 2\n">
+		;MDebugRegisters
 
 		ld	ft,de
 		jal	UartWordOutSync
 
+		;MDebugPrint <"sendReadDirCommand 3\n">
+		;MDebugRegisters
 		jal	ComSendDataString
 
 		ld	t,ERROR_SUCCESS
 		ld	f,FLAGS_EQ
 
 .exit		pop	bc-hl
+		;MDebugPrint <"sendReadDirCommand exit\n">
+		;MDebugRegisters
 		j	(hl)
 
 
