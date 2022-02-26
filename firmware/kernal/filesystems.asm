@@ -528,6 +528,103 @@ DirectoryRead:
 ; -- Private functions
 ; --
 
+; ---------------------------------------------------------------------------
+; -- Determine absolute path from path, without volume
+; --
+; -- Inputs:
+; --   ft - source pointer to path
+; --   bc - dest pointer to path
+; --
+		SECTION	"getAbsolutePathFromPath",CODE
+getAbsolutePathFromPath:
+		pusha
+
+		push	ft
+		ld	t,0
+		ld	(bc),t
+		pop	ft
+
+		ld	de,ft	; de = source pointer
+		ld	t,(de)
+		add	de,1
+		ld	l,t	; l = source len
+		
+		cmp	l,0
+		j/eq	.done
+
+		ld	t,(de)
+		cmp	t,'/'
+		j/ne	.not_absolute
+
+		; path of the form '/...'
+
+		ld	ft,de
+		j	.copy_absolute
+
+.not_absolute
+		ld	t,(de)
+		cmp	t,':'
+		j/eq	.volume
+
+		; path of the form '...'
+
+		push	de
+		ld	de,currentPath
+		jal	StringCopy
+
+		ld	t,'/'
+		jal	StringAppendChar
+
+		pop	de
+		ld	ft,de
+		j	.copy_absolute
+		
+.volume
+		; path of the form ':volume...'
+
+		sub	l,1
+
+		push	bc/hl
+		ld	t,l
+		ld	c,t
+		ld	b,'/'
+		ld	ft,de
+		jal	MemoryCharN
+		pop	bc/hl
+
+		j/eq	.copy_absolute
+
+		; path of the form ':volume'
+
+		ld	t,'/'
+		jal	StringAppendChar
+		j	.done
+
+.copy_absolute
+		; path of the form ':volume/...'
+
+		; ft = location of first /
+
+		push	ft
+		sub	ft,de	; ft = length of volume name
+
+		; adjust length
+		sub	t,l
+		neg	t
+		ld	d,t
+
+		pop	ft
+
+		; ft = src
+		; bc = dest
+		; d = length
+
+		exg	bc,ft
+
+		jal	StringAppendChars
+
+.done		popa
+		j	(hl)
 
 ; ---------------------------------------------------------------------------
 ; -- Determine to which volume a path belongs
@@ -603,6 +700,7 @@ getFileSystemFromPath:
 		pop	hl
 		j/eq	.match
 		pop	ft
+
 		dj	e,.check_filesystem_loop
 
 		; not found
