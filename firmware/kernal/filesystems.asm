@@ -122,7 +122,10 @@ FileInitialize:
 		; initialize current path
 
 		ld	ft,currentPath
-		ld	b,0
+		ld	b,1
+		ld	(ft),b
+		add	ft,1
+		ld	b,'/'
 		ld	(ft),b
 
 		popa
@@ -435,12 +438,11 @@ FileReadByte:
 ; --
 		SECTION	"DirectoryOpen",CODE
 DirectoryOpen:
-		;MDebugStacks
+		MDebugPrint <"DirectoryOpen\n">
+		MDebugStacks
 		pusha
 
-		MDebugPrint <"DirectoryOpen ">
-		MDebugPrintR bc
-		MDebugNewLine
+		;MDebugRegisters
 
 		; clear directory structure
 		push	ft-bc
@@ -454,6 +456,8 @@ DirectoryOpen:
 		jal	getFileSystemFromPath
 		j/eq	.found_filesystem
 
+		MDebugPrint <"File system not found\n">
+
 		pop	ft
 
 		ld	b,ERROR_NOT_AVAILABLE
@@ -466,17 +470,23 @@ DirectoryOpen:
 		
 .found_filesystem
 		pop	ft
-		MDebugMemory ft,16
-
 		ld	de,ft
-
-		; set filesystem pointer in directory struct
 		pop	ft
 		push	ft
+		
+		;MDebugMemory ft,16
+
+		; set filesystem pointer in directory struct
 		ld	(ft),e
 		add	ft,1
 		ld	(ft),d
 		sub	ft,1
+
+		; get directory name
+
+		MStackAlloc STRING_SIZE
+		exg	ft,bc
+		jal	getAbsolutePathFromPath
 
 		; get open function
 		ld	ft,de
@@ -485,10 +495,17 @@ DirectoryOpen:
 		add	ft,1
 		ld	h,(ft)
 
-		pop	ft/bc
-		jal	(hl)
+		pop	ft
 
-		pop	de-hl
+		;MDebugRegisters
+		MDebugStacks
+		jal	(hl)
+		MDebugStacks
+
+		MStackFree STRING_SIZE
+
+		pop	bc-hl
+		MDebugStacks
 		j	(hl)
 
 
@@ -520,12 +537,11 @@ DirectoryRead:
 		ld	l,(ft)
 		add	ft,1
 		ld	h,(ft)
-		sub	ft,fs_ReadDir
 
 		pop	ft
-		MDebugMemory bc,32
+		MDebugRegisters
+
 		jal	(hl)
-		MDebugMemory bc,32
 
 		pop	bc-hl
 		j	(hl)
@@ -544,7 +560,13 @@ DirectoryRead:
 ; --
 		SECTION	"getAbsolutePathFromPath",CODE
 getAbsolutePathFromPath:
+		MDebugPrint <"getAbsolutePathFromPath entry\n">
+		MDebugStacks
+
 		pusha
+
+		;MDebugPrint <"getAbsolutePathFromPath entry\n">
+		;MDebugRegisters
 
 		push	ft
 		ld	t,0
@@ -555,18 +577,26 @@ getAbsolutePathFromPath:
 		ld	t,(de)
 		add	de,1
 		ld	l,t	; l = source len
+		MDebugRegisters
 		
 		cmp	l,0
-		j/eq	.done
+		j/eq	.empty
 
 		ld	t,(de)
 		cmp	t,'/'
 		j/ne	.not_absolute
 
 		; path of the form '/...'
+		MDebugPrint <"path of the form '/...'\n">
 
 		ld	ft,de
+		push	ft
 		j	.copy_absolute
+
+.empty		ld	t,'/'
+		jal	StringAppendChar
+		popa
+		j	(hl)
 
 .not_absolute
 		ld	t,(de)
@@ -574,6 +604,7 @@ getAbsolutePathFromPath:
 		j/eq	.volume
 
 		; path of the form '...'
+		MDebugPrint <"path of the form '...'\n">
 
 		push	de
 		ld	de,currentPath
@@ -588,8 +619,8 @@ getAbsolutePathFromPath:
 		
 .volume
 		; path of the form ':volume...'
-
-		sub	l,1
+		MDebugPrint <"path of the form ':volume...'\n">
+		;MDebugRegisters
 
 		push	bc/hl
 		ld	t,l
@@ -602,6 +633,7 @@ getAbsolutePathFromPath:
 		j/eq	.copy_absolute
 
 		; path of the form ':volume'
+		MDebugPrint <"path of the form ':volume'\n">
 
 		ld	t,'/'
 		jal	StringAppendChar
@@ -609,10 +641,16 @@ getAbsolutePathFromPath:
 
 .copy_absolute
 		; path of the form ':volume/...'
+		MDebugPrint <"path of the form '[:volume]/...'\n">
+		;MDebugRegisters
 
-		; ft = location of first /
-
+		; ft' = location of first /
+		pop	ft
 		push	ft
+
+		;MDebugPrint <"path of the form ':volume/...'\n">
+		;MDebugRegisters
+
 		sub	ft,de	; ft = length of volume name
 
 		; adjust length
@@ -625,12 +663,18 @@ getAbsolutePathFromPath:
 		; ft = src
 		; bc = dest
 		; d = length
+		;MDebugMemory ft,32
 
 		exg	bc,ft
+
+		;MDebugRegisters
 
 		jal	StringAppendChars
 
 .done		popa
+		;MDebugStacks
+		;MDebugMemory bc,32
+		MDebugPrint <" - exit\n">
 		j	(hl)
 
 ; ---------------------------------------------------------------------------
@@ -647,10 +691,10 @@ getAbsolutePathFromPath:
 getFileSystemFromPath:
 		push	bc-hl
 
-		MDebugPrint <"getFileSystemFromPath entry\n">
-		MDebugPrint <" - source: ">
-		MDebugHexWord ft
-		MDebugNewLine
+		;MDebugPrint <"getFileSystemFromPath entry\n">
+		;MDebugPrint <" - source: ">
+		;MDebugHexWord ft
+		;MDebugNewLine
 
 		ld	bc,ft
 
@@ -683,6 +727,7 @@ getFileSystemFromPath:
 		j	.found_length
 .found_slash	pop	ft
 		sub	ft,bc
+		;MDebugPrint <" - found slash\n">
 .found_length
 		; bc = start of volume name
 		; t = length
@@ -692,7 +737,7 @@ getFileSystemFromPath:
 		ld	e,(ft)	; e = total filesystems
 		ld	hl,filesystems
 
-		MDebugPrint <"getFileSystemFromPath find filesystem\n">
+		;MDebugPrint <"getFileSystemFromPath find filesystem\n">
 
 .check_filesystem_loop
 		ld	t,(hl)
@@ -711,7 +756,7 @@ getFileSystemFromPath:
 		dj	e,.check_filesystem_loop
 
 		; not found
-		MDebugPrint <"getFileSystemFromPath exit: no match\n">
+		;MDebugPrint <"getFileSystemFromPath exit: no match\n">
 
 		pop	bc-hl
 		ld	ft,FLAGS_NE
@@ -721,7 +766,7 @@ getFileSystemFromPath:
 		pop	bc-hl
 		ld	f,FLAGS_EQ
 
-		MDebugPrint <"getFileSystemFromPath exit: found match\n">
+		;MDebugPrint <"getFileSystemFromPath exit: found match\n">
 		j	(hl)
 
 .current_fs	ld	bc,currentFs+1
@@ -752,10 +797,10 @@ getFileSystemFromPath:
 ; --
 		SECTION	"checkFilesystemMatch",CODE
 checkFilesystemMatch:
-		MDebugPrint <"checkFilesystemMatch entry\n">
+		;MDebugPrint <"checkFilesystemMatch entry\n">
 		;MDebugStacks
-		MDebugMemory bc,16
-		MDebugRegisters
+		;MDebugMemory bc,16
+		;MDebugRegisters
 		push	bc-hl
 
 		ld	hl,ft
@@ -769,7 +814,7 @@ checkFilesystemMatch:
 		push	hl
 		add	hl,1
 		ld	ft,hl
-		MDebugMemory hl,16
+		;MDebugMemory hl,16
 		jal	MemoryCompareN
 		pop	hl
 		j/eq	.found
