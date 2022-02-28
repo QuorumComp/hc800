@@ -64,8 +64,15 @@ KVector:	MACRO
 
 		SECTION "PrintError",CODE
 printError:
+		push	ft-de
+
+		SET_MMU_KERNAL
+
+		pop	ft
 		jal	ErrorPrintDescription
-		pop	hl
+
+		RESTORE_MMU_CFG
+		popa
 		reti
 		
 

@@ -32,10 +32,10 @@ ErrorPrintDescription:
 		ld	ft,{ DC_STR <": "> }
 		jal	ScreenStringOut
 
-		pop	ft		
+		pop	ft
 		ld	f,0
 		add	ft,ft
-		add	ft,descriptions+4+1
+		add	ft,descriptions+1
 		ld	hl,ft
 
 		lco	t,(hl)
@@ -44,6 +44,10 @@ ErrorPrintDescription:
 		lco	t,(hl)
 
 		jal	ScreenStringOut
+
+		ld	b,VATTR_ITALIC
+		ld	c,0
+		jal	TextSetAttributes
 
 		ld	t,10
 		jal	ScreenCharacterOut

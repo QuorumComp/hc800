@@ -270,7 +270,7 @@ ComSyncResponse:
 
 .timeout	ld	t,ERROR_TIMEOUT
 
-.done		cmp	t,0
+.done		cmp	t,ERROR_SUCCESS
 		pop	bc-hl
 		j	(hl)
 
@@ -434,7 +434,7 @@ comReadFile:
 
 .timeout	ld	t,ERROR_TIMEOUT
 
-.done		cmp	t,0
+.done		cmp	t,ERROR_SUCCESS
 		pop	de-hl
 		j	(hl)
 
@@ -488,7 +488,7 @@ comReadIdentify:
 		j/ne	.timeout
 
 		ld	ft,~IDENT_NONCE
-		cmp	bc
+		cmp	ft,bc
 		j/ne	.protocol
 
 		ld	t,ERROR_SUCCESS
@@ -499,7 +499,7 @@ comReadIdentify:
 
 .timeout	ld	t,ERROR_TIMEOUT
 
-.test		cmp	t,0
+.test		cmp	t,ERROR_SUCCESS
 .done		pop	bc-hl
 		j	(hl)
 
