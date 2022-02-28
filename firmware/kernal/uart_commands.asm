@@ -1,6 +1,9 @@
 		INCLUDE	"lowlevel/uart.i"
 		INCLUDE	"lowlevel/rc800.i"
+
 		INCLUDE	"stdlib/string.i"
+
+		INCLUDE	"error.i"
 		INCLUDE	"uart_commands.i"
 
 IDENT_NONCE	EQU	$1234

@@ -211,11 +211,86 @@ insertCharacter:
 		j	(hl)
 
 ; --
+; -- Print data string
+; --
+; -- Inputs:
+; --   ft - string
+; --
+ScreenStringOut:
+		pusha
+
+		ld	bc,ft
+		lco	t,(bc)
+		ld	d,t
+		add	bc,1
+
+		add	d,1
+		j	.start
+.loop		lco	t,(bc)
+		add	bc,1
+		jal	ScreenCharacterOut
+.start		dj	d,.loop
+
+		popa
+		j	(hl)
+
+		SECTION	"ScreenHexWordOut",CODE
+ScreenHexWordOut:
+		pusha
+
+		exg	f,t
+		jal	ScreenHexByteOut
+		exg	f,t
+		jal	ScreenHexByteOut
+
+		popa
+		j	(hl)
+
+
+; -- Print value as hexadecimal
+; --
+; -- Inputs:
+; --    t - value to print
+		SECTION	"ScreenHexByteOut",CODE
+ScreenHexByteOut:
+		pusha
+
+		ld	d,t
+
+		ld	f,0
+		rs	ft,4
+		jal	ScreenDigitOut
+
+		ld	t,$F
+		and	t,d
+		jal	ScreenDigitOut
+
+		popa
+		j	(hl)
+
+; -- Print single digit
+; --
+; --    t - digit ($0-$F)
+		SECTION	"ScreenDigitOut",CODE
+ScreenDigitOut:
+		pusha
+
+		jal	DigitToAscii
+		jal	ScreenCharacterOut
+
+		popa
+		j	(hl)
+
+
+
+
+; --
 ; -- Print character
 ; --
 ; -- Inputs:
 ; --   t - character (incl. control codes)
 ; --
+		SECTION	"ScreenCharacter",CODE
 ScreenCharacterOut:
 		pusha
 

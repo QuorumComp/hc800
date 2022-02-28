@@ -11,6 +11,7 @@
 
 		INCLUDE	"blockdevice.i"
 		INCLUDE	"editor.i"
+		INCLUDE	"error.i"
 		INCLUDE	"filesystems.i"
 		INCLUDE	"keyboard.i"
 		INCLUDE	"main.i"
@@ -90,21 +91,10 @@ Main:
 
 		sys	KExecute
 		j/eq	.no_error
-		jal	printError
+		jal	ErrorPrintDescription
 .no_error
 		;j	.read_line
 		ld	hl,.read_line
-		j	(hl)
-
-printError:
-		push	hl
-		MSetAttribute VATTR_ITALIC
-		MPrintString "Error "
-		jal	StreamHexByteOut
-		MPrintString " loading COM \n"
-		MClearAttribute VATTR_ITALIC
-
-		pop	hl
 		j	(hl)
 
 printReadyPrompt:

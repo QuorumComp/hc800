@@ -121,7 +121,7 @@ ComLoadFile:
 ; --
 ; -- Attempts to identify UART file server
 ; -- Returns:
-; --    t - error code, 0 is success
+; --    t - error code
 ; --    f - "eq" condition if success
 ; --
 		SECTION "ComIdentify",CODE
@@ -192,7 +192,7 @@ ComSyncResponse:
 
 .timeout	ld	t,ERROR_TIMEOUT
 
-.done		cmp	t,0
+.done		cmp	t,ERROR_SUCCESS
 		pop	bc-hl
 		j	(hl)
 
@@ -243,7 +243,7 @@ comReadFile:
 
 .timeout	ld	t,ERROR_TIMEOUT
 
-.done		cmp	t,0
+.done		cmp	t,ERROR_SUCCESS
 		pop	de-hl
 		j	(hl)
 
@@ -284,7 +284,7 @@ comSendLoadFile:
 		j	(hl)
 
 ; -- Outputs:
-; --    t - error code, 0 = success
+; --    t - error code
 ; --    f - "eq" if success
 		SECTION "ReadIdentify",CODE
 comReadIdentify:
@@ -297,7 +297,7 @@ comReadIdentify:
 		j/ne	.timeout
 
 		ld	ft,~$1234
-		cmp	bc
+		cmp	ft,bc
 		j/ne	.protocol
 
 		ld	t,ERROR_SUCCESS
@@ -308,7 +308,7 @@ comReadIdentify:
 
 .timeout	ld	t,ERROR_TIMEOUT
 
-.test		cmp	t,0
+.test		cmp	t,ERROR_SUCCESS
 .done		pop	bc-hl
 		j	(hl)
 

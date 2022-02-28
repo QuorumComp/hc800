@@ -8,6 +8,7 @@
 		INCLUDE	"stdlib/syscall.i"
 
 		INCLUDE	"blockdevice.i"
+		INCLUDE	"error.i"
 		INCLUDE	"fat32.i"
 		INCLUDE	"filesystems.i"
 		INCLUDE	"uartfs.i"
@@ -453,7 +454,13 @@ DirectoryOpen:
 		jal	getFileSystemFromPath
 		j/eq	.found_filesystem
 
-		popa
+		pop	ft
+
+		ld	b,ERROR_NOT_AVAILABLE
+		add	ft,dir_Error
+		ld	(ft),b
+
+		pop	bc-hl
 		ld	f,FLAGS_NE
 		j	(hl)
 		

@@ -5,6 +5,7 @@
 		INCLUDE	"stdlib/string.i"
 		INCLUDE	"stdlib/stream.i"
 
+		INCLUDE	"error.i"
 		INCLUDE	"filesystems.i"
 		INCLUDE	"mmu.i"
 		INCLUDE	"video.i"

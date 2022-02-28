@@ -15,7 +15,12 @@ Entry::
 		ld	ft,dirInfo
 		ld	bc,path
 		sys	KOpenDirectory
-		j/ne	.error
+		j/eq	.print_dir
+
+		ld	bc,dirInfo+dir_Error
+		ld	t,(bc)
+		sys	KPrintError
+		j	.done
 
 .print_dir	ld	bc,dirInfo+dir_Filename
 		jal	StreamBssStringOut
@@ -25,7 +30,7 @@ Entry::
 		sys	KReadDirectory
 		j/eq	.print_dir
 
-.error		popa
+.done		popa
 		sys	KExit
 
 
@@ -34,4 +39,4 @@ dirInfo		DS	dir_SIZEOF
 
 
 		SECTION	"Data",DATA_S
-path		DC_STR	<":v1">
+path		DC_STR	<":v2">

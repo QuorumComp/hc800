@@ -1,9 +1,10 @@
 		INCLUDE	"lowlevel/rc800.i"
 		INCLUDE	"lowlevel/uart.i"
 		INCLUDE	"stdlib/string.i"
+
+		INCLUDE	"error.i"
 		INCLUDE	"filesystems.i"
 		INCLUDE	"uartfs.i"
-
 		INCLUDE	"uart_commands.i"
 		INCLUDE	"uart_commands_disabled.i"
 

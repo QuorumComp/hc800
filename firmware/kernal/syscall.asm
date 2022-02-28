@@ -7,6 +7,7 @@
 		INCLUDE	"kernal/keyboard.i"
 
 		INCLUDE	"editor.i"
+		INCLUDE	"error.i"
 		INCLUDE	"filesystems.i"
 		INCLUDE	"main.i"
 		INCLUDE	"mmu.i"
@@ -58,7 +59,15 @@ KVector:	MACRO
 		KVector SysGetVolume
 		KVector	openDirectory
 		KVector	readDirectory
+		KVector	printError
 
+
+		SECTION "PrintError",CODE
+printError:
+		jal	ErrorPrintDescription
+		pop	hl
+		reti
+		
 
 		SECTION "OpenDirectory",CODE
 openDirectory:

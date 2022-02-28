@@ -4,6 +4,7 @@ SRCS = startup.asm \
 	blockdevice.asm \
 	commandline.asm \
 	editor.asm \
+	error.asm \
 	fat32.asm \
 	filesystems.asm \
 	keyboard.asm \
