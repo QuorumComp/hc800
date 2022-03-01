@@ -16,7 +16,7 @@
 		INCLUDE	"uart_commands.i"
 		INCLUDE	"uart_commands_disabled.i"
 
-MAX_FILESYSTEMS = 10
+MAX_VOLUMES = 10
 MAX_FAT_VOLUMES = 3
 
 ; -- Get block device information
@@ -33,7 +33,7 @@ SysGetVolume::
 
 		ld	f,t
 
-		ld	de,totalFilesystems
+		ld	de,totalvolumes
 		ld	t,(de)
 		exg	f,t
 
@@ -44,7 +44,7 @@ SysGetVolume::
 
 		add	t,t
 		ld	f,0
-		add	ft,filesystems
+		add	ft,volumes
 
 		MDebugHexWord ft
 		MDebugNewLine
@@ -89,14 +89,14 @@ FileInitialize:
 
 		ld	t,0	; t - device identifier
 
-		ld	bc,filesystems
-		ld	de,fat32Filesystems
+		ld	bc,volumes
+		ld	de,fat32volumes
 
 .next_blockdevice
 		jal	mountFat
 		j/ne	.no_fat
 
-		; success, store filesystem pointer
+		; success, store volume pointer
 
 		MDebugPrint <"Mounted FAT32 volume\n">
 
@@ -109,10 +109,10 @@ FileInitialize:
 		cmp	t,TOTAL_BLOCKDEVICES
 		j/ne	.next_blockdevice
 
-		ld	de,UartFilesystem
+		ld	de,UartVolume
 		jal	.storeFsPointer
 
-		; de - UART filesystem, set as current
+		; de - UART volume, set as current
 
 		ld	ft,currentFs
 		ld	(ft),e
@@ -153,7 +153,7 @@ FileInitialize:
 		ld	(de),t
 		add	de,1
 
-		ld	hl,totalFilesystems
+		ld	hl,totalvolumes
 		ld	t,(hl)
 		add	t,'0'
 		ld	(de),t
@@ -222,7 +222,7 @@ FileOpen:
 		ld	t,0
 		jal	SetMemory
 
-		; get filesystem
+		; get volume
 		ld	ft,currentFs
 		ld	e,(ft)
 		add	ft,1
@@ -232,7 +232,7 @@ FileOpen:
 		MDebugHexWord de
 		MDebugNewLine
 
-		; set filesystem pointer in file struct
+		; set volume pointer in file struct
 		ld	ft,bc
 		ld	(ft),e
 		add	ft,1
@@ -269,7 +269,7 @@ FileClose:
 
 		MDebugPrint <"FileClose\n">
 
-		; get filesystem
+		; get volume
 		ld	c,(ft)
 		add	ft,1
 		ld	b,(ft)
@@ -346,7 +346,7 @@ FileRead:
 		push	bc-hl
 
 		push	ft-bc
-		; get filesystem
+		; get volume
 		ld	ft,bc
 		ld	c,(ft)
 		add	ft,1
@@ -452,41 +452,34 @@ DirectoryOpen:
 		jal	SetMemory
 		pop	ft-bc
 
-		ld	ft,bc
-		jal	getFileSystemFromPath
-		j/eq	.found_filesystem
+		MStackAlloc STRING_SIZE
+		exg	ft,bc
+		jal	getVolumeAndComponentsFromPath
+		j/eq	.found_volume
 
 		MDebugPrint <"File system not found\n">
 
 		pop	ft
+		add	ft,dir_Error
 
 		ld	b,ERROR_NOT_AVAILABLE
-		add	ft,dir_Error
 		ld	(ft),b
 
-		pop	bc-hl
 		ld	f,FLAGS_NE
-		j	(hl)
+		j	.exit
 		
-.found_filesystem
+.found_volume
 		pop	ft
-		ld	de,ft
-		pop	ft
+		ld	de,ft	; de = volume
+		pop	ft	; ft = directory struct
 		push	ft
 		
 		;MDebugMemory ft,16
 
-		; set filesystem pointer in directory struct
+		; set volume pointer in directory struct
 		ld	(ft),e
 		add	ft,1
 		ld	(ft),d
-		sub	ft,1
-
-		; get directory name
-
-		MStackAlloc STRING_SIZE
-		exg	ft,bc
-		jal	getAbsolutePathFromPath
 
 		; get open function
 		ld	ft,de
@@ -502,8 +495,7 @@ DirectoryOpen:
 		jal	(hl)
 		MDebugStacks
 
-		MStackFree STRING_SIZE
-
+.exit		MStackFree STRING_SIZE
 		pop	bc-hl
 		MDebugStacks
 		j	(hl)
@@ -526,7 +518,7 @@ DirectoryRead:
 
 		MDebugPrint <"DirectoryRead\n">
 
-		; get filesystem
+		; get volume
 		ld	c,(ft)
 		add	ft,1
 		ld	b,(ft)
@@ -552,20 +544,48 @@ DirectoryRead:
 ; --
 
 ; ---------------------------------------------------------------------------
-; -- Determine absolute path from path, without volume
+; -- Determine path components from path, without volume
 ; --
 ; -- Inputs:
 ; --   ft - source pointer to path
-; --   bc - dest pointer to path
+; --   bc - dest pointer to path components
 ; --
-		SECTION	"getAbsolutePathFromPath",CODE
-getAbsolutePathFromPath:
-		MDebugPrint <"getAbsolutePathFromPath entry\n">
+; -- Outputs:
+; --    f - "eq" if found
+; --  ft' - pointer to character or non existant if f "ne"
+; --
+		SECTION	"getVolumeAndComponentsFromPath",CODE
+getVolumeAndComponentsFromPath:
+		push	bc-hl
+		ld	de,ft
+
+		jal	getVolumeFromPath
+		j/ne	.exit
+
+		ld	ft,de
+		jal	getComponentsFromPath
+
+		ld	f,FLAGS_EQ
+
+.exit		pop	bc-hl
+		j	(hl)
+
+
+; ---------------------------------------------------------------------------
+; -- Determine path components from path, without volume
+; --
+; -- Inputs:
+; --   ft - source pointer to path
+; --   bc - dest pointer to path components
+; --
+		SECTION	"getComponentsFromPath",CODE
+getComponentsFromPath:
+		MDebugPrint <"getComponentsFromPath entry\n">
 		MDebugStacks
 
 		pusha
 
-		;MDebugPrint <"getAbsolutePathFromPath entry\n">
+		;MDebugPrint <"getComponentsFromPath entry\n">
 		;MDebugRegisters
 
 		push	ft
@@ -687,11 +707,11 @@ getAbsolutePathFromPath:
 ; --    f - "eq" if found
 ; --  ft' - pointer to character or non existant if f "ne"
 ; --
-		SECTION	"getFileSystemFromPath",CODE
-getFileSystemFromPath:
+		SECTION	"getVolumeFromPath",CODE
+getVolumeFromPath:
 		push	bc-hl
 
-		;MDebugPrint <"getFileSystemFromPath entry\n">
+		;MDebugPrint <"getVolumeFromPath entry\n">
 		;MDebugPrint <" - source: ">
 		;MDebugHexWord ft
 		;MDebugNewLine
@@ -712,7 +732,7 @@ getFileSystemFromPath:
 		add	bc,1
 		sub	e,1
 
-		; MDebugPrint <"getFileSystemFromPath determine volume name length\n">
+		; MDebugPrint <"getVolumeFromPath determine volume name length\n">
 
 		; find position of / character
 
@@ -733,13 +753,13 @@ getFileSystemFromPath:
 		; t = length
 
 		ld	d,t
-		ld	ft,totalFilesystems
-		ld	e,(ft)	; e = total filesystems
-		ld	hl,filesystems
+		ld	ft,totalvolumes
+		ld	e,(ft)	; e = total volumes
+		ld	hl,volumes
 
-		;MDebugPrint <"getFileSystemFromPath find filesystem\n">
+		;MDebugPrint <"getVolumeFromPath find volume\n">
 
-.check_filesystem_loop
+.check_volume_loop
 		ld	t,(hl)
 		exg	f,t
 		add	hl,1
@@ -748,15 +768,15 @@ getFileSystemFromPath:
 		add	hl,1
 
 		push	ft/hl
-		jal	checkFilesystemMatch
+		jal	checkvolumeMatch
 		pop	hl
 		j/eq	.match
 		pop	ft
 
-		dj	e,.check_filesystem_loop
+		dj	e,.check_volume_loop
 
 		; not found
-		;MDebugPrint <"getFileSystemFromPath exit: no match\n">
+		;MDebugPrint <"getVolumeFromPath exit: no match\n">
 
 		pop	bc-hl
 		ld	ft,FLAGS_NE
@@ -766,7 +786,7 @@ getFileSystemFromPath:
 		pop	bc-hl
 		ld	f,FLAGS_EQ
 
-		;MDebugPrint <"getFileSystemFromPath exit: found match\n">
+		;MDebugPrint <"getVolumeFromPath exit: found match\n">
 		j	(hl)
 
 .current_fs	ld	bc,currentFs+1
@@ -778,26 +798,26 @@ getFileSystemFromPath:
 		push	ft
 		ld	f,FLAGS_EQ
 
-		;MDebugPrint <"getFileSystemFromPath exit: use current fs\n">
+		;MDebugPrint <"getVolumeFromPath exit: use current fs\n">
 
 		pop	bc-hl
 		j	(hl)
 
 
 ; ---------------------------------------------------------------------------
-; -- Check filesystem name match
+; -- Check volume name match
 ; --
 ; -- Inputs:
-; --   ft - filesystem
+; --   ft - volume
 ; --   bc - name
 ; --    d - name length
 ; --
 ; -- Outputs:
 ; --    f = "eq" if match
 ; --
-		SECTION	"checkFilesystemMatch",CODE
-checkFilesystemMatch:
-		;MDebugPrint <"checkFilesystemMatch entry\n">
+		SECTION	"checkvolumeMatch",CODE
+checkvolumeMatch:
+		;MDebugPrint <"checkvolumeMatch entry\n">
 		;MDebugStacks
 		;MDebugMemory bc,16
 		;MDebugRegisters
@@ -827,12 +847,12 @@ checkFilesystemMatch:
 		j	(hl)
 
 
-			SECTION	"FilesystemVars",BSS
-fat32Filesystems:	DS	fat32_SIZEOF*MAX_FAT_VOLUMES
-filesystems:		DS	MAX_FILESYSTEMS*2
-totalFilesystems:	DS	1
-readBuffer:		DS	2
-currentFs:		DS	2
-currentPath:		DS_STR
-filePath:		DS_STR
+		SECTION	"volumeVars",BSS
+fat32volumes:	DS	fat32_SIZEOF*MAX_FAT_VOLUMES
+volumes:	DS	MAX_VOLUMES*2
+totalvolumes:	DS	1
+readBuffer:	DS	2
+currentFs:	DS	2
+currentPath:	DS_STR
+filePath:	DS_STR
 

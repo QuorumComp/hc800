@@ -2,7 +2,7 @@
 KERNAL_UARTFS_I_INCLUDED_ = 1
 
 		GLOBAL	UartInitialize
-		GLOBAL	UartFilesystem
+		GLOBAL	UartVolume
 
 	ENDC
 	

@@ -72,7 +72,7 @@ printError:
 		jal	ErrorPrintDescription
 
 		RESTORE_MMU_CFG
-		popa
+		pop	bc-hl
 		reti
 		
 

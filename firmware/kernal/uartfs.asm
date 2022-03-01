@@ -28,7 +28,7 @@ udir_SIZEOF	RB	0
 UartInitialize:
 		pusha
 
-		ld	bc,UartFilesystem
+		ld	bc,UartVolume
 		ld	de,.fs
 		ld	f,.fs_end-.fs
 .copy		lco	t,(de)
@@ -425,12 +425,12 @@ sendReadDirCommand:
 .exit		pop	bc-hl
 		;MDebugPrint <"sendReadDirCommand exit\n">
 		;MDebugRegisters
-		j	(hl)
+		j	(hl)	
 
 
 		SECTION	"UartFiles",BSS
 
 uartFile1:	DS_STR
 uartDir1:	DS_STR
-UartFilesystem:	DS	ufs_SIZEOF
+UartVolume:	DS	ufs_SIZEOF
 
