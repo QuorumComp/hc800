@@ -539,6 +539,94 @@ DirectoryRead:
 		j	(hl)
 
 
+; ---------------------------------------------------------------------------
+; -- Remove component from path. Path may end with a slash. The last
+; -- component is removed up until the next to last slash, which is included
+; --
+; -- Inputs:
+; --   ft - path, may end with slash
+; --
+		SECTION	"PathRemoveComponent",CODE
+PathRemoveComponent:
+		pusha
+
+		ld	de,ft
+
+		ld	t,(de)
+		cmp	t,0
+		j/eq	.done
+
+		ld	f,0
+		add	ft,de
+
+		ld	e,(ft)
+		cmp	e,'/'
+		j/ne	.remove
+
+		; remove slash
+		ld	t,(de)
+		sub	t,1
+		ld	(de),t
+
+.remove		ld	ft,de
+		ld	b,'/'
+		jal	StringReverseChar
+		j/ne	.not_found
+
+		; remove last component by adjusting length
+		pop	ft
+		sub	ft,de
+		ld	(de),t
+		j	.done
+
+.not_found	; no slash found, add one
+		ld	f,0
+		ld	t,(de)
+		add	t,1
+		ld	(de),t
+		add	ft,de
+		ld	b,'/'
+		ld	(ft),b
+
+.done		popa
+		j	(hl)
+
+
+; ---------------------------------------------------------------------------
+; -- Append component to path. A slash will be inserted between path and 
+; -- component if path does not end with a slash
+; --
+; -- Inputs:
+; --   ft - path, may end with slash
+; --   bc - component, must not start with slash
+; --
+		SECTION	"PathAppend",CODE
+PathAppend:
+		pusha
+
+		ld	e,(ft)
+		ld	d,0
+		add	ft,de
+
+		ld	e,(ft)
+		cmp	e,'/'
+		j/eq	.append
+
+		; add slash
+
+		pop	ft
+		push	ft-bc
+		ld	bc,ft
+		ld	t,'/'
+		jal	StringAppendChar
+		pop	bc
+
+.append		jal	StringAppendString
+
+		popa
+		j	(hl)
+
+
 ; --
 ; -- Private functions
 ; --
@@ -562,12 +650,35 @@ getVolumeAndComponentsFromPath:
 		jal	getVolumeFromPath
 		j/ne	.exit
 
+		MStackAlloc STRING_SIZE
+		ld	bc,ft
 		ld	ft,de
 		jal	getComponentsFromPath
 
+
+
+
+		MStackFree STRING_SIZE
 		ld	f,FLAGS_EQ
 
 .exit		pop	bc-hl
+		j	(hl)
+
+
+; ---------------------------------------------------------------------------
+; -- Normalize path, removing parent directory indicators as necessary
+; --
+; -- Inputs:
+; --   ft - source pointer to path components, must start with slash
+; --   bc - dest pointer to path components
+; --
+		SECTION	"normalizePathComponents",CODE
+normalizePathComponents:
+		pusha
+
+		
+
+		popa
 		j	(hl)
 
 

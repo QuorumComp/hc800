@@ -13,6 +13,8 @@ FILESYSTEMS_I_INCLUDED_ = 1
 		GLOBAL	FileClose
 		GLOBAL	DirectoryOpen
 		GLOBAL	DirectoryRead
+		GLOBAL	PathRemoveComponent
+		GLOBAL	PathAppend
 
 		RSRESET
 fs_Label	RB	MAX_LABEL_LENGTH
