@@ -14,7 +14,7 @@
 		INCLUDE	"uartfs.i"
 
 		INCLUDE	"uart_commands.i"
-		INCLUDE	"uart_commands_disabled.i"
+;		INCLUDE	"uart_commands_disabled.i"
 
 MAX_VOLUMES = 10
 MAX_FAT_VOLUMES = 3
@@ -469,6 +469,9 @@ DirectoryOpen:
 		j	.exit
 		
 .found_volume
+		MDebugPrint <"Found volume\n">
+		MDebugMemory bc,32
+
 		pop	ft
 		ld	de,ft	; de = volume
 		pop	ft	; ft = directory struct
@@ -491,9 +494,9 @@ DirectoryOpen:
 		pop	ft
 
 		;MDebugRegisters
-		MDebugStacks
+		;MDebugStacks
 		jal	(hl)
-		MDebugStacks
+		;MDebugStacks
 
 .exit		MStackFree STRING_SIZE
 		pop	bc-hl
@@ -548,9 +551,12 @@ DirectoryRead:
 ; --
 		SECTION	"PathRemoveComponent",CODE
 PathRemoveComponent:
+		MDebugPrint <"PathRemoveComponent entry\n">
 		pusha
 
 		ld	de,ft
+
+		MDebugMemory de,16
 
 		ld	t,(de)
 		cmp	t,0
@@ -559,21 +565,28 @@ PathRemoveComponent:
 		ld	f,0
 		add	ft,de
 
-		ld	e,(ft)
-		cmp	e,'/'
-		j/ne	.remove
+		MDebugRegisters
+
+		ld	b,(ft)
+		cmp	b,'/'
+		j/ne	.no_remove
 
 		; remove slash
 		ld	t,(de)
 		sub	t,1
 		ld	(de),t
 
-.remove		ld	ft,de
+.no_remove	MDebugPrint <"Find slash\n">
+		ld	ft,de
 		ld	b,'/'
+		MDebugRegisters
 		jal	StringReverseChar
+		MDebugRegisters
 		j/ne	.not_found
 
 		; remove last component by adjusting length
+		MDebugPrint <"Remove last component\n">
+
 		pop	ft
 		sub	ft,de
 		ld	(de),t
@@ -589,6 +602,43 @@ PathRemoveComponent:
 		ld	(ft),b
 
 .done		popa
+		MDebugPrint <"PathRemoveComponent exit\n">
+		j	(hl)
+
+
+; ---------------------------------------------------------------------------
+; -- Append component to path. A slash will be inserted between path and 
+; -- component if path does not end with a slash
+; --
+; -- Inputs:
+; --   ft - destination path string, may end with slash
+; --   bc - component chars, must not start with slash
+; --    d - number of chars to append
+; --
+		SECTION	"PathAppendChars",CODE
+PathAppendChars:
+		pusha
+
+		ld	e,(ft)
+		ld	d,0
+		add	ft,de
+
+		ld	e,(ft)
+		cmp	e,'/'
+		j/eq	.append
+
+		; add slash
+
+		pop	ft
+		push	ft
+		ld	bc,ft
+		ld	t,'/'
+		jal	StringAppendChar
+
+.append		pop	ft-de
+		jal	StringAppendChars
+
+		pop	hl
 		j	(hl)
 
 
@@ -604,26 +654,14 @@ PathRemoveComponent:
 PathAppend:
 		pusha
 
-		ld	e,(ft)
-		ld	d,0
-		add	ft,de
-
-		ld	e,(ft)
-		cmp	e,'/'
-		j/eq	.append
-
-		; add slash
+		ld	t,(bc)
+		add	bc,1
+		ld	d,t
 
 		pop	ft
-		push	ft-bc
-		ld	bc,ft
-		ld	t,'/'
-		jal	StringAppendChar
-		pop	bc
+		jal	PathAppendChars
 
-.append		jal	StringAppendString
-
-		popa
+		pop	bc-hl
 		j	(hl)
 
 
@@ -644,6 +682,9 @@ PathAppend:
 ; --
 		SECTION	"getVolumeAndComponentsFromPath",CODE
 getVolumeAndComponentsFromPath:
+		MDebugPrint <"getVolumeAndComponentsFromPath entry\n">
+		MDebugRegisters
+
 		push	bc-hl
 		ld	de,ft
 
@@ -655,13 +696,20 @@ getVolumeAndComponentsFromPath:
 		ld	ft,de
 		jal	getComponentsFromPath
 
+		ld	ft,bc
+		swap	bc
+		MDebugMemory bc,32
+		jal	normalizePathComponents
+		MDebugMemory bc,32
 
-
+		swap	bc
 
 		MStackFree STRING_SIZE
 		ld	f,FLAGS_EQ
 
 .exit		pop	bc-hl
+		MDebugPrint <"getVolumeAndComponentsFromPath exit\n">
+		MDebugRegisters
 		j	(hl)
 
 
@@ -669,17 +717,148 @@ getVolumeAndComponentsFromPath:
 ; -- Normalize path, removing parent directory indicators as necessary
 ; --
 ; -- Inputs:
-; --   ft - source pointer to path components, must start with slash
-; --   bc - dest pointer to path components
+; --   ft - source pointer to path components string, must start with slash
+; --   bc - dest pointer to path components string
 ; --
 		SECTION	"normalizePathComponents",CODE
 normalizePathComponents:
+		MDebugPrint <"normalizePathComponents entry\n">
+		MDebugRegisters
+
 		pusha
 
-		
+		push	ft
+		ld	t,0
+		ld	(bc),t
+		pop	ft
 
-		popa
+		ld	e,(ft)	; e = length of source
+		add	ft,1	; ft = first slash of path component
+
+.next		add	ft,1	; skip slash
+		sub	e,1
+
+		jal	findComponentRange
+
+		;   ft  - start
+		;   ft' - one past last char of component (slash, new start)
+		ld	bc,ft
+		pop	ft
+		ld	hl,ft
+		sub	ft,bc	; t = length of component
+
+		push	ft
+
+		; adjust remaining length
+		sub	t,e
+		neg	t
+		ld	e,t
+
+		pop	ft
+
+		cmp	t,0
+		j/eq	.slash_only
+
+		; check for parent (..)
+		; must be exactly 2 characters long, filenames may start with ..
+
+		cmp	t,2
+		j/ne	.not_parent
+
+		; maybe parent (..)
+
+		ld	t,(bc)
+		cmp	t,'.'
+		j/ne	.not_parent
+
+		add	bc,1
+		ld	t,(bc)
+		sub	bc,1
+		cmp	t,'.'
+		j/ne	.not_parent
+
+		; is parent
+
+		push	hl
+
+		swap	bc
+		ld	ft,bc
+		MDebugMemory bc,16
+		jal	PathRemoveComponent
+		MDebugMemory bc,16
+		swap	bc
+
+		pop	hl
+		j	.slash_only
+
+.not_parent
+		;MDebugMemory bc,1
+
+		; t = length of component
+		; bc = start of component
+		; bc' = dest pointer
+		; hl = end of of component
+
+		ld	d,t
+		swap	bc
+		ld	ft,bc
+		swap	bc
+
+		; ft = destination path string, may end with slash
+		; bc = component chars, must not start with slash
+		; bc' = dest pointer
+		;  d = number of chars to append
+
+		push	hl
+		jal	PathAppendChars
+		pop	hl
+
+.slash_only	cmp	e,0
+		j/eq	.done
+
+		ld	ft,hl
+		pop	bc
+		push	bc
+
+		j	.next
+
+.done		popa
+		MDebugPrint <"normalizePathComponents exit\n">
+		MDebugRegisters
 		j	(hl)
+
+; input:
+;   ft - source
+;    e - length
+; output:
+;   ft  - start
+;   ft' - end
+findComponentRange:
+		push	bc-hl
+
+		exg	de,ft
+		ld	c,t
+		ld	ft,de
+
+		ld	b,'/'
+		jal	MemoryCharN
+		j/eq	.found_slash
+
+		; no slash, must be last component
+		; set up registers for append
+		ld	ft,de
+		push	ft
+		ld	b,0
+		add	ft,bc
+		swap	ft
+
+		pop	bc-hl
+		j	(hl)
+
+.found_slash	ld	ft,de
+		pop	bc-hl
+		j	(hl)
+
 
 
 ; ---------------------------------------------------------------------------
@@ -692,7 +871,7 @@ normalizePathComponents:
 		SECTION	"getComponentsFromPath",CODE
 getComponentsFromPath:
 		MDebugPrint <"getComponentsFromPath entry\n">
-		MDebugStacks
+		MDebugRegisters
 
 		pusha
 
@@ -708,7 +887,7 @@ getComponentsFromPath:
 		ld	t,(de)
 		add	de,1
 		ld	l,t	; l = source len
-		MDebugRegisters
+		;MDebugRegisters
 		
 		cmp	l,0
 		j/eq	.empty
@@ -803,9 +982,8 @@ getComponentsFromPath:
 		jal	StringAppendChars
 
 .done		popa
-		;MDebugStacks
-		;MDebugMemory bc,32
-		MDebugPrint <" - exit\n">
+		MDebugPrint <"getComponentsFromPath exit\n">
+		MDebugRegisters
 		j	(hl)
 
 ; ---------------------------------------------------------------------------
