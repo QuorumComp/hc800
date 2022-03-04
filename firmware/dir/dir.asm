@@ -39,4 +39,4 @@ dirInfo		DS	dir_SIZEOF
 
 
 		SECTION	"Data",DATA_S
-path		DC_STR	<":v1">
+path		DC_STR	<":uart///test/../../test">

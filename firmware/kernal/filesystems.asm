@@ -14,7 +14,7 @@
 		INCLUDE	"uartfs.i"
 
 		INCLUDE	"uart_commands.i"
-;		INCLUDE	"uart_commands_disabled.i"
+		INCLUDE	"uart_commands_disabled.i"
 
 MAX_VOLUMES = 10
 MAX_FAT_VOLUMES = 3
@@ -216,23 +216,34 @@ FileOpen:
 		pusha
 
 		MDebugPrint <"FileOpen\n">
+		MDebugStacks
 
 		; clear file handle structure
 		ld	de,file_SIZEOF
 		ld	t,0
 		jal	SetMemory
 
+		MStackAlloc STRING_SIZE
+		ld	bc,ft
+		pop	ft
+		jal	getVolumeAndComponentsFromPath
+		j/eq	.found_volume
+
+		pop	bc-hl
+		j	.free
+
+.found_volume
+		MDebugStacks
 		; get volume
-		ld	ft,currentFs
-		ld	e,(ft)
-		add	ft,1
-		ld	d,(ft)
-		push	de
+		pop	ft
+		ld	de,ft
 
 		MDebugHexWord de
 		MDebugNewLine
 
 		; set volume pointer in file struct
+		swap	bc
+
 		ld	ft,bc
 		ld	(ft),e
 		add	ft,1
@@ -247,13 +258,16 @@ FileOpen:
 		sub	de,fs_Open
 		ld	hl,ft
 
-		MDebugHexWord hl
-		MDebugNewLine
+		swap	bc
+		ld	ft,bc
+		pop	bc
 
-		pop	ft/bc
+		MDebugRegisters
+
 		jal	(hl)
 
 		pop	de/hl
+.free		MStackFree STRING_SIZE
 		j	(hl)
 
 
@@ -440,6 +454,7 @@ FileReadByte:
 DirectoryOpen:
 		MDebugPrint <"DirectoryOpen\n">
 		MDebugStacks
+		;MDebugStacks
 		pusha
 
 		;MDebugRegisters
@@ -457,7 +472,7 @@ DirectoryOpen:
 		jal	getVolumeAndComponentsFromPath
 		j/eq	.found_volume
 
-		MDebugPrint <"File system not found\n">
+		MDebugPrint <"Volume not found\n">
 
 		pop	ft
 		add	ft,dir_Error
@@ -470,7 +485,7 @@ DirectoryOpen:
 		
 .found_volume
 		MDebugPrint <"Found volume\n">
-		MDebugMemory bc,32
+		;MDebugMemory bc,32
 
 		pop	ft
 		ld	de,ft	; de = volume
@@ -492,6 +507,7 @@ DirectoryOpen:
 		ld	h,(ft)
 
 		pop	ft
+		MDebugMemory bc,16
 
 		;MDebugRegisters
 		;MDebugStacks
@@ -500,7 +516,9 @@ DirectoryOpen:
 
 .exit		MStackFree STRING_SIZE
 		pop	bc-hl
+		MDebugPrint <"DirectoryOpen exit\n">
 		MDebugStacks
+		MDebugRegisters
 		j	(hl)
 
 
@@ -551,12 +569,12 @@ DirectoryRead:
 ; --
 		SECTION	"PathRemoveComponent",CODE
 PathRemoveComponent:
-		MDebugPrint <"PathRemoveComponent entry\n">
+		;MDebugPrint <"PathRemoveComponent entry\n">
 		pusha
 
 		ld	de,ft
 
-		MDebugMemory de,16
+		;MDebugMemory de,16
 
 		ld	t,(de)
 		cmp	t,0
@@ -565,7 +583,7 @@ PathRemoveComponent:
 		ld	f,0
 		add	ft,de
 
-		MDebugRegisters
+		;MDebugRegisters
 
 		ld	b,(ft)
 		cmp	b,'/'
@@ -576,16 +594,16 @@ PathRemoveComponent:
 		sub	t,1
 		ld	(de),t
 
-.no_remove	MDebugPrint <"Find slash\n">
+.no_remove	;MDebugPrint <"Find slash\n">
 		ld	ft,de
 		ld	b,'/'
-		MDebugRegisters
+		;MDebugRegisters
 		jal	StringReverseChar
-		MDebugRegisters
+		;MDebugRegisters
 		j/ne	.not_found
 
 		; remove last component by adjusting length
-		MDebugPrint <"Remove last component\n">
+		;MDebugPrint <"Remove last component\n">
 
 		pop	ft
 		sub	ft,de
@@ -602,7 +620,7 @@ PathRemoveComponent:
 		ld	(ft),b
 
 .done		popa
-		MDebugPrint <"PathRemoveComponent exit\n">
+		;MDebugPrint <"PathRemoveComponent exit\n">
 		j	(hl)
 
 
@@ -683,7 +701,7 @@ PathAppend:
 		SECTION	"getVolumeAndComponentsFromPath",CODE
 getVolumeAndComponentsFromPath:
 		MDebugPrint <"getVolumeAndComponentsFromPath entry\n">
-		MDebugRegisters
+		;MDebugStacks
 
 		push	bc-hl
 		ld	de,ft
@@ -691,16 +709,27 @@ getVolumeAndComponentsFromPath:
 		jal	getVolumeFromPath
 		j/ne	.exit
 
+		;MDebugStacks
+
 		MStackAlloc STRING_SIZE
 		ld	bc,ft
 		ld	ft,de
 		jal	getComponentsFromPath
+		MDebugPrint <"Components: ">
+		MDebugMemory bc,$40
+		;swap	ft
+		;MDebugRegisters
+		;swap	ft
+		;MDebugStacks
 
 		ld	ft,bc
 		swap	bc
-		MDebugMemory bc,32
 		jal	normalizePathComponents
-		MDebugMemory bc,32
+		MDebugMemory bc,16
+		;swap	ft
+		;MDebugRegisters
+		;swap	ft
+		;MDebugStacks
 
 		swap	bc
 
@@ -709,7 +738,7 @@ getVolumeAndComponentsFromPath:
 
 .exit		pop	bc-hl
 		MDebugPrint <"getVolumeAndComponentsFromPath exit\n">
-		MDebugRegisters
+		;MDebugStacks
 		j	(hl)
 
 
@@ -722,8 +751,8 @@ getVolumeAndComponentsFromPath:
 ; --
 		SECTION	"normalizePathComponents",CODE
 normalizePathComponents:
-		MDebugPrint <"normalizePathComponents entry\n">
-		MDebugRegisters
+		;MDebugPrint <"normalizePathComponents entry\n">
+		;MDebugRegisters
 
 		pusha
 
@@ -750,8 +779,8 @@ normalizePathComponents:
 		push	ft
 
 		; adjust remaining length
+		exg	t,e
 		sub	t,e
-		neg	t
 		ld	e,t
 
 		pop	ft
@@ -765,7 +794,7 @@ normalizePathComponents:
 		cmp	t,2
 		j/ne	.not_parent
 
-		; maybe parent (..)
+		; it's 2 chars, maybe parent (..)
 
 		ld	t,(bc)
 		cmp	t,'.'
@@ -783,19 +812,15 @@ normalizePathComponents:
 
 		swap	bc
 		ld	ft,bc
-		MDebugMemory bc,16
-		jal	PathRemoveComponent
-		MDebugMemory bc,16
 		swap	bc
+		jal	PathRemoveComponent
 
 		pop	hl
 		j	.slash_only
 
 .not_parent
-		;MDebugMemory bc,1
-
 		; t = length of component
-		; bc = start of component
+		; bc = component chars, must not start with slash
 		; bc' = dest pointer
 		; hl = end of of component
 
@@ -823,8 +848,8 @@ normalizePathComponents:
 		j	.next
 
 .done		popa
-		MDebugPrint <"normalizePathComponents exit\n">
-		MDebugRegisters
+		;MDebugPrint <"normalizePathComponents exit\n">
+		;MDebugRegisters
 		j	(hl)
 
 ; input:
@@ -870,13 +895,10 @@ findComponentRange:
 ; --
 		SECTION	"getComponentsFromPath",CODE
 getComponentsFromPath:
-		MDebugPrint <"getComponentsFromPath entry\n">
-		MDebugRegisters
+		;MDebugPrint <"getComponentsFromPath entry\n">
+		;MDebugStacks
 
 		pusha
-
-		;MDebugPrint <"getComponentsFromPath entry\n">
-		;MDebugRegisters
 
 		push	ft
 		ld	t,0
@@ -886,22 +908,19 @@ getComponentsFromPath:
 		ld	de,ft	; de = source pointer
 		ld	t,(de)
 		add	de,1
-		ld	l,t	; l = source len
-		;MDebugRegisters
+		ld	h,0
+		ld	l,t	; hl = source len
 		
-		cmp	l,0
+		tst	hl
 		j/eq	.empty
 
 		ld	t,(de)
 		cmp	t,'/'
 		j/ne	.not_absolute
 
-		; path of the form '/...'
 		MDebugPrint <"path of the form '/...'\n">
 
-		ld	ft,de
-		push	ft
-		j	.copy_absolute
+		j	.copy_range
 
 .empty		ld	t,'/'
 		jal	StringAppendChar
@@ -913,24 +932,20 @@ getComponentsFromPath:
 		cmp	t,':'
 		j/eq	.volume
 
-		; path of the form '...'
 		MDebugPrint <"path of the form '...'\n">
 
-		push	de
+		push	de/hl
 		ld	de,currentPath
+		;MDebugMemory bc,16
+		;MDebugMemory de,16
 		jal	StringCopy
+		pop	de/hl
+		;MDebugMemory bc,16
 
-		ld	t,'/'
-		jal	StringAppendChar
-
-		pop	de
-		ld	ft,de
-		j	.copy_absolute
+		j	.copy_range
 		
 .volume
-		; path of the form ':volume...'
 		MDebugPrint <"path of the form ':volume...'\n">
-		;MDebugRegisters
 
 		push	bc/hl
 		ld	t,l
@@ -939,51 +954,47 @@ getComponentsFromPath:
 		ld	ft,de
 		jal	MemoryCharN
 		pop	bc/hl
+		j/ne	.only_volume
 
-		j/eq	.copy_absolute
+		pop	ft	; remove flags
+		exg	de,ft
+		sub	ft,de
+		add	ft,hl
+		ld	hl,ft
+		j	.copy_range
 
-		; path of the form ':volume'
+.only_volume
 		MDebugPrint <"path of the form ':volume'\n">
-
 		ld	t,'/'
 		jal	StringAppendChar
-		j	.done
+		popa
+		j	(hl)
 
-.copy_absolute
-		; path of the form ':volume/...'
-		MDebugPrint <"path of the form '[:volume]/...'\n">
-		;MDebugRegisters
+.copy_range
+		;MDebugPrint <"path of the form '[:volume]/...'\n">
 
-		; ft' = location of first /
-		pop	ft
-		push	ft
+		; hl = length
+		; de = start range
 
-		;MDebugPrint <"path of the form ':volume/...'\n">
-		;MDebugRegisters
-
-		sub	ft,de	; ft = length of volume name
-
-		; adjust length
-		sub	t,l
-		neg	t
-		ld	d,t
-
-		pop	ft
+		ld	ft,hl
+		exg	f,t
+		exg	ft,de
 
 		; ft = src
 		; bc = dest
 		; d = length
-		;MDebugMemory ft,32
-
-		exg	bc,ft
 
 		;MDebugRegisters
+
+		exg	bc,ft
 
 		jal	StringAppendChars
 
 .done		popa
 		MDebugPrint <"getComponentsFromPath exit\n">
-		MDebugRegisters
+		MDebugMemory ft,16
+		MDebugMemory bc,16
+		;MDebugStacks
 		j	(hl)
 
 ; ---------------------------------------------------------------------------
@@ -993,8 +1004,10 @@ getComponentsFromPath:
 ; --   ft - source pointer to path
 ; --
 ; -- Outputs:
+; --    t - error code
 ; --    f - "eq" if found
-; --  ft' - pointer to character or non existant if f "ne"
+; --  when f is "ne":
+; --   ft' - pointer to character or non existant if f "ne"
 ; --
 		SECTION	"getVolumeFromPath",CODE
 getVolumeFromPath:
@@ -1068,14 +1081,8 @@ getVolumeFromPath:
 		;MDebugPrint <"getVolumeFromPath exit: no match\n">
 
 		pop	bc-hl
-		ld	ft,FLAGS_NE
-		j	(hl)
-
-.match		; ft' - file system
-		pop	bc-hl
-		ld	f,FLAGS_EQ
-
-		;MDebugPrint <"getVolumeFromPath exit: found match\n">
+		ld	f,FLAGS_NE
+		ld	t,ERROR_NOT_AVAILABLE
 		j	(hl)
 
 .current_fs	ld	bc,currentFs+1
@@ -1084,10 +1091,12 @@ getVolumeFromPath:
 		sub	bc,1
 		ld	t,(bc)
 
+		MDebugPrint <"getVolumeFromPath exit: use current fs ">
+		MDebugRegisters
 		push	ft
-		ld	f,FLAGS_EQ
 
-		;MDebugPrint <"getVolumeFromPath exit: use current fs\n">
+.match		ld	f,FLAGS_EQ
+		ld	t,ERROR_SUCCESS
 
 		pop	bc-hl
 		j	(hl)
