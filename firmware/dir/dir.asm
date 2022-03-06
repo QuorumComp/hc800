@@ -12,8 +12,26 @@
 Entry::
 		pusha
 
-		ld	ft,dirInfo
+		ld	ft,path
+		sys	KGetCommandLine
+
+		; find first argument, skip executable name
 		ld	bc,path
+		ld	t,(bc)
+		ld	f,0
+		add	ft,bc
+		add	ft,1
+		ld	bc,ft
+
+		ld	t,(bc)
+		cmp	t,0
+		j/ne	.path_argument
+
+		ld	bc,currentPath
+
+.path_argument
+		; bc = path
+		ld	ft,dirInfo
 		sys	KOpenDirectory
 		j/eq	.print_dir
 
@@ -36,7 +54,8 @@ Entry::
 
 		SECTION	"Variables",BSS_S
 dirInfo		DS	dir_SIZEOF
+path		DS	STRING_SIZE
 
 
 		SECTION	"Data",DATA_S
-path		DC_STR	<":uart///test/../../test">
+currentPath	DC_STR	<"./">
