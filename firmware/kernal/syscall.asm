@@ -16,6 +16,7 @@
 		INCLUDE	"video.i"
 
 		IMPORT	SysExecuteCommandLine
+		IMPORT	SysGetCommandLine
 		IMPORT	SysExit
 		IMPORT	SysGetBlockDevice
 		IMPORT	SysGetVolume
@@ -60,6 +61,7 @@ KVector:	MACRO
 		KVector	openDirectory
 		KVector	readDirectory
 		KVector	printError
+		KVector	SysGetCommandLine
 
 
 		SECTION "PrintError",CODE

@@ -67,8 +67,10 @@ Main:
 .read_line
 		jal	printReadyPrompt
 
+		MStackAlloc STRING_SIZE
+		ld	bc,ft
+
 		MSetColor 2
-		ld	bc,commandLine
 		jal	ScreenEditLine
 		MSetColor 0
 
@@ -76,7 +78,6 @@ Main:
 		; print command line to screen
 		ld	t,'"'
 		sys	KCharacterOut
-		ld	bc,commandLine
 		jal	StreamBssStringOut
 		ld	t,'"'
 		sys	KCharacterOut
@@ -84,7 +85,6 @@ Main:
 		sys	KCharacterOut
 	ENDC
 
-		ld	bc,commandLine
 		ld	t,(bc)
 		cmp	t,0
 		j/eq	.read_line
@@ -93,6 +93,7 @@ Main:
 		j/eq	.no_error
 		jal	ErrorPrintDescription
 .no_error
+		MStackFree STRING_SIZE
 		;j	.read_line
 		ld	hl,.read_line
 		j	(hl)
@@ -234,4 +235,4 @@ printBoard:
 
 		SECTION	"Vars",BSS
 totalBanks:	DS	1
-commandLine:	DS	207
+commandLine:	DS	CHARS_PER_LINE*2+1	; max length of command line (two lines of characters plus length byte)

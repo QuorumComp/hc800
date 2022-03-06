@@ -18,17 +18,46 @@ HUNK_END	EQU	1
 HUNK_DATA	EQU	2
 
 
+		SECTION "SysGetCommandLine",CODE
+SysGetCommandLine::
+		push	ft-de
+
+		ld	bc,ft
+		ld	de,lastCommandLine
+
+.string		ld	t,(de)
+		ld	(bc),t
+		cmp	t,0
+		j/eq	.done
+
+		add	bc,1
+		add	de,1
+
+		ld	f,t
+.char		ld	t,(de)
+		ld	(bc),t
+		add	bc,1
+		add	de,1
+		dj	f,.char
+		j	.string
+
+.done		popa
+		reti
+
+
 		SECTION "ExecuteCommandLine",CODE
 SysExecuteCommandLine::
 		push	bc-de
 
 		ld	ft,bc
 		ld	de,ft
+		ld	bc,lastCommandLine
 		jal	tokenizeCommandLine
 
 		ld	t,MMU_CFG_LOAD|MMU_INDEX_PUSH
 		jal	MmuActivateConfig
 
+		ld	de,lastCommandLine
 		jal	readExecutable
 
 		push	ft
@@ -266,23 +295,21 @@ readHeader:
 		j	(hl)
 
 ; --
-; -- Copy and tokenize command line to first client data bank
+; -- Copy and tokenize command line in place
 ; --
 ; -- Inputs:
-; --   de - command line (Pascal string)
+; --   bc - command line destination (list of strings)
+; --   de - command line source (Pascal string)
 ; --
 tokenizeCommandLine:
 		pusha
-
-		ld	ft,de
-		ld	bc,ft
 
 		ld	t,(de)
 		add	de,1
 		ld	l,t		; l = string length
 
 		cmp	l,0
-		j/z	.arguments_done
+		j/eq	.arguments_done
 .skip_spaces	ld	t,(de)
 		cmp	t,' '
 		j/ne	.skipped_spaces
@@ -304,15 +331,16 @@ tokenizeCommandLine:
 		dj	l,.copy_chars
 
 .set_length	ld	ft,bc
-		push	ft
-		pop	bc
+		swap	bc
 		sub	ft,bc
-		sub	t,1
+		sub	ft,1
 		ld	(bc),t
-		pop	ft
-		ld	bc,ft
+		swap	bc
 		cmp	l,0
 		j/nz	.skip_spaces
+
+		swap	bc
+		pop	bc
 
 .arguments_done	ld	t,0
 		ld	(bc),t
@@ -322,5 +350,6 @@ tokenizeCommandLine:
 
 
 		SECTION	"CommandlineVars",BSS
-exeFileHandle:	DS	file_SIZEOF
-mmuConfig:	DS	MMU_CONFIG_SIZE
+exeFileHandle	DS	file_SIZEOF
+mmuConfig	DS	MMU_CONFIG_SIZE
+lastCommandLine	DS	STRING_SIZE
