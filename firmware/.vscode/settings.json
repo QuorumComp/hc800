@@ -8,7 +8,11 @@
     "[asm.rc8]": {
         "editor.tabSize": 8,
         "editor.insertSpaces": false,
-        "editor.quickSuggestions": false
+        "editor.quickSuggestions": {
+            "comments": "off",
+            "strings": "off",
+            "other": "off"
+        }
     },
     "files.exclude": {
         "**/*.obj": true

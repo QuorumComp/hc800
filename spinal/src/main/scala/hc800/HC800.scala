@@ -66,12 +66,12 @@ class HC800(boardIndex: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800
 	val board = BoardId.Board.elements(boardIndex)
 	val boardIsZxNext = board == BoardId.Board.zxNext
 	val boardIsMist = board == BoardId.Board.mist
+	val boardIsNexys3 = board == BoardId.Board.nexys3
 
 	val io = new Bundle {
-		val btn = in Bits(5 bits)
-
-		val seg = out Bits(8 bits)
-		val an  = out Bits(4 bits)
+		val btn = boardIsNexys3 generate (in Bits(5 bits))
+		val seg = boardIsNexys3 generate (out Bits(8 bits))
+		val an  = boardIsNexys3 generate (out Bits(4 bits))
 
 		val red   = out UInt(5 bits)
 		val green = out UInt(5 bits)
@@ -259,7 +259,14 @@ class HC800(boardIndex: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800
 		val font = new Font()
 		val uart = new UART()
 		val sd = new SD()
-		val nexys3 = new Nexys3()
+
+		val nexys3 = boardIsNexys3 generate {
+			val nexys3 = new Nexys3()
+			nexys3.io.segments <> io.seg
+			nexys3.io.anode    <> io.an
+			nexys3.io.buttons  <> io.btn
+			nexys3
+		}
 
 		val hBlanking = Bool()
 		val vBlanking = Bool()
@@ -270,10 +277,6 @@ class HC800(boardIndex: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800
 			default -> False)
 
 		interruptController.io.outRequest <> cpuArea.irq
-
-		nexys3.io.segments <> io.seg
-		nexys3.io.anode    <> io.an
-		nexys3.io.buttons  <> io.btn
 
 		uart.io.uart.txd <> io.txd
 		uart.io.uart.rxd <> io.rxd
@@ -295,8 +298,12 @@ class HC800(boardIndex: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800
 		cpuArea.cpuBus.dataToMaster := delayMemDataIn
 		chipMemBus.dataToMaster := delayMemDataIn
 
+		val nexys3IoDataIn = 
+			if (boardIsNexys3) cpuArea.ioBus.wireClient(nexys3.io.bus, boardEnable)
+			else B"00000000"
+
 		val ioDataIn =
-			cpuArea.ioBus.wireClient(nexys3.io.bus, boardEnable) |
+			nexys3IoDataIn |
 			cpuArea.ioBus.wireClient(graphicsRegBus, graphicsEnable) |
 			cpuArea.ioBus.wireClient(mmu.io.regBus, mmuEnable) |
 			cpuArea.ioBus.wireClient(boardId.io, boardIdEnable) |
@@ -375,9 +382,10 @@ object HC800TopLevel {
 		).generateVerilog(new HC800(board, vendor)(rc800.lpm.blackbox.Components)).printPruned()
 	}
 
-	def main(args: Array[String]) {
-		generate("../specnext/hc800_zxnext.v", BoardId.Board.zxNext.position, Vendor.Xilinx)
+	def main(args: Array[String]): Unit = {
+		//generate("../specnext/hc800_zxnext.v", BoardId.Board.zxNext.position, Vendor.Xilinx)
 		generate("../mist/hc800_mist.v", BoardId.Board.mist.position, Vendor.Altera)
+		//generate("../../../rtl/hc800_mister.v", BoardId.Board.mister.position, Vendor.Altera)
 		//generate("hc800_nexys3.v", BoardId.Board.nexys3.position, Vendor.Xilinx)
 	}
 }

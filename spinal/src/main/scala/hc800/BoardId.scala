@@ -51,6 +51,7 @@ object BoardId {
 	object Board extends SpinalEnum(defaultEncoding = binarySequential) {
 		val zxNext,
 			nexys3,
-			mist = newElement()
+			mist,
+			mister = newElement()
 	}
 }
