@@ -12,6 +12,7 @@ class BoardId(board: Int) extends Component {
 			case Board.zxNext.position => "ZX Spectrum Next"
 			case Board.nexys3.position => "Digilent Nexys 3"
 			case Board.mist.position => "MiST"
+			case Board.mister.position => "MiSTer"
 			case _ => "Unknown"
 		}
 

@@ -66,6 +66,7 @@ class HC800(boardIndex: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800
 	val board = BoardId.Board.elements(boardIndex)
 	val boardIsZxNext = board == BoardId.Board.zxNext
 	val boardIsMist = board == BoardId.Board.mist
+	val boardIsMister = board == BoardId.Board.mister
 	val boardIsNexys3 = board == BoardId.Board.nexys3
 
 	val io = new Bundle {
@@ -99,10 +100,10 @@ class HC800(boardIndex: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800
 		val keyboardColumns = boardIsZxNext generate (in  Bits(7 bits))
 		val keyboardRows    = boardIsZxNext generate (out Bits(8 bits))
 
-		val ps2Code   = boardIsMist generate (in Bits(8 bits))
-		val ps2Make   = boardIsMist generate (in Bool())
-		val ps2Extend = boardIsMist generate (in Bool())
-		val ps2Strobe = boardIsMist generate (in Bool())
+		val ps2Code   = (boardIsMist || boardIsMister) generate (in Bits(8 bits))
+		val ps2Make   = (boardIsMist || boardIsMister) generate (in Bool())
+		val ps2Extend = (boardIsMist || boardIsMister) generate (in Bool())
+		val ps2Strobe = (boardIsMist || boardIsMister) generate (in Bool())
 	}
 
 	val ioMap = new {
@@ -384,7 +385,7 @@ object HC800TopLevel {
 
 	def main(args: Array[String]): Unit = {
 		//generate("../specnext/hc800_zxnext.v", BoardId.Board.zxNext.position, Vendor.Xilinx)
-		generate("../mist/hc800_mist.v", BoardId.Board.mist.position, Vendor.Altera)
+		//generate("../mist/hc800_mist.v", BoardId.Board.mist.position, Vendor.Altera)
 		//generate("../../../rtl/hc800_mister.v", BoardId.Board.mister.position, Vendor.Altera)
 		//generate("hc800_nexys3.v", BoardId.Board.nexys3.position, Vendor.Xilinx)
 	}
