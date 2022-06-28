@@ -539,7 +539,7 @@ DirectoryRead:
 
 		MDebugPrint <"DirectoryRead\n">
 
-		; get volume
+		; bc <- volume (file system structure )
 		ld	c,(ft)
 		add	ft,1
 		ld	b,(ft)

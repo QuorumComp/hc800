@@ -2,6 +2,7 @@
 		INCLUDE	"lowlevel/rc800.i"
 		INCLUDE	"lowlevel/stack.i"
 
+		INCLUDE	"kernal/error.i"
 		INCLUDE	"kernal/filesystems.i"
 
 		INCLUDE	"blockdevice.i"
@@ -245,7 +246,8 @@ dirOpen:
 		add	ft,1
 		ld	(ft),b
 
-		; bc = filesystem
+		; bc <- filesystem
+		sub	de,fat32_RootCluster
 		ld	ft,de
 		ld	bc,ft
 
@@ -281,7 +283,6 @@ dirRead:
 		ld	f,t
 		sub	de,1
 		ld	t,(de)
-		push	ft
 		rs	ft,4	; 16 entries per sector
 		ld	hl,ft	; hl = sector# in cluster
 
@@ -305,12 +306,73 @@ dirRead:
 		; ft:ft' = sector number
 
 		pop	bc
+		push	bc
 		push	ft
-		add	bc,fs_BlockDevice
+		add	bc,fs_BlockDevice+1
+		ld	t,(bc)
+		ld	f,t
+		sub	bc,1
+		ld	t,(bc)
+		ld	bc,ft
 
-;		MStackAlloc 512
+		; bc = block device
+
+		MStackAlloc 512
+		ld	de,ft
+		pop	ft
+
+		jal	BlockDeviceRead
+		j/ne	.read_fail
+
+		MDebugMemory de,32
+
+		pop	ft
+		push	ft
+		ld	bc,ft
+
+		add	bc,dir_Error
+		ld	t,ERROR_SUCCESS
+		ld	(bc),t
+
+		add	bc,udir_FileIndex-dir_Error
+		ld	t,(bc)
+		and	t,$F
+		ld	f,0
+		ls	ft,5
+		add	ft,de
+		ld	de,ft	; de = dir entry
+
+		ld	t,(de)
+		cmp	t,0
+		j/ne	.not_end
+
+		; we have reached the end
+.read_fail
+		popa
+		ld	f,FLAGS_NE
+		j	.exit
+
+.not_end	add	bc,dir_Filename-udir_FileIndex
+		ld	f,8
+.copy_name	ld	t,(de)
+		ld	(bc),t
+		add	de,1
+		add	bc,1
+		dj	f,.copy_name
+		ld	t,'.'
+		ld	(bc),t
+		add	bc,1
+		ld	f,3
+.copy_extension	ld	t,(de)
+		ld	(bc),t
+		add	de,1
+		add	bc,1
+		dj	f,.copy_extension
 
 		popa
+		ld	f,FLAGS_EQ
+.exit
+		MStackFree 512
 		j	(hl)
 
 
