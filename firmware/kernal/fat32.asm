@@ -9,7 +9,7 @@
 		INCLUDE	"fat32.i"
 
 		INCLUDE	"uart_commands.i"
-		INCLUDE	"uart_commands_disabled.i"
+;;		INCLUDE	"uart_commands_disabled.i"
 
 FAT32_BOOT_SIG		EQU	$29
 
@@ -272,6 +272,8 @@ dirOpen:
 ; --
 		SECTION "Fat32DirRead",CODE
 dirRead:
+		MDebugPrint "dirRead\n"
+		MDebugMemory ft,32
 		pusha
 		ld	de,ft
 
@@ -348,7 +350,23 @@ dirRead:
 		ld	f,FLAGS_NE
 		j	.exit
 
-.not_end	add	bc,dir_Filename-udir_FileIndex
+.not_end	; increment file index
+		ld	t,(bc)
+		exg	t,f
+		add	bc,1
+		ld	t,(bc)
+		exg	f,t
+		add	ft,1
+		exg	f,t
+		ld	(bc),t
+		exg	f,t
+		sub	bc,1
+		ld	(bc),t
+
+		add	bc,dir_Filename-udir_FileIndex
+		ld	t,12
+		ld	(bc),t	; length
+		add	bc,1
 		ld	f,8
 .copy_name	ld	t,(de)
 		ld	(bc),t
@@ -366,6 +384,8 @@ dirRead:
 		dj	f,.copy_extension
 
 		popa
+		MDebugMemory ft,32
+
 		ld	f,FLAGS_EQ
 .exit
 		MStackFree 512

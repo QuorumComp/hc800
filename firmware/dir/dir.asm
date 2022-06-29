@@ -40,8 +40,10 @@ Entry::
 		sys	KPrintError
 		j	.done
 
-.print_dir	ld	bc,dirInfo+dir_Filename
+.print_dir	MPrintChar '"'
+		ld	bc,dirInfo+dir_Filename
 		jal	StreamBssStringOut
+		MPrintChar '"'
 		MNewLine
 
 		ld	ft,dirInfo
