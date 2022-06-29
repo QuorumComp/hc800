@@ -49,6 +49,16 @@ TestDiv:
 TestMul:
 		pusha
 
+		MPrintString <"0x00018602 * 0x0002 = (unsigned, expect 00000C04) ">
+		ld	ft,$8602
+		push	ft
+		ld	ft,$0001
+		ld	bc,$0002
+		jal	MathMultiplyUnsigned_32x16_p32
+		jal	StreamHexLongOut
+		MNewLine
+		pop	ft
+
 		MPrintString <"0x1234 * 0x2345 = (unsigned, expect 02820404) ">
 		ld	ft,$1234
 		ld	bc,$2345
