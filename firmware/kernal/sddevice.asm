@@ -138,7 +138,6 @@ getSize:
 ; -- Read block from device
 ; --
 ; -- Inputs:
-; --   ft:ft' - block number
 ; --   bc - pointer to block device structure
 ; --
 ; -- Returns:

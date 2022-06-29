@@ -277,26 +277,22 @@ dirRead:
 
 		; TODO: move to next cluster if done with current
 
-		; calc sector number for next file
+		; ft <- file index
 		add	de,udir_FileIndex+1
 		ld	t,(de)
 		ld	f,t
 		sub	de,1
-		ld	t,(de)
+		ld	t,(de)	; ft = file index
+
 		rs	ft,4	; 16 entries per sector
+
 		ld	hl,ft	; hl = sector# in cluster
-
 		push	hl
-		push	bc
-
 		add	de,udir_Cluster-udir_FileIndex
-		add	bc,fat32_ClusterToSector
-		ld	t,(bc)
-		ld	b,t
 		MLoad32	ft,(de)
-		jal	MathShiftLeft_32
-
+		jal	clusterToSector
 		pop	hl
+
 		exg	bc,hl
 		push	bc
 		ld	bc,0
@@ -469,11 +465,12 @@ checkFat32:	push	bc-hl
 
 .signature	DB	"FAT32   "
 
+
 ; ---------------------------------------------------------------------------
 ; -- Convert cluster number to sector number
 ; --
 ; -- Inputs:
-; --   ft:ft' - cluster
+; --   ft:ft' - cluster (consumed)
 ; --   bc     - pointer to filesystem structure
 ; --
 ; -- Outputs:

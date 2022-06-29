@@ -200,17 +200,6 @@ BlockDeviceInit:
 ; --
 		SECTION	"BlockDeviceRead",CODE
 BlockDeviceRead:
-		MDebugPrint <"BlockDeviceRead enter ">
-		MDebugHexWord ft
-		swap	ft
-		MDebugHexWord ft
-		swap	ft
-		MDebugPrint <" ">
-		MDebugHexWord bc
-		MDebugPrint <" ">
-		MDebugHexWord de
-		MDebugNewLine
-
 		push	bc/hl
 
 		exg	ft,bc
