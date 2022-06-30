@@ -26,6 +26,18 @@ BS_BOOT_RECORD_SIG	EQU	$1FE
 
 BS_LABEL_SIZEOF		EQU	11
 
+ATTR_READONLY	EQU	$01
+ATTR_HIDDEN	EQU	$02
+ATTR_SYSTEM	EQU	$04
+ATTR_LABEL	EQU	$08
+ATTR_DIRECTORY	EQU	$10
+ATTR_ARCHIVE	EQU	$20
+ATTR_DEVICE	EQU	$40
+
+DIRENT_NAME	EQU	$00
+DIRENT_EXT	EQU	$08
+DIRENT_ATTR	EQU	$0B
+
 
 		RSSET	dir_PRIVATE
 udir_Cluster	RB	4
@@ -280,6 +292,7 @@ dirRead:
 		; TODO: move to next cluster if done with current
 
 		; ft <- file index
+.next_file_index
 		add	de,udir_FileIndex+1
 		ld	t,(de)
 		ld	f,t
@@ -362,6 +375,25 @@ dirRead:
 		exg	f,t
 		sub	bc,1
 		ld	(bc),t
+
+
+		; check attributes
+		add	de,DIRENT_ATTR
+		ld	t,(de)
+		sub	de,DIRENT_ATTR
+		and	t,ATTR_HIDDEN|ATTR_LABEL
+		cmp	t,0
+		j/eq	.attr_ok
+
+		MStackFree 512
+		ld	ft,bc
+		sub	ft,udir_FileIndex
+		ld	de,ft
+		pop	bc
+		push	bc
+		ld	hl,.next_file_index
+		j	(hl)
+.attr_ok
 
 		add	bc,dir_Filename-udir_FileIndex
 		ld	t,12
