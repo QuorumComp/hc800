@@ -26,23 +26,29 @@ BS_BOOT_RECORD_SIG	EQU	$1FE
 
 BS_LABEL_SIZEOF		EQU	11
 
-ATTR_READONLY	EQU	$01
-ATTR_HIDDEN	EQU	$02
-ATTR_SYSTEM	EQU	$04
-ATTR_LABEL	EQU	$08
-ATTR_DIRECTORY	EQU	$10
-ATTR_ARCHIVE	EQU	$20
-ATTR_DEVICE	EQU	$40
+ATTR_READONLY		EQU	$01
+ATTR_HIDDEN		EQU	$02
+ATTR_SYSTEM		EQU	$04
+ATTR_LABEL		EQU	$08
+ATTR_DIRECTORY		EQU	$10
+ATTR_ARCHIVE		EQU	$20
+ATTR_DEVICE		EQU	$40
 
-DIRENT_NAME	EQU	$00
-DIRENT_EXT	EQU	$08
-DIRENT_ATTR	EQU	$0B
+DIRENT_NAME		EQU	$00
+DIRENT_EXT		EQU	$08
+DIRENT_ATTR		EQU	$0B
 
 
-		RSSET	dir_PRIVATE
-udir_Cluster	RB	4
-udir_FileIndex	RB	2
-udir_SIZEOF	RB	0
+			RSSET	dir_PRIVATE
+udir_Cluster		RB	4
+udir_FileIndex		RB	2
+udir_SIZEOF		RB	0
+
+			RSSET	file_PRIVATE
+ufile_RootCluster	RB	4
+ufile_Cluster		RB	4
+ufile_SectorIndex	RB	1
+ufile_SIZEOF		RB	0
 
 
 ; ---------------------------------------------------------------------------
@@ -254,8 +260,7 @@ dirOpen:
 
 		add	ft,udir_FileIndex-udir_Cluster
 		ld	b,0
-		ld	(ft),b
-		add	ft,1
+		ld	(ft+),b
 		ld	(ft),b
 
 		; bc <- filesystem
@@ -424,21 +429,6 @@ dirRead:
 		j	(hl)
 
 
-; ---------------------------------------------------------------------------
-; -- Follow a file path
-; --
-; -- Inputs:
-; --   ft - 32 byte working buffer
-; --   bc - pointer to path
-; --   de - FAT32 directory structure to fill in
-; --
-followPath:
-		pusha
-
-		popa
-		j	(hl)
-
-
 fileOpen:
 		ld	f,FLAGS_EQ
 		j	(hl)
@@ -556,3 +546,167 @@ clusterToSector:
 		pop	bc-hl
 		j	(hl)
 
+
+; ---------------------------------------------------------------------------
+; -- Read sector from file
+; --
+; -- Inputs:
+; --   ft - file structure
+; --   bc - pointer to filesystem structure
+; --   de - destination
+; --
+readFileSector:
+		pusha
+
+		; read sector
+		add	ft,ufile_SectorIndex
+		ld	l,(ft)	; l = sector index
+
+		add	bc,fat32_ClusterToSector
+		ld	t,(bc)
+		ld	h,t	; h = cluster to sector
+		ld	ft,1
+		ls	ft,h	; ft = sectors per cluster
+		ld	h,0
+
+		cmp	ft,hl
+		j/ne	.not_next_cluster
+
+		; move to next cluster
+		pop	ft
+		push	ft
+		add	ft,ufile_Cluster
+		ld	de,ft
+		; ft:ft' <- current cluster
+		MLoad32 ft,(de)
+		pop	bc		; bc = file system
+		push	bc
+		jal	getNextCluster
+		j/ne	.file_end
+
+		pop	ft
+		MPop32	(de),ft
+
+		; zero sector index
+		pop	ft
+		push	ft
+		add	ft,ufile_SectorIndex
+		ld	b,0
+		ld	(ft),b	; sector index = 0
+
+		popa
+		j	readFileSector
+
+.file_end	; TODO
+		j	@+2
+
+.not_next_cluster
+		sub	bc,fat32_ClusterToSector
+
+		pop	ft
+		push	ft
+		ld	de,ft
+		add	de,ufile_Cluster
+		MLoad32 ft,(de)
+		; ft:ft' = cluster
+		
+		jal	clusterToSector
+
+		add	de,ufile_SectorIndex-ufile_Cluster
+		ld	t,(de)
+		ld	f,0
+		ld	bc,ft
+		push	bc
+		ld	bc,0
+
+		jal	MathAdd_32_32
+		; ft:ft' - sector
+
+		pop	bc
+		push	bc
+		add	bc,fs_BlockDevice+1
+		push	ft
+		ld	ft,(-bc)
+		ld	bc,ft
+		pop	ft
+		; bc - block device
+
+		pop	de
+		push	de
+		; de - destination
+		jal	BlockDeviceRead
+
+		popa
+		j	(hl)
+
+
+; ---------------------------------------------------------------------------
+; -- Get next cluster number for file
+; --
+; -- Inputs:
+; --   ft:ft' - cluster
+; --   bc     - pointer to filesystem structure
+; --
+; -- Output:
+; --   f        - "eq" if next cluster was found
+; --   ft':ft'' - present if cluster was found
+; --
+getNextCluster:
+		push	bc-hl
+
+		swap	ft
+		ld	hl,ft	; hl = cluster
+		swap	ft
+
+		ld	de,ft
+
+		ld	bc,7
+		jal	MathShiftRight_32
+		; ft:ft' = FAT sector index
+
+		push	ft
+		add	bc,fat32_FatBase+1
+		ld	ft,(-bc)
+		ld	bc,ft
+		push	bc
+		ld	bc,0
+		; bc:bc' - FAT base
+
+		jal	MathAdd_32_32
+		; ft:ft' - FAT sector 
+		
+		push	ft
+		pop	bc
+		push	bc
+		add	bc,fs_BlockDevice+1
+		ld	ft,(-bc)
+		ld	bc,ft
+		pop	ft
+		; bc - block device
+
+		MStackAlloc 512
+		ld	de,ft
+		; de - sector data
+
+		push	hl
+		jal	BlockDeviceRead
+		pop	hl
+		j/ne	.exit
+
+.exit		ld	ft,hl
+		and	t,$7F
+		ld	f,0
+		ls	ft,2
+		add	ft,de
+		ld	de,ft
+		MLoad32	ft,(de)
+
+		; TODO: Check if end marker
+
+		push	ft
+		ld	f,FLAGS_EQ
+
+		MStackFree	512
+
+		pop	bc-hl
+		j	(hl)

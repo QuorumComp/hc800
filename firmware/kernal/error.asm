@@ -34,7 +34,7 @@ ErrorPrintDescription:
 
 		pop	ft
 		ld	f,0
-		add	ft,ft
+		ls	ft,1
 		add	ft,descriptions+1
 		ld	hl,ft
 
