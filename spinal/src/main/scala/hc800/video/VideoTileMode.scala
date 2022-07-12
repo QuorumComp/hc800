@@ -45,10 +45,10 @@ class VideoTileMode(secondPlane: Boolean, hTotal: Int) extends Component {
 
 		val memBusCycle = in UInt(4 bits)
 
-		val vSync = in Bool
-		val hSync = in Bool
-		val hBlank = in Bool
-		val pixelEnable = in Bool
+		val vSync = in Bool()
+		val hSync = in Bool()
+		val hBlank = in Bool()
+		val pixelEnable = in Bool()
 
 		val hPos = in UInt(11 bits)
 		val vPos = in UInt(9 bits)

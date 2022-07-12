@@ -10,9 +10,9 @@ class SD extends Component {
 		val bus = slave(Bus(addressWidth = 1))
 
 		val sd_cs = out Bits(2 bits)
-		val sd_clock = out Bool
-		val sd_di = out Bool
-		val sd_do = in Bool
+		val sd_clock = out Bool()
+		val sd_di = out Bool()
+		val sd_do = in Bool()
     }
 
 	// State

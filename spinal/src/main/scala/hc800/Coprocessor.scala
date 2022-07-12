@@ -31,8 +31,8 @@ case class Coprocessor() extends Component {
 
     val io = new Bundle {
 		val busAddress = out UInt(11 bits)
-		val busEnable  = out Bool
-		val busWrite   = out Bool
+		val busEnable  = out Bool()
+		val busWrite   = out Bool()
 		val busDataOut = out Bits(16 bits)
 		val busDataIn  = out Bits(16 bits)
 

@@ -9,10 +9,10 @@ class BoardId(board: Int) extends Component {
 
 	val identifier =
 		board match {
-			case Board.zxNext.position => "ZX Spectrum Next"
-			case Board.nexys3.position => "Digilent Nexys 3"
-			case Board.mist.position => "MiST"
-			case Board.mister.position => "MiSTer"
+			case Board.zxNext => "ZX Spectrum Next"
+			case Board.nexys3 => "Digilent Nexys 3"
+			case Board.mist => "MiST"
+			case Board.mister => "MiSTer"
 			case _ => "Unknown"
 		}
 
@@ -49,10 +49,10 @@ class BoardId(board: Int) extends Component {
 
 
 object BoardId {
-	object Board extends SpinalEnum(defaultEncoding = binarySequential) {
-		val zxNext,
-			nexys3,
-			mist,
-			mister = newElement()
+	object Board {
+		val zxNext = 0
+		val nexys3 = 1
+		val mist = 2
+		val mister = 3
 	}
 }

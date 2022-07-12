@@ -8,7 +8,7 @@ import hc800.Constants
 
 class VideoFrame extends Component {
 	val io = new Bundle {
-		val pixelEnable = in Bool
+		val pixelEnable = in Bool()
 
 		val hPos = in UInt(11 bits)
 		val vPos = in UInt(9 bits)

@@ -6,7 +6,7 @@ import hc800.Constants
 
 case class ScanDoubler(doubleDomain: ClockDomain) extends Component {
 	val io = new Bundle {
-		val pixelEnableIn = in Bool
+		val pixelEnableIn = in Bool()
 		val hPosIn  = in UInt(11 bits)
 		val vPosIn  = in UInt(8 bits)
 		val redIn   = in UInt(5 bits)

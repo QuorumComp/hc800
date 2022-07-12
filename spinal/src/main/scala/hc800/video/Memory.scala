@@ -12,14 +12,14 @@ case class ScanlineMemory(busDomain: ClockDomain) extends BlackBox {
 	val width = log2Up(words)
 
 	val io = new Bundle {
-		val clka = in Bool
-		val ena = in Bool
-		val wea = in Bool
+		val clka = in Bool()
+		val ena = in Bool()
+		val wea = in Bool()
 		val addra = in UInt(width bits)
 		val dina = in Bits(15 bits)
 
-		val clkb = in Bool
-		val enb = in Bool
+		val clkb = in Bool()
+		val enb = in Bool()
 		val addrb = in UInt(width bits)
 		val doutb = out Bits(15 bits)
 	}
@@ -35,16 +35,16 @@ class AttributeMemory extends BlackBox {
 	import AttributeMemory._
 
 	val io = new Bundle {
-		val clka = in Bool
-		val ena = in Bool
+		val clka = in Bool()
+		val ena = in Bool()
 		val wea = in Bits(2 bits)
 		val addra = in UInt(width bits)
 		val dina = in Bits(16 bits)
 		val douta = out Bits(16 bits)
 
-		val clkb = in Bool
-		val enb = in Bool
-		val web = in Bool
+		val clkb = in Bool()
+		val enb = in Bool()
+		val web = in Bool()
 		val addrb = in UInt((width + 1) bits)
 		val dinb = in Bits(8 bits)
 		val doutb = out Bits(8 bits)
@@ -67,16 +67,16 @@ class PaletteMemory extends BlackBox {
 	import PaletteMemory._
 
 	val io = new Bundle {
-		val clka = in Bool
-		val ena = in Bool
+		val clka = in Bool()
+		val ena = in Bool()
 		val wea = in Bits(2 bits)
 		val addra = in UInt(width bits)
 		val dina = in Bits(16 bits)
 		val douta = out Bits(16 bits)
 
-		val clkb = in Bool
-		val enb = in Bool
-		val web = in Bool
+		val clkb = in Bool()
+		val enb = in Bool()
+		val web = in Bool()
 		val addrb = in UInt(byteWidth bits)
 		val dinb = in Bits(8 bits)
 		val doutb = out Bits(8 bits)

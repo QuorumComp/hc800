@@ -11,13 +11,13 @@ import hc800.keyboard.Keyboard
 
 case class CPU(memoryDomain: ClockDomain)(implicit lpmComponents: rc800.lpm.Components) extends Component {
 	val io = new Bundle {
-		val irq = in Bool
+		val irq = in Bool()
 
 		val bus = master(Bus(addressWidth = 16))
 
-		val io     = out Bool
-		val code   = out Bool
-		val system = out Bool
+		val io     = out Bool()
+		val code   = out Bool()
+		val system = out Bool()
 	}
 
 	private val cpu = new rc800.RC811()
@@ -39,13 +39,13 @@ case class CPU(memoryDomain: ClockDomain)(implicit lpmComponents: rc800.lpm.Comp
 
 case class BusCPU(memoryDomain: ClockDomain)(implicit lpmComponents: rc800.lpm.Components) extends Component {
 	val io = new Bundle {
-		val irq = in Bool
+		val irq = in Bool()
 
 		val cpuBus = master(Bus(addressWidth = 16))
 		val ioBus = master(Bus(addressWidth = 16))
 
-		val code   = out Bool
-		val system = out Bool
+		val code   = out Bool()
+		val system = out Bool()
 	}
 
 	private val cpu = CPU(memoryDomain)
@@ -61,9 +61,8 @@ case class BusCPU(memoryDomain: ClockDomain)(implicit lpmComponents: rc800.lpm.C
 }
 
 
-class HC800(boardIndex: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.Components) extends Component {
+class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.Components) extends Component {
 
-	val board = BoardId.Board.elements(boardIndex)
 	val boardIsZxNext = board == BoardId.Board.zxNext
 	val boardIsMist = board == BoardId.Board.mist
 	val boardIsMister = board == BoardId.Board.mister
@@ -93,9 +92,9 @@ class HC800(boardIndex: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800
 		val ramBus = master(Bus(addressWidth = 21))
 
 		val sd_cs = out Bits(2 bits)
-		val sd_clock = out Bool
-		val sd_di = out Bool
-		val sd_do = in Bool
+		val sd_clock = out Bool()
+		val sd_di = out Bool()
+		val sd_do = in Bool()
 
 		val keyboardColumns = boardIsZxNext generate (in  Bits(7 bits))
 		val keyboardRows    = boardIsZxNext generate (out Bits(8 bits))
@@ -230,7 +229,7 @@ class HC800(boardIndex: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800
 		val paletteMemEnable = machineBus.address === ramMap.palette
 		val ramEnable        = machineBus.address === ramMap.ram
 
-		val boardId = new BoardId(boardIndex)
+		val boardId = new BoardId(board)
 
 		def mkZxNextKeyboard(): hc800.keyboard.ZxNextMembrane = {
 			val kbd = new hc800.keyboard.ZxNextMembrane()
@@ -385,8 +384,8 @@ object HC800TopLevel {
 
 	def main(args: Array[String]): Unit = {
 		//generate("../specnext/hc800_zxnext.v", BoardId.Board.zxNext.position, Vendor.Xilinx)
-		//generate("../mist/hc800_mist.v", BoardId.Board.mist.position, Vendor.Altera)
-		//generate("../../../rtl/hc800_mister.v", BoardId.Board.mister.position, Vendor.Altera)
+		generate("../mist/hc800_mist.v", BoardId.Board.mist, Vendor.Altera)
 		//generate("hc800_nexys3.v", BoardId.Board.nexys3.position, Vendor.Xilinx)
+		//generate("../../../rtl/hc800_mister.v", BoardId.Board.mister, Vendor.Altera)
 	}
 }
