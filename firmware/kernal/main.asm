@@ -37,12 +37,19 @@ Main:
 		MStackInit 1024
 
 		MDebugStacks
+		MDebugPrint <"Initialize palette\n">
 		jal	InitializePalette
+		MDebugPrint <"Initialize keyboard\n">
 		jal	KeyboardInitialize
+		MDebugPrint <"Initialize text\n">
 		jal	TextInitialize
+		MDebugPrint <"Initialize block devices\n">
 		jal	BlockDeviceInit
+		MDebugPrint <"Initialize file systems\n">
 		jal	FileInitialize
 		MDebugStacks
+
+		MDebugPrint <"Initialization done\n">
 
 		sys	KClearScreen
 
