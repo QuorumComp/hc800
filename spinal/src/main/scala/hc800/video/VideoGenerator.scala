@@ -71,7 +71,7 @@ class VideoGenerator(scanDoubleDomain: ClockDomain) extends Component {
 		private val vSyncEnd   = 4+vSyncStart
 		private val vTotal     = 9+vSyncEnd
 
-		private val sync = new VideoSync(initialHPos = 0, initialVPos = 0)
+		private val sync = new VideoSync(initialHPos = Constants.firstCycle - 1, initialVPos = 0)
 		sync.io.hDisp      := hDisp
 		sync.io.hSyncStart := hSyncStart
 		sync.io.hSyncEnd   := hSyncEnd
