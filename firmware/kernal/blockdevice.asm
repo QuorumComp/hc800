@@ -11,6 +11,9 @@
 
 		INCLUDE	"uart_commands_disabled.i"
 
+BYTES_PER_SECTOR = 512
+SECTOR_HEAP_SIZE = 8
+
 MAX_PARTITIONS = 3
 
 ; -- Get block device information
@@ -95,6 +98,25 @@ SysGetBlockDevice::
 		SECTION	"BlockDeviceRead",CODE
 BlockDeviceInit:
 		pusha
+
+		MDebugPrint <"Init sector heap\n">
+		ld	bc,sectors
+
+		ld	ft,freeSectors
+		ld	(ft+),c
+		ld	(ft),b
+	
+		ld	l,SECTOR_HEAP_SIZE-1
+.sector_heap_loop
+		ld	ft,bc
+		add	bc,BYTES_PER_SECTOR
+		ld	(ft+),c
+		ld	(ft),b
+		dj	l,.sector_heap_loop
+		ld	ft,bc
+		ld	c,0
+		ld	(ft+),c
+		ld	(ft),c
 
 		MDebugPrint <"Init sda\n">
 
@@ -298,6 +320,50 @@ BlockDeviceGet:
 		j	(hl)
 
 
+; ---------------------------------------------------------------------------
+; -- Allocate a sector from the sector heap
+; --
+; -- Returns:
+; --   ft - pointer to block or null if failure
+; --
+		SECTION	"BlockAllocSector",CODE
+BlockAllocSector:
+		push	bc-de
+
+		ld	de,freeSectors
+		ld	ft,(de)
+		push	ft
+
+		ld	bc,ft
+		ld	ft,(bc)
+		ld	(de),ft
+
+		pop	ft-de
+		j	(hl)
+		
+
+; ---------------------------------------------------------------------------
+; -- Return a sector to the sector heap
+; --
+; -- Input:
+; --   ft - pointer to block
+; --
+		SECTION	"BlockFreeSector",CODE
+BlockFreeSector:
+		pusha
+
+		ld	bc,ft
+
+		ld	de,freeSectors
+		ld	ft,(de)
+		ld	(bc),ft
+		ld	ft,bc
+		ld	(de),ft
+
+		popa
+		j	(hl)
+
+
 		SECTION	"BlockDevicesList",CODE
 blockDevicePointers:
 		DW	sda
@@ -320,3 +386,5 @@ sdb:		DS	sddev_SIZEOF
 sdb0:		DS	mbrdev_SIZEOF
 sdb1:		DS	mbrdev_SIZEOF
 sdb2:		DS	mbrdev_SIZEOF
+sectors:	DS	BYTES_PER_SECTOR*SECTOR_HEAP_SIZE
+freeSectors:	DS	2

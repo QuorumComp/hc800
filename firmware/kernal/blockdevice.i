@@ -13,4 +13,7 @@ bdev_PRIVATE	RB	0
 		GLOBAL	BlockDeviceRead
 		GLOBAL	BlockDeviceSize
 
+		GLOBAL	BlockAllocSector
+		GLOBAL	BlockFreeSector
+
 	ENDC

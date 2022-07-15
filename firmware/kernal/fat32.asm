@@ -48,6 +48,7 @@ udir_SIZEOF		RB	0
 ufile_RootCluster	RB	4
 ufile_Cluster		RB	4
 ufile_SectorIndex	RB	1
+ufile_SectorData	RB	2
 ufile_SIZEOF		RB	0
 
 
@@ -381,6 +382,9 @@ dirRead:
 		sub	bc,1
 		ld	(bc),t
 
+		ld	t,(de)
+		cmp	t,$E5
+		j/eq	.skip_file
 
 		; check attributes
 		add	de,DIRENT_ATTR
@@ -390,6 +394,7 @@ dirRead:
 		cmp	t,0
 		j/eq	.attr_ok
 
+.skip_file
 		MStackFree 512
 		ld	ft,bc
 		sub	ft,udir_FileIndex
@@ -400,25 +405,31 @@ dirRead:
 		j	(hl)
 .attr_ok
 
-		add	bc,dir_Filename-udir_FileIndex
-		ld	t,12
-		ld	(bc),t	; length
-		add	bc,1
+		add	bc,dir_Filename-udir_FileIndex+1
+		push	bc
 		ld	f,8
-.copy_name	ld	t,(de)
-		ld	(bc),t
-		add	de,1
-		add	bc,1
+.copy_name	ld	t,(de+)
+		ld	(bc+),t
 		dj	f,.copy_name
+.find_space_1	ld	t,(-bc)
+		cmp	t,' '
+		j/eq	.find_space_1
+		add	bc,1
 		ld	t,'.'
-		ld	(bc),t
-		add	bc,1
+		ld	(bc+),t
 		ld	f,3
-.copy_extension	ld	t,(de)
-		ld	(bc),t
-		add	de,1
-		add	bc,1
+.copy_extension	ld	t,(de+)
+		ld	(bc+),t
 		dj	f,.copy_extension
+.find_space_2	ld	t,(-bc)
+		cmp	t,' '
+		j/eq	.find_space_2
+		cmp	t,'.'
+		add/ne	bc,1
+		ld	ft,bc
+		pop	bc
+		sub	ft,bc
+		ld	(-bc),t	; length
 
 		popa
 		MDebugMemory ft,32
@@ -429,7 +440,21 @@ dirRead:
 		j	(hl)
 
 
+; ---------------------------------------------------------------------------
+; -- Open file. file_Flags, file_Error and file_Length are filled in.
+; --
+; -- Inputs:
+; --   ft - file name path
+; --   bc - file struct
+; --   de - pointer to filesystem struct
+; --
+; -- Output:
+; --    t - Error code
+; --    f - "eq" if success
+; --
 fileOpen:
+		
+
 		ld	f,FLAGS_EQ
 		j	(hl)
 
@@ -544,6 +569,48 @@ clusterToSector:
 		pop	bc
 		
 		pop	bc-hl
+		j	(hl)
+
+
+; ---------------------------------------------------------------------------
+; -- Open file by root cluster
+; --
+; -- Inputs:
+; --   ft:ft' - root cluster (consumed)
+; --   bc     - file struct
+; --   de     - pointer to filesystem struct
+; --
+; -- Output:
+; --    t - Error code
+; --    f - "eq" if success
+; --
+		SECTION	"openFileSector",CODE
+openFileSector:
+		pusha
+
+		add	bc,ufile_RootCluster
+		ld	(bc+),ft
+		add	bc,1
+		pop	ft
+		ld	(bc+),ft
+		add	bc,1
+
+		ld	ft,0
+
+		; ufile_CLuster
+		ld	(bc+),ft
+		add	bc,1
+		ld	(bc+),ft
+		add	bc,1
+
+		; ufile_SectorIndex
+		ld	(bc+),t
+
+		jal	BlockAllocSector
+		; ufile_SectorData
+		ld	(bc),ft
+
+		popa
 		j	(hl)
 
 
