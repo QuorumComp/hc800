@@ -40,7 +40,14 @@ Entry::
 		sys	KPrintError
 		j	.done
 
-.print_dir	MPrintChar '"'
+.print_dir	ld	bc,dirInfo+dir_Flags
+		ld	t,(bc)
+		and	t,DFLAG_DIR
+		cmp	t,0
+		j/eq	.not_dir
+		MPrintString "<DIR> "
+.not_dir
+		MPrintChar '"'
 		ld	bc,dirInfo+dir_Filename
 		jal	StreamBssStringOut
 		MPrintChar '"'

@@ -367,27 +367,31 @@ dirRead:
 .read_fail
 		popa
 		ld	f,FLAGS_NE
-		j	.exit
+		MStackFree 512
+		j	(hl)
 
 .not_end	; increment file index
-		ld	t,(bc)
-		exg	t,f
-		add	bc,1
-		ld	t,(bc)
-		exg	f,t
+		ld	ft,(bc+)
 		add	ft,1
-		exg	f,t
-		ld	(bc),t
-		exg	f,t
-		sub	bc,1
-		ld	(bc),t
+		ld	(-bc),ft
+		add	bc,dir_Flags-udir_FileIndex
 
 		ld	t,(de)
 		cmp	t,$E5
 		j/eq	.skip_file
 
 		; check attributes
+		ld	t,0
+		ld	(bc),t
+
 		add	de,DIRENT_ATTR
+		ld	t,(de)
+		and	t,ATTR_DIRECTORY
+		cmp	t,0
+		j/eq	.not_dir
+		ld	t,DFLAG_DIR
+		ld	(bc),t
+.not_dir
 		ld	t,(de)
 		sub	de,DIRENT_ATTR
 		and	t,ATTR_HIDDEN|ATTR_LABEL
@@ -397,7 +401,7 @@ dirRead:
 .skip_file
 		MStackFree 512
 		ld	ft,bc
-		sub	ft,udir_FileIndex
+		sub	ft,dir_Flags
 		ld	de,ft
 		pop	bc
 		push	bc
@@ -405,7 +409,7 @@ dirRead:
 		j	(hl)
 .attr_ok
 
-		add	bc,dir_Filename-udir_FileIndex+1
+		add	bc,dir_Filename+1-dir_Flags
 		push	bc
 		ld	f,8
 .copy_name	ld	t,(de+)
@@ -432,10 +436,7 @@ dirRead:
 		ld	(-bc),t	; length
 
 		popa
-		MDebugMemory ft,32
-
 		ld	f,FLAGS_EQ
-.exit
 		MStackFree 512
 		j	(hl)
 
