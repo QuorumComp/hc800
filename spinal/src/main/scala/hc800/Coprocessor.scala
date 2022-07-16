@@ -13,7 +13,7 @@ class DotProduct extends Component {
 		val result   = out (SInt(32 bits))
 	}
 
-	private val multipliers = Vector(new MultiplierUnit16x16(),new MultiplierUnit16x16(),new MultiplierUnit16x16(),new MultiplierUnit16x16())
+	private val multipliers = Vector(new MultiplierUnit32x32(),new MultiplierUnit32x32(),new MultiplierUnit32x32(),new MultiplierUnit32x32())
 
 	for (i <- 0 to 3) {
 		multipliers(i).io.operand1 <> io.operand1(i).asBits

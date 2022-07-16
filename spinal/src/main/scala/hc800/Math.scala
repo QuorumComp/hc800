@@ -9,21 +9,21 @@ case class Math() extends Component {
 
     val io = slave(Bus(addressWidth = Register.craft().getBitsWidth))
 
-	private val registerX = Reg(Bits(16 bits))
-	private val registerY = Reg(Bits(16 bits))
-	private val registerZ = Reg(Bits(32 bits))
+	private val registerX = Reg(Bits(32 bits))
+	private val registerY = Reg(Bits(32 bits))
+	private val registerZ = Reg(Bits(64 bits))
 
 	private val ready     = Reg(Bool())
 	private val restart   = Reg(Bool())
 	private val operation = Reg(Operation())
 
-	private val multiplier = new MultiplierUnit16x16()
+	private val multiplier = new MultiplierUnit32x32()
 	multiplier.io.restart  <> restart
 	multiplier.io.signed   <> (operation === Operation.signedMultiply)
 	multiplier.io.operand1 <> registerX
 	multiplier.io.operand2 <> registerY
 
-	private val divider = new DividerUnit16x16()
+	private val divider = new DividerUnit32x32()
 	divider.io.restart  <> restart
 	divider.io.signed   <> (operation === Operation.signedDivision)
 	divider.io.dividend <> registerZ
@@ -72,18 +72,18 @@ case class Math() extends Component {
 	when (io.enable.rise && io.write) {
 		switch (address) {
 			is (Register.operation) { startOperation() }
-			is (Register.x)         { registerX := (registerX(7 downto 0) ## io.dataFromMaster) }
-			is (Register.y)         { registerY := (registerY(7 downto 0) ## io.dataFromMaster) }
-			is (Register.z)         { registerZ := (registerZ(23 downto 0) ## io.dataFromMaster) }
+			is (Register.x)         { registerX := (registerX(23 downto 0) ## io.dataFromMaster) }
+			is (Register.y)         { registerY := (registerY(23 downto 0) ## io.dataFromMaster) }
+			is (Register.z)         { registerZ := (registerZ(55 downto 0) ## io.dataFromMaster) }
 		}
 	}
 
 
 	when (io.enable.rise && !io.write) {
 		switch (address) {
-			is (Register.x) { registerX := U(0, 8 bits) ## registerX(15 downto 8) }
-			is (Register.y) { registerY := U(0, 8 bits) ## registerY(15 downto 8) }
-			is (Register.z) { registerZ := U(0, 8 bits) ## registerZ(31 downto 8) }
+			is (Register.x) { registerX := U(0, 8 bits) ## registerX(31 downto 8) }
+			is (Register.y) { registerY := U(0, 8 bits) ## registerY(31 downto 8) }
+			is (Register.z) { registerZ := U(0, 8 bits) ## registerZ(63 downto 8) }
 		}
 	}
 
@@ -136,21 +136,29 @@ object Math {
 		value
 	}
 
-	def writeX(math: Math, value: Short): Unit = {
+	def writeX(math: Math, value: Int): Unit = {
+		writeRegister(math, Register.x.position, value >>> 24)
+		writeRegister(math, Register.x.position, value >>> 16)
 		writeRegister(math, Register.x.position, value >>> 8)
 		writeRegister(math, Register.x.position, value)
 	}
 
-	def writeY(math: Math, value: Short): Unit = {
+	def writeY(math: Math, value: Int): Unit = {
+		writeRegister(math, Register.y.position, value >>> 24)
+		writeRegister(math, Register.y.position, value >>> 16)
 		writeRegister(math, Register.y.position, value >>> 8)
 		writeRegister(math, Register.y.position, value)
 	}
 
-	def writeZ(math: Math, value: Int): Unit = {
-		writeRegister(math, Register.z.position, value >>> 24)
-		writeRegister(math, Register.z.position, value >>> 16)
-		writeRegister(math, Register.z.position, value >>> 8)
-		writeRegister(math, Register.z.position, value)
+	def writeZ(math: Math, value: Long): Unit = {
+		writeRegister(math, Register.z.position, (value >> 32).toInt >>> 24)
+		writeRegister(math, Register.z.position, (value >> 32).toInt >>> 16)
+		writeRegister(math, Register.z.position, (value >> 32).toInt >>> 8)
+		writeRegister(math, Register.z.position, (value >> 32).toInt >>> 0)
+		writeRegister(math, Register.z.position, value.toInt >>> 24)
+		writeRegister(math, Register.z.position, value.toInt >>> 16)
+		writeRegister(math, Register.z.position, value.toInt >>> 8)
+		writeRegister(math, Register.z.position, value.toInt)
 	}
 
 	def writeOperation(math: Math, operation: Int) =
@@ -231,7 +239,7 @@ object Math {
 				dut.clockDomain.waitRisingEdge()
 			}
 
-			//testMul(dut)
+			testMul(dut)
 			testDiv(dut)
 		}
 	}
