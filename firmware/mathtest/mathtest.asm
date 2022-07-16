@@ -31,18 +31,6 @@ TestDiv:
 		pop	ft
 		MNewLine
 
-		MPrintString <"0x12345678 / 0x7654 = (unsigned, expect 2762:3E50) ">
-		MPush32	ft,$12345678
-		ld	bc,$7654
-		jal	MathDivideUnsigned_32by16_q16_r16
-		swap	ft
-		jal	StreamHexWordOut
-		MPrintChar ':'
-		pop	ft
-		jal	StreamHexWordOut
-		pop	ft
-		MNewLine
-
 		popa
 		j	(hl)
 

@@ -76,7 +76,7 @@ LoadKernal:
 		pop	bc-hl
 		j	(hl)
 
-.kernal_name	DB	"kernal.bin"
+.kernal_name	DB	"/kernal.bin"
 .kernal_length	EQU	@-.kernal_name
 
 ; --
