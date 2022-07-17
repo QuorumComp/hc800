@@ -7,28 +7,54 @@
 		SECTION	"Monitor",CODE
 
 Entry::
+		jal	TestPrint
 		jal	TestShift
 		jal	TestAdd
 		jal	TestMul
 		jal	TestDiv
 
-
 		sys	KExit
 
+
+TestPrint:
+		pusha
+
+		MPush32	ft,3124567890
+		MPrintString <"Expect 3124567890 = ">
+		jal	StreamDecimalLongOut
+		MNewLine
+		pop	ft
+		pop	ft
+
+		popa
+		j	(hl)
 
 TestDiv:
 		pusha
 
-		MPrintString <"0x12345678 / 0x7654 = (unsigned, expect 2762:3E50) ">
+		MPrintString <"0x12345678 / 0x7654 = (unsigned, expect 3E50:2762) ">
 		MPush32	ft,$12345678
 		ld	bc,$7654
 		jal	MathDivideUnsigned_32by16_q16_r16
-		swap	ft
 		jal	StreamHexWordOut
 		MPrintChar ':'
 		pop	ft
 		jal	StreamHexWordOut
 		pop	ft
+		MNewLine
+
+		MPrintString <"0xFEDCBA98 / 0x87654 = (unsigned, expect 000104C0:00001E1E) ">
+		MPush32	ft,$FEDCBA98
+		MPush32	bc,$87654
+		jal	MathDivideUnsigned_32by32_q32_r32
+		jal	StreamHexLongOut
+		MPrintChar ':'
+		pop	ft
+		pop	ft
+		jal	StreamHexLongOut
+		pop	ft
+		pop	bc
+		pop	bc
 		MNewLine
 
 		popa
@@ -37,7 +63,7 @@ TestDiv:
 TestMul:
 		pusha
 
-		MPrintString <"0x00018602 * 0x0002 = (unsigned, expect 00000C04) ">
+		MPrintString <"0x00018602 * 0x0002 = (unsigned, expect 00030C04) ">
 		ld	ft,$8602
 		push	ft
 		ld	ft,$0001
