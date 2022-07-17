@@ -45,11 +45,21 @@ Entry::
 		and	t,DFLAG_DIR
 		cmp	t,0
 		j/eq	.not_dir
-		MPrintString "<DIR> "
+		MPrintString "     [DIR] "
 		j	.dir_done
 .not_dir
 		ld	bc,dirInfo+dir_Length
 		MLoad32	ft,(bc)
+
+		MPush32 ft
+		jal	DecimalLongWidth
+		neg	t
+		add	t,10
+		ld	e,t
+		pop	ft
+.spaces		MPrintChar ' '
+		dj	e,.spaces		
+
 		jal	StreamDecimalLongOut
 		pop	ft
 		MPrintChar ' '
@@ -67,7 +77,6 @@ Entry::
 
 .done		popa
 		sys	KExit
-
 
 		SECTION	"Variables",BSS_S
 dirInfo		DS	dir_SIZEOF
