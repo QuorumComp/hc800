@@ -37,6 +37,7 @@ ATTR_DEVICE		EQU	$40
 DIRENT_NAME		EQU	$00
 DIRENT_EXT		EQU	$08
 DIRENT_ATTR		EQU	$0B
+DIRENT_LENGTH		EQU	$1C
 
 
 			RSSET	dir_PRIVATE
@@ -433,7 +434,13 @@ dirRead:
 		ld	ft,bc
 		pop	bc
 		sub	ft,bc
-		ld	(-bc),t	; length
+		ld	(-bc),t	; name length
+
+		add	bc,dir_Length-dir_Filename
+		add	de,DIRENT_LENGTH-DIRENT_ATTR
+
+		MPush32 ft,(de)
+		MPop32	(bc),ft
 
 		popa
 		ld	f,FLAGS_EQ

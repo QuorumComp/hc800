@@ -46,7 +46,15 @@ Entry::
 		cmp	t,0
 		j/eq	.not_dir
 		MPrintString "<DIR> "
+		j	.dir_done
 .not_dir
+		ld	bc,dirInfo+dir_Length
+		MLoad32	ft,(bc)
+		jal	StreamDecimalLongOut
+		pop	ft
+		MPrintChar ' '
+
+.dir_done
 		MPrintChar '"'
 		ld	bc,dirInfo+dir_Filename
 		jal	StreamBssStringOut
