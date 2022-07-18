@@ -7,6 +7,7 @@ TARGETS = \
 	devices/devices \
 	dir/dir \
 	mathtest/mathtest \
+	type/type \
 	volumes/volumes
 
 LIBS = stdlib/std.lib lowlevel/lowlevel.lib

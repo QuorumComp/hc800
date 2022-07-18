@@ -108,3 +108,4 @@ spinal/RC811.v_toplevel_decodeArea_decoderUnit_decoder_1_signalMem.bin
 .metals/
 firmware/.metals/metals.h2.db
 firmware/.metals/metals.log
+firmware/type/type

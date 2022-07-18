@@ -25,7 +25,7 @@ endif
 ASSEMBLE = $(ASM) $(DEPFLAGS) $(ASMFLAGS)
 
 $(TARGET) : $(notdir $(SRCS:asm=obj)) $(LIBS)
-	$(LINK) -sEntry -m$@.sym -o$@ -thc8s $+
+	$(LINK) -sEntry -m$@.sym -o$@ -chc800s -fhc800 $+
 
 %.obj : %.asm
 %.obj : %.asm $(DEPDIR)/%.d

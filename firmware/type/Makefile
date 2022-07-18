@@ -1,9 +1,8 @@
 STD = ../stdlib/std.lib
-LOWLEVEL = ../lowlevel/lowlevel.lib
-LIBS = $(STD) $(LOWLEVEL)
-SRCS = volumes.asm
+LIBS = $(STD)
+SRCS = type.asm
 ASMFLAGS = -g -el -z0 -i../
-TARGET = volumes
+TARGET = type
 
 ASM = motorrc8
 LIB = xlib
@@ -24,9 +23,6 @@ endif
 
 ASSEMBLE = $(ASM) $(DEPFLAGS) $(ASMFLAGS)
 
-$(TARGET) : $(notdir $(SRCS:asm=obj)) $(LIBS)
-	$(LINK) -sEntry -m$@.sym -o$@ -chc800s -fhc800 $+
-
 %.obj : %.asm
 %.obj : %.asm $(DEPDIR)/%.d
 	$(ASSEMBLE) -o$@ $<
@@ -34,6 +30,9 @@ $(TARGET) : $(notdir $(SRCS:asm=obj)) $(LIBS)
 
 $(DEPDIR)/%.d: ;
 .PRECIOUS: $(DEPDIR)/%.d
+
+$(TARGET) : $(notdir $(SRCS:asm=obj)) $(LIBS)
+	$(LINK) -sEntry -m$@.sym -o$@ -chc800s -fhc800 $+
 
 clean :
 	$(REMOVEALL)
