@@ -5,6 +5,7 @@
 		INCLUDE	"lowlevel/scancodes.i"
 
 		INCLUDE	"stdlib/string.i"
+		INCLUDE	"stdlib/syscall.i"
 
 		INCLUDE	"editor.i"
 		INCLUDE	"keyboard.i"

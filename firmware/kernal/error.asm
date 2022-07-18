@@ -1,4 +1,5 @@
 		INCLUDE	"stdlib/string.i"
+		INCLUDE	"stdlib/syscall.i"
 
 		INCLUDE	"editor.i"
 		INCLUDE	"error.i"

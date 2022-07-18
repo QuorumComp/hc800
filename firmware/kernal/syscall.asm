@@ -62,6 +62,9 @@ KVector:	MACRO
 		KVector	readDirectory
 		KVector	printError
 		KVector	SysGetCommandLine
+		KVector	openFile
+		KVector	closeFile
+		KVector	readFile
 
 
 		SECTION "PrintError",CODE
@@ -75,6 +78,27 @@ printError:
 
 		RESTORE_MMU_CFG
 		pop	bc-hl
+		reti
+		
+
+		SECTION "OpenFile",CODE
+openFile:
+		jal	FileOpen
+		pop	hl
+		reti
+		
+
+		SECTION "CloseFile",CODE
+closeFile:
+		jal	FileClose
+		pop	hl
+		reti
+		
+
+		SECTION "ReadFile",CODE
+readFile:
+		jal	FileRead
+		pop	hl
 		reti
 		
 
