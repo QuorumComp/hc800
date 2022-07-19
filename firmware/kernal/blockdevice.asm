@@ -95,7 +95,7 @@ SysGetBlockDevice::
 ; ---------------------------------------------------------------------------
 ; -- Initialize block devices
 ; --
-		SECTION	"BlockDeviceRead",CODE
+		SECTION	"BlockDeviceInit",CODE
 BlockDeviceInit:
 		pusha
 
@@ -226,22 +226,18 @@ BlockDeviceRead:
 
 		exg	ft,bc
 		add	ft,bdev_Read
-		ld	l,(ft)
-		add	ft,1
-		ld	h,(ft)
+		ld	hl,(ft+)
 		sub	ft,bdev_Read+1
 		exg	ft,bc
 
 		MDebugPrint <"BlockDeviceRead call ">
 		MDebugStacks
-		MDebugNewLine
 		jal	(hl)
 
 		pop	bc/hl
 
 		MDebugPrint <"BlockDeviceRead exit ">
 		MDebugStacks
-		MDebugNewLine
 
 		jal	(hl)
 

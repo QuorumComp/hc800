@@ -181,6 +181,7 @@ mountFat:
 		j/ne	.fail
 
 		pop	ft
+		push	ft
 		add	de,fs_DeviceId
 		ld	(de),t
 
@@ -191,7 +192,7 @@ mountFat:
 		ld	t,f
 		ld	(de),t
 
-		pop	bc-hl
+		popa
 		ld	f,FLAGS_EQ
 		j	(hl)
 

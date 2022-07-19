@@ -55,9 +55,8 @@ SdDeviceMake:
 		add	bc,bdev_Read-sddev_Type
 		ld	f,.templateEnd-.template
 .template_loop	lco	t,(de)
-		ld	(bc),t
 		add	de,1
-		add	bc,1
+		ld	(bc+),t
 		dj	f,.template_loop
 
 		ld	f,FLAGS_EQ

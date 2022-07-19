@@ -34,7 +34,9 @@ Main:
 		ld	t,0
 		jal	SetMemory
 
-		MStackInit 1024
+		jal	initializeMemory
+		
+		MStackInit 4096
 
 		MDebugStacks
 		MDebugPrint <"Initialize palette\n">
@@ -56,7 +58,6 @@ Main:
 		MPrintString "\n /// Quorum Computing HC800 ///\n"
 
 		jal	printBoard
-		jal	initializeMemory
 
 		MPrintString " RAM  : "
 		ld	de,totalBanks

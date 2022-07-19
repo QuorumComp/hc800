@@ -461,9 +461,28 @@ dirRead:
 ; --    f - "eq" if success
 ; --
 fileOpen:
-		
+		push	bc-hl
 
-		ld	f,FLAGS_EQ
+		MDebugMemory ft,16
+
+		push	ft
+		MStackAlloc 512
+		ld	bc,ft
+		pop	ft
+
+		; --   ft - file name path
+		; --   bc - sector buffer
+		; --   de - pointer to filesystem struct
+		jal	findFile
+		j/eq	.found
+
+		ld	f,FLAGS_NE
+		j	.exit
+
+.found		ld	f,FLAGS_EQ
+.exit		
+		MStackFree 512		
+		pop	bc-hl
 		j	(hl)
 
 fileClose:
@@ -579,6 +598,123 @@ clusterToSector:
 		pop	bc-hl
 		j	(hl)
 
+
+; ---------------------------------------------------------------------------
+; -- Find file
+; --
+; -- Inputs:
+; --   ft - file name path
+; --   bc - sector buffer
+; --   de - pointer to filesystem struct
+; --
+; -- Output:
+; --   f  - "eq" if file found
+; --   ft - pointer into sector buffer
+; --
+		SECTION	"findFile",CODE
+findFile:
+		push	bc-hl
+
+		push	ft
+
+		add	de,fat32_ClusterToSector
+		ld	t,(de)
+		ld	l,t
+		ld	ft,1
+		ls	ft,l
+		ld	l,t	; l - sectors per cluster
+
+		push	ft
+		add	de,fat32_RootCluster-fat32_ClusterToSector
+		MLoad32	ft,(de)
+		sub	de,fat32_RootCluster
+
+.loop		jal	findFileInCluster
+		j/eq	.found
+		j/ltu	.no_more_entries
+
+		push	bc
+		ld	ft,de
+		ld	bc,ft
+		pop	ft
+
+		jal	getNextCluster
+		pop	bc
+
+		j/ne	.no_more_entries
+
+		pop	ft
+		j	.loop
+
+.no_more_entries
+		pop	ft	; remove 
+		ld	f,FLAGS_NE
+
+.found		pop	bc-hl
+		j	(hl)		
+
+
+
+
+; -- Inputs:
+; --   ft:ft' - cluster (consumed)
+; --   ft''   - file name path
+; --   bc     - sector buffer
+; --   de     - pointer to filesystem struct
+; --
+; -- Output:
+; --   f   - "ltu" (no more entries), "eq" (found)
+; --   ft' - present when found, pointer into sector buffer
+; --   ft'':ft''' - cluster
+; --   ft'''' - filename path
+findFileInCluster
+		push	ft
+		ld	f,FLAGS_LTU
+		j	(hl)
+
+		jal	clusterToSector
+
+		; ft:ft' - sector
+		; bc - filesystem 
+		; de - sector buffer
+
+		push	hl
+.sector_loop	MPush32	ft
+		jal	.find_file_in_sector
+		pop	hl
+		j/eq	.found_file
+		pop	ft
+		jal	MathInc_32
+		dj	l,.sector_loop
+
+		ld	f,FLAGS_NE
+
+.found_file	pop	bc-hl
+		j	(hl)
+
+
+; -- Inputs:
+; --   ft:ft' - sector (consumed)
+; --   bc     - filesystem 
+; --   de     - sector buffer
+; -- Outputs:
+; --   f   - "eq" if file found
+; --   ft' - pointer into sector buffer, present if found
+
+.find_file_in_sector
+		push	ft/bc
+		ld	ft,bc
+		add	ft,fs_BlockDevice
+		ld	bc,(ft)
+		pop	ft
+
+		; bc - block device
+		; bc' - filesystem
+
+		jal	BlockDeviceRead
+
+		ld	l,16 ; max file entries per sector
+		ENDC
 
 ; ---------------------------------------------------------------------------
 ; -- Open file by root cluster
@@ -735,8 +871,10 @@ getNextCluster:
 
 		ld	de,ft
 
-		ld	bc,7
+		push	bc
+		ld	b,7
 		jal	MathShiftRight_32
+		pop	bc
 		; ft:ft' = FAT sector index
 
 		push	ft
