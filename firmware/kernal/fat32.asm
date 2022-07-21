@@ -39,6 +39,7 @@ DIRENT_EXT		EQU	$08
 DIRENT_ATTR		EQU	$0B
 DIRENT_LENGTH		EQU	$1C
 
+DIRENTS_PER_SECTOR	EQU	16
 
 			RSSET	dir_PRIVATE
 udir_Cluster		RB	4
@@ -477,6 +478,7 @@ fileOpen:
 		j/eq	.found
 
 		ld	f,FLAGS_NE
+		ld	t,ERROR_NOT_AVAILABLE
 		j	.exit
 
 .found		ld	f,FLAGS_EQ
@@ -608,24 +610,14 @@ clusterToSector:
 ; --   de - pointer to filesystem struct
 ; --
 ; -- Output:
-; --   f  - "eq" if file found
-; --   ft - pointer into sector buffer
+; --   f   - "eq" if file found
+; --   ft' - pointer into sector buffer if found
 ; --
 		SECTION	"findFile",CODE
 findFile:
-		push	bc-hl
+		pusha
 
-		push	ft
-
-		add	de,fat32_ClusterToSector
-		ld	t,(de)
-		ld	l,t
-		ld	ft,1
-		ls	ft,l
-		ld	l,t	; l - sectors per cluster
-
-		push	ft
-		add	de,fat32_RootCluster-fat32_ClusterToSector
+		add	de,fat32_RootCluster
 		MLoad32	ft,(de)
 		sub	de,fat32_RootCluster
 
@@ -634,6 +626,7 @@ findFile:
 		j/ltu	.no_more_entries
 
 		push	bc
+
 		ld	ft,de
 		ld	bc,ft
 		pop	ft
@@ -641,14 +634,22 @@ findFile:
 		jal	getNextCluster
 		pop	bc
 
-		j/ne	.no_more_entries
+		j/ne	.no_more_clusters
 
 		pop	ft
 		j	.loop
 
-.no_more_entries
-		pop	ft	; remove 
+.no_more_clusters
+		popa
 		ld	f,FLAGS_NE
+		j	(hl)		
+
+.no_more_entries
+		pop	ft
+		pop	ft
+		popa
+		ld	f,FLAGS_NE
+		j	(hl)		
 
 .found		pop	bc-hl
 		j	(hl)		
@@ -657,7 +658,7 @@ findFile:
 
 
 ; -- Inputs:
-; --   ft:ft' - cluster (consumed)
+; --   ft:ft' - cluster
 ; --   ft''   - file name path
 ; --   bc     - sector buffer
 ; --   de     - pointer to filesystem struct
@@ -668,26 +669,43 @@ findFile:
 ; --   ft'':ft''' - cluster
 ; --   ft'''' - filename path
 findFileInCluster
-		push	ft
-		ld	f,FLAGS_LTU
-		j	(hl)
+		push	bc-hl
 
+		MPush32	ft
+		push	ft/bc
+		ld	ft,de
+		ld	bc,ft
+		pop	ft
 		jal	clusterToSector
+		pop	bc
 
 		; ft:ft' - sector
-		; bc - filesystem 
-		; de - sector buffer
 
-		push	hl
+		push	ft
+		add	de,fat32_ClusterToSector
+		ld	t,(de)
+		ld	l,t
+		ld	ft,1
+		ls	ft,l
+		ld	l,t	; l - sectors per cluster
+		sub	de,fat32_ClusterToSector
+		pop	ft
+
 .sector_loop	MPush32	ft
-		jal	.find_file_in_sector
+		push	hl
+		jal	findFileInSector
 		pop	hl
 		j/eq	.found_file
 		pop	ft
+		push	hl
 		jal	MathInc_32
+		pop	hl
 		dj	l,.sector_loop
 
+		popa
+
 		ld	f,FLAGS_NE
+		j	(hl)
 
 .found_file	pop	bc-hl
 		j	(hl)
@@ -701,7 +719,12 @@ findFileInCluster
 ; --   f   - "eq" if file found
 ; --   ft' - pointer into sector buffer, present if found
 
-.find_file_in_sector
+findFileInSector
+		pop	ft
+		ld	f,FLAGS_NE
+		j	(hl)
+
+	IF 0
 		push	ft/bc
 		ld	ft,bc
 		add	ft,fs_BlockDevice
@@ -714,7 +737,7 @@ findFileInCluster
 		jal	BlockDeviceRead
 
 		ld	l,16 ; max file entries per sector
-		ENDC
+	ENDC
 
 ; ---------------------------------------------------------------------------
 ; -- Open file by root cluster
@@ -855,7 +878,7 @@ readFileSector:
 ; -- Get next cluster number for file
 ; --
 ; -- Inputs:
-; --   ft:ft' - cluster
+; --   ft:ft' - cluster (consumed)
 ; --   bc     - pointer to filesystem structure
 ; --
 ; -- Output:
@@ -863,13 +886,13 @@ readFileSector:
 ; --   ft':ft'' - present if cluster was found
 ; --
 getNextCluster:
+		j @+2
 		push	bc-hl
 
 		swap	ft
 		ld	hl,ft	; hl = cluster
+		push	hl
 		swap	ft
-
-		ld	de,ft
 
 		push	bc
 		ld	b,7
@@ -883,9 +906,11 @@ getNextCluster:
 		ld	bc,ft
 		push	bc
 		ld	bc,0
+		pop	ft
 		; bc:bc' - FAT base
 
 		jal	MathAdd_32_32
+		pop	bc
 		; ft:ft' - FAT sector 
 		
 		push	ft
@@ -894,19 +919,18 @@ getNextCluster:
 		add	bc,fs_BlockDevice+1
 		ld	ft,(-bc)
 		ld	bc,ft
-		pop	ft
 		; bc - block device
 
 		MStackAlloc 512
 		ld	de,ft
 		; de - sector data
+		pop	ft
 
-		push	hl
 		jal	BlockDeviceRead
 		pop	hl
-		j/ne	.exit
+		j/ne	.read_fail
 
-.exit		ld	ft,hl
+		ld	ft,hl
 		and	t,$7F
 		ld	f,0
 		ls	ft,2
@@ -914,12 +938,34 @@ getNextCluster:
 		ld	de,ft
 		MLoad32	ft,(de)
 
-		; TODO: Check if end marker
+		j @+2
 
-		push	ft
+		; Check if end marker
+		MPush32 ft
+		exg	f,t
+		cmp	f,$FF
+		j/ne	.not_end1
+		and	t,$0F
+		cmp	t,$0F
+		j/ne	.not_end1
+		pop	ft
+		cmp	f,$FF
+		j/ne	.not_end2
+		cmp	t,$F0
+		j/ltu	.not_end2
+
+		pop	ft
+		pop	ft
+.read_fail		
+		ld	f,FLAGS_NE
+		j	.exit
+
+.not_end1	pop	ft
+.not_end2	pop	ft
 		ld	f,FLAGS_EQ
-
+.exit
 		MStackFree	512
 
 		pop	bc-hl
+		j @+2
 		j	(hl)
