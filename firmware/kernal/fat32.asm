@@ -38,12 +38,12 @@ DIRENT_NAME		EQU	$00
 DIRENT_EXT		EQU	$08
 DIRENT_ATTR		EQU	$0B
 DIRENT_LENGTH		EQU	$1C
+DIRENT_SIZEOF		EQU	32
 
-DIRENTS_PER_SECTOR	EQU	16
+DIRENTS_PER_SECTOR	EQU	512/DIRENT_SIZEOF
 
 			RSSET	dir_PRIVATE
-udir_Cluster		RB	4
-udir_FileIndex		RB	2
+udir_File		RB	2
 udir_SIZEOF		RB	0
 
 			RSSET	file_PRIVATE
@@ -51,6 +51,7 @@ ufile_RootCluster	RB	4
 ufile_Cluster		RB	4
 ufile_SectorIndex	RB	1
 ufile_SectorData	RB	2
+ufile_RemainingBytes	RB	2	; remaining bytes to read in SectorData
 ufile_SIZEOF		RB	0
 
 
@@ -256,21 +257,23 @@ fillFsStruct:
 dirOpen:
 		pusha
 
-		; clear file index
-		add	ft,udir_Cluster
-		add	de,fat32_RootCluster
-		MCopy	ft,de,4
-
-		add	ft,udir_FileIndex-udir_Cluster
-		ld	b,0
-		ld	(ft+),b
-		ld	(ft),b
-
-		; bc <- filesystem
-		sub	de,fat32_RootCluster
-		ld	ft,de
 		ld	bc,ft
 
+		; clear file index
+		jal	BlockAllocSector
+		add	bc,udir_File
+		ld	(bc),ft
+
+		ld	bc,ft ; bc - file struct
+
+		add	de,fat32_RootCluster
+		MLoad32	ft,(de)
+		sub	de,fat32_RootCluster
+
+		jal	openFileSector
+
+		ld	ft,de
+		ld	bc,ft
 		pop	ft
 		jal	dirRead
 
@@ -292,74 +295,35 @@ dirOpen:
 ; --
 		SECTION "Fat32DirRead",CODE
 dirRead:
-		MDebugPrint "dirRead\n"
-		MDebugMemory ft,32
 		pusha
+
 		ld	de,ft
 
-		; TODO: move to next cluster if done with current
-
-		; ft <- file index
-.next_file_index
-		add	de,udir_FileIndex+1
-		ld	t,(de)
-		ld	f,t
-		sub	de,1
-		ld	t,(de)	; ft = file index
-
-		rs	ft,4	; 16 entries per sector
-
-		ld	hl,ft	; hl = sector# in cluster
-		push	hl
-		add	de,udir_Cluster-udir_FileIndex
-		MLoad32	ft,(de)
-		jal	clusterToSector
-		pop	hl
-
-		exg	bc,hl
-		push	bc
-		ld	bc,0
-		jal	MathAdd_32_32
-		pop	bc
-
-		; ft:ft' = sector number
-
-		pop	bc
-		push	bc
-		push	ft
-		add	bc,fs_BlockDevice+1
-		ld	t,(bc)
-		ld	f,t
-		sub	bc,1
-		ld	t,(bc)
+		; bc <- file struct
+.next_file_entry
+		add	de,udir_File
+		ld	ft,(de+)
 		ld	bc,ft
 
-		; bc = block device
-
-		MStackAlloc 512
+		; alloc 32 bytes
+		MStackAlloc 32
 		ld	de,ft
-		pop	ft
 
-		jal	BlockDeviceRead
+		; read 32 bytes
+		ld	ft,32
+
+		; --   ft - bytes to read
+		; --   bc - pointer to file struct
+		; --   de - destination pointer (data segment)
+
+		jal	fileRead
 		j/ne	.read_fail
 
-		MDebugMemory de,32
-
 		pop	ft
 		push	ft
 		ld	bc,ft
 
-		add	bc,dir_Error
-		ld	t,ERROR_SUCCESS
-		ld	(bc),t
-
-		add	bc,udir_FileIndex-dir_Error
-		ld	t,(bc)
-		and	t,$F
-		ld	f,0
-		ls	ft,5
-		add	ft,de
-		ld	de,ft	; de = dir entry
+		; check entry, read again if not valid entry
 
 		ld	t,(de)
 		cmp	t,0
@@ -369,21 +333,16 @@ dirRead:
 .read_fail
 		popa
 		ld	f,FLAGS_NE
-		MStackFree 512
+		MStackFree 32
 		j	(hl)
 
-.not_end	; increment file index
-		ld	ft,(bc+)
-		add	ft,1
-		ld	(-bc),ft
-		add	bc,dir_Flags-udir_FileIndex
-
-		ld	t,(de)
+.not_end	ld	t,(de)
 		cmp	t,$E5
 		j/eq	.skip_file
 
 		; check attributes
 		ld	t,0
+		add	bc,dir_Flags
 		ld	(bc),t
 
 		add	de,DIRENT_ATTR
@@ -401,13 +360,13 @@ dirRead:
 		j/eq	.attr_ok
 
 .skip_file
-		MStackFree 512
+		MStackFree 32
 		ld	ft,bc
 		sub	ft,dir_Flags
 		ld	de,ft
 		pop	bc
 		push	bc
-		ld	hl,.next_file_index
+		ld	hl,.next_file_entry
 		j	(hl)
 .attr_ok
 
@@ -445,7 +404,7 @@ dirRead:
 
 		popa
 		ld	f,FLAGS_EQ
-		MStackFree 512
+		MStackFree 32
 		j	(hl)
 
 
@@ -474,8 +433,8 @@ fileOpen:
 		; --   ft - file name path
 		; --   bc - sector buffer
 		; --   de - pointer to filesystem struct
-		jal	findFile
-		j/eq	.found
+;		jal	findFile
+;		j/eq	.found
 
 		ld	f,FLAGS_NE
 		ld	t,ERROR_NOT_AVAILABLE
@@ -491,8 +450,99 @@ fileClose:
 		ld	f,FLAGS_EQ
 		j	(hl)
 
+; ---------------------------------------------------------------------------
+; -- Read from file offset
+; --
+; -- Inputs:
+; --   ft - bytes to read
+; --   bc - pointer to file struct
+; --   de - destination pointer (data segment)
+; --
+; -- Output:
+; --   ft - bytes actually read
+; --
 fileRead:
-		ld	f,FLAGS_EQ
+		pusha
+		push	ft
+
+		; --
+		; -- Read from first sector
+		; --
+.read_next
+		add	bc,ufile_RemainingBytes
+		ld	ft,(bc+)
+		ld	hl,ft
+		pop	ft
+		push	ft
+		cmp	ft,hl
+		j/leu	.enough_in_first
+		ld	ft,hl
+.enough_in_first
+		; ft - bytes to read from first sector
+		; hl - remaining bytes in sector
+		pusha
+		exg	ft,hl
+		sub	ft,hl
+		ld	(-bc),ft	; adjust remaining in structure
+		popa
+
+		push	ft
+
+		add	bc,ufile_SectorData-(ufile_RemainingBytes+1)
+		ld	ft,(bc+)
+		add	ft,512
+		sub	ft,hl
+		ld	bc,ft	; bc <- source
+
+		pop	ft
+		ld	hl,ft
+
+		; adjust number of bytes to read
+		pop	ft
+		sub	ft,hl
+		push	ft
+
+		; loop adjust
+		sub	hl,1
+		add	h,1
+		add	l,1
+
+.copy_bytes_1	ld	t,(bc+)
+		ld	(de+),t
+		dj	l,.copy_bytes_1
+		dj	h,.copy_bytes_1
+
+		; --
+		; -- Cache next sector
+		; --
+
+		add	bc,ufile_RemainingBytes-(ufile_SectorData+1)
+		ld	ft,(bc+)
+		tst	ft
+		j/ne	.dont_read_next
+
+		; --   ft - file structure
+		; --   bc - pointer to filesystem structure
+		pop	bc
+		push	bc
+		ld	ft,(bc)
+		exg	ft,bc
+		jal	readNextFileSector
+
+.dont_read_next
+		pop	ft
+		push	ft
+		tst	ft
+		j/eq	.done
+
+		sub	bc,ufile_RemainingBytes+1
+		j	.read_next
+.done
+		pop	ft
+		ld	bc,ft	; bc = left to read
+		pop	ft
+		sub	ft,bc	; ft = total read
+		pop	bc-hl
 		j	(hl)
 
 ; ---------------------------------------------------------------------------
@@ -613,6 +663,8 @@ clusterToSector:
 ; --   f   - "eq" if file found
 ; --   ft' - pointer into sector buffer if found
 ; --
+	IF 0
+
 		SECTION	"findFile",CODE
 findFile:
 		pusha
@@ -713,6 +765,7 @@ findFileInCluster
 
 ; -- Inputs:
 ; --   ft:ft' - sector (consumed)
+; --   ft''   - file name path
 ; --   bc     - filesystem 
 ; --   de     - sector buffer
 ; -- Outputs:
@@ -720,11 +773,8 @@ findFileInCluster
 ; --   ft' - pointer into sector buffer, present if found
 
 findFileInSector
-		pop	ft
-		ld	f,FLAGS_NE
-		j	(hl)
+		push	bc-hl
 
-	IF 0
 		push	ft/bc
 		ld	ft,bc
 		add	ft,fs_BlockDevice
@@ -735,8 +785,43 @@ findFileInSector
 		; bc' - filesystem
 
 		jal	BlockDeviceRead
+		pop	bc
 
-		ld	l,16 ; max file entries per sector
+		ld	l,DIRENTS_PER_SECTOR
+
+		; Check first character in name
+
+.file_loop	ld	t,(de)
+		cmp	t,0
+		j/eq	.end_of_directory
+
+		cmp	t,$E5
+		j/eq	.skip_file
+
+		; check attributes
+		add	de,DIRENT_ATTR
+		ld	t,(de)
+		sub	de,DIRENT_ATTR
+		and	t,ATTR_HIDDEN|ATTR_LABEL
+		cmp	t,0
+		j/ne	.skip_file
+
+		pop	ft
+		ld	h,(ft+)	; name length
+		ld	bc,ft
+
+		ld	t,(bc+)
+		ld	f,t
+		ld	t,(de+)
+		cmp	f,t
+
+
+.skip_file	add	de,DIRENT_SIZEOF
+		dj	l,.next_file
+	
+
+		pop	bc-hl
+		j	(hl)
 	ENDC
 
 ; ---------------------------------------------------------------------------
@@ -775,7 +860,7 @@ openFileSector:
 
 		jal	BlockAllocSector
 		; ufile_SectorData
-		ld	(bc),ft
+		ld	(bc+),ft
 
 		popa
 		j	(hl)
@@ -787,9 +872,8 @@ openFileSector:
 ; -- Inputs:
 ; --   ft - file structure
 ; --   bc - pointer to filesystem structure
-; --   de - destination
 ; --
-readFileSector:
+readNextFileSector:
 		pusha
 
 		; read sector
@@ -829,7 +913,7 @@ readFileSector:
 		ld	(ft),b	; sector index = 0
 
 		popa
-		j	readFileSector
+		j	readNextFileSector
 
 .file_end	; TODO
 		j	@+2
@@ -847,9 +931,13 @@ readFileSector:
 		jal	clusterToSector
 
 		add	de,ufile_SectorIndex-ufile_Cluster
+		push	ft
 		ld	t,(de)
 		ld	f,0
 		ld	bc,ft
+		add	t,1
+		ld	(de),t	; inc sector index
+		pop	ft
 		push	bc
 		ld	bc,0
 
@@ -862,11 +950,13 @@ readFileSector:
 		push	ft
 		ld	ft,(-bc)
 		ld	bc,ft
-		pop	ft
 		; bc - block device
 
-		pop	de
-		push	de
+		
+		add	de,ufile_SectorData-ufile_SectorIndex
+		ld	ft,de
+		ld	de,(ft)
+		pop	ft
 		; de - destination
 		jal	BlockDeviceRead
 
@@ -961,8 +1051,7 @@ getNextCluster:
 		j	.exit
 
 .not_end1	pop	ft
-.not_end2	pop	ft
-		ld	f,FLAGS_EQ
+.not_end2	ld	f,FLAGS_EQ
 .exit
 		MStackFree	512
 
