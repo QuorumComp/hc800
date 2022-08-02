@@ -317,6 +317,9 @@ dirRead:
 		; --   de - destination pointer (data segment)
 
 		jal	fileRead
+		cmp	f,0
+		j/ne	.read_fail
+		cmp	t,32
 		j/ne	.read_fail
 
 		pop	ft
@@ -477,7 +480,11 @@ fileRead:
 		cmp	ft,hl
 		j/leu	.enough_in_first
 		ld	ft,hl
+		j	.found_to_read
 .enough_in_first
+		pop	ft
+		push	ft
+.found_to_read
 		; ft - bytes to read from first sector
 		; hl - remaining bytes in sector
 		pusha
@@ -503,6 +510,8 @@ fileRead:
 		push	ft
 
 		; loop adjust
+		tst	hl
+		j/eq	.skip_copy
 		sub	hl,1
 		add	h,1
 		add	l,1
@@ -511,22 +520,25 @@ fileRead:
 		ld	(de+),t
 		dj	l,.copy_bytes_1
 		dj	h,.copy_bytes_1
-
+.skip_copy
 		; --
 		; -- Cache next sector
 		; --
-
-		add	bc,ufile_RemainingBytes-(ufile_SectorData+1)
+		pop	bc
+		push	bc
+		add	bc,ufile_RemainingBytes
 		ld	ft,(bc+)
 		tst	ft
 		j/ne	.dont_read_next
 
-		; --   ft - file structure
-		; --   bc - pointer to filesystem structure
-		pop	bc
-		push	bc
+		add	bc,file_System-(ufile_RemainingBytes+1)
 		ld	ft,(bc)
 		exg	ft,bc
+
+		; --   ft - file structure
+		; --   bc - pointer to filesystem structure
+
+		j @+2
 		jal	readNextFileSector
 
 .dont_read_next
@@ -535,7 +547,8 @@ fileRead:
 		tst	ft
 		j/eq	.done
 
-		sub	bc,ufile_RemainingBytes+1
+		pop	bc
+		push	bc
 		j	.read_next
 .done
 		pop	ft
@@ -838,20 +851,25 @@ findFileInSector
 ; --
 		SECTION	"openFileSector",CODE
 openFileSector:
-		pusha
+		push	bc-hl
+
+		exg	ft,de
+		ld	(bc),ft	; file_System
+		exg	ft,de
 
 		add	bc,ufile_RootCluster
+		swap	ft
+		ld	(bc+),ft
+		add	bc,1
+		swap	ft
+		ld	(bc+),ft
+		add	bc,1
+
+		; ufile_Cluster
+		swap	ft
 		ld	(bc+),ft
 		add	bc,1
 		pop	ft
-		ld	(bc+),ft
-		add	bc,1
-
-		ld	ft,0
-
-		; ufile_CLuster
-		ld	(bc+),ft
-		add	bc,1
 		ld	(bc+),ft
 		add	bc,1
 
@@ -861,8 +879,13 @@ openFileSector:
 		jal	BlockAllocSector
 		; ufile_SectorData
 		ld	(bc+),ft
+		add	bc,1
 
-		popa
+		ld	ft,0
+		; ufile_RemainingBytes
+		ld	(bc+),ft
+
+		pop	bc-hl
 		j	(hl)
 
 
@@ -882,6 +905,7 @@ readNextFileSector:
 
 		add	bc,fat32_ClusterToSector
 		ld	t,(bc)
+		sub	bc,fat32_ClusterToSector
 		ld	h,t	; h = cluster to sector
 		ld	ft,1
 		ls	ft,h	; ft = sectors per cluster
@@ -919,8 +943,6 @@ readNextFileSector:
 		j	@+2
 
 .not_next_cluster
-		sub	bc,fat32_ClusterToSector
-
 		pop	ft
 		push	ft
 		ld	de,ft
@@ -940,8 +962,8 @@ readNextFileSector:
 		pop	ft
 		push	bc
 		ld	bc,0
-
 		jal	MathAdd_32_32
+		pop	bc
 		; ft:ft' - sector
 
 		pop	bc
@@ -952,13 +974,18 @@ readNextFileSector:
 		ld	bc,ft
 		; bc - block device
 
-		
 		add	de,ufile_SectorData-ufile_SectorIndex
 		ld	ft,de
 		ld	de,(ft)
 		pop	ft
 		; de - destination
 		jal	BlockDeviceRead
+
+		pop	ft
+		push	ft
+		add	ft,ufile_RemainingBytes
+		ld	bc,512
+		ld	(ft+),bc
 
 		popa
 		j	(hl)
@@ -976,7 +1003,6 @@ readNextFileSector:
 ; --   ft':ft'' - present if cluster was found
 ; --
 getNextCluster:
-		j @+2
 		push	bc-hl
 
 		swap	ft
@@ -1028,8 +1054,6 @@ getNextCluster:
 		ld	de,ft
 		MLoad32	ft,(de)
 
-		j @+2
-
 		; Check if end marker
 		MPush32 ft
 		exg	f,t
@@ -1056,5 +1080,4 @@ getNextCluster:
 		MStackFree	512
 
 		pop	bc-hl
-		j @+2
 		j	(hl)
