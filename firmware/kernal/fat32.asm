@@ -356,6 +356,7 @@ dirRead:
 		ld	t,DFLAG_DIR
 		ld	(bc),t
 .not_dir
+		sub	bc,dir_Flags
 		ld	t,(de)
 		sub	de,DIRENT_ATTR
 		and	t,ATTR_HIDDEN|ATTR_LABEL
@@ -363,17 +364,17 @@ dirRead:
 		j/eq	.attr_ok
 
 .skip_file
+		MDebugPrint <".skip_file\n">
 		MStackFree 32
 		ld	ft,bc
-		sub	ft,dir_Flags
 		ld	de,ft
 		pop	bc
 		push	bc
 		ld	hl,.next_file_entry
 		j	(hl)
 .attr_ok
-
-		add	bc,dir_Filename+1-dir_Flags
+		MDebugPrint <".attr_ok\n">
+		add	bc,dir_Filename+1
 		push	bc
 		ld	f,8
 .copy_name	ld	t,(de+)
@@ -896,7 +897,7 @@ openFileSector:
 ; --   bc - pointer to filesystem structure
 ; --
 readNextFileSector:
-		j	@+2
+		MDebugPrint <"readNextFileSector\n">
 		pusha
 
 		; read sector
@@ -937,7 +938,6 @@ readNextFileSector:
 		ld	(ft),b	; sector index = 0
 
 		popa
-		j	@+2
 		j	readNextFileSector
 
 .file_end	; TODO

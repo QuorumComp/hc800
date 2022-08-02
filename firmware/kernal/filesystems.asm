@@ -539,6 +539,7 @@ DirectoryRead:
 		pusha
 
 		MDebugPrint <"DirectoryRead\n">
+		MDebugMemory ft,16
 
 		; bc <- volume (file system structure )
 		ld	c,(ft)
