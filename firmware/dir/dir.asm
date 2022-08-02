@@ -61,7 +61,6 @@ Entry::
 		dj	e,.spaces		
 
 		jal	StreamDecimalLongOut
-		pop	ft
 		MPrintChar ' '
 
 .dir_done

@@ -538,7 +538,6 @@ fileRead:
 		; --   ft - file structure
 		; --   bc - pointer to filesystem structure
 
-		j @+2
 		jal	readNextFileSector
 
 .dont_read_next
@@ -897,6 +896,7 @@ openFileSector:
 ; --   bc - pointer to filesystem structure
 ; --
 readNextFileSector:
+		j	@+2
 		pusha
 
 		; read sector
@@ -926,17 +926,18 @@ readNextFileSector:
 		jal	getNextCluster
 		j/ne	.file_end
 
-		pop	ft
+		pop	ft	; discard status
 		MPop32	(de),ft
 
 		; zero sector index
-		pop	ft
+		;pop	ft
 		push	ft
 		add	ft,ufile_SectorIndex
 		ld	b,0
 		ld	(ft),b	; sector index = 0
 
 		popa
+		j	@+2
 		j	readNextFileSector
 
 .file_end	; TODO
@@ -1003,6 +1004,7 @@ readNextFileSector:
 ; --   ft':ft'' - present if cluster was found
 ; --
 getNextCluster:
+		MDebugPrint <"getNextCluster\n">
 		push	bc-hl
 
 		swap	ft
