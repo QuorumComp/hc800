@@ -217,6 +217,7 @@ FileOpen:
 		pusha
 
 		MDebugPrint <"FileOpen\n">
+		MDebugMemory ft,32
 		MDebugStacks
 
 		; clear file handle structure
@@ -226,6 +227,8 @@ FileOpen:
 
 		MStackAlloc STRING_SIZE
 		ld	bc,ft
+		ld	t,0
+		ld	(bc),t
 		pop	ft
 		jal	getVolumeAndComponentsFromPath
 		j/eq	.found_volume
@@ -265,6 +268,8 @@ FileOpen:
 
 		MDebugRegisters
 
+		MDebugMemory ft,32
+
 		jal	(hl)
 
 		pop	de/hl
@@ -298,7 +303,7 @@ FileClose:
 
 		pop	ft
 		jal	(hl)
-		
+
 		pop	bc-hl
 		j	(hl)
 
@@ -734,7 +739,7 @@ PathAppend:
 		SECTION	"getVolumeAndComponentsFromPath",CODE
 getVolumeAndComponentsFromPath:
 		MDebugPrint <"getVolumeAndComponentsFromPath entry\n">
-		;MDebugStacks
+		MDebugRegisters
 
 		push	bc-hl
 		ld	de,ft
@@ -824,6 +829,8 @@ normalizePathComponents:
 		; check for parent (..)
 		; must be exactly 2 characters long, filenames may start with ..
 
+		push	ft
+
 		cmp	t,2
 		j/ne	.not_parent
 
@@ -839,6 +846,7 @@ normalizePathComponents:
 		cmp	t,'.'
 		j/ne	.not_parent
 
+		pop	ft
 		; is parent
 
 		push	hl
@@ -852,6 +860,7 @@ normalizePathComponents:
 		j	.slash_only
 
 .not_parent
+		pop	ft
 		; t = length of component
 		; bc = component chars, must not start with slash
 		; bc' = dest pointer

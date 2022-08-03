@@ -470,9 +470,13 @@ dirRead:
 ; --
 		SECTION	"Fat32FileOpen",CODE
 fileOpen:
+		MDebugMemory ft,32
 		push	bc-hl
 
 		ld	bc,ft	; bc - filename
+		ld	t,1
+		jal	StringDropLeft
+
 		MStackAlloc dir_SIZEOF
 		push	ft
 

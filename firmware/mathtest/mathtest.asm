@@ -8,8 +8,8 @@
 		SECTION	"Monitor",CODE
 
 Entry::
-		jal	TestStrings
-
+		jal	TestStringDrop
+		jal	TestStringCompare
 		jal	TestPrint
 		jal	TestShift
 		jal	TestAdd
@@ -19,7 +19,30 @@ Entry::
 		sys	KExit
 
 
-TestStrings:
+TestStringDrop:
+		pusha
+
+		ld	bc,testString
+		jal	StringClear
+
+		ld	bc,testString
+		ld	de,{ DC_STR "/DropSlash" }
+		jal	StringAppendDataString
+
+		ld	t,1
+		ld	bc,testString
+		jal	StringDropLeft
+
+		MPrintString <"Expect DropSlash: ">
+		ld	bc,testString
+		jal	StreamBssStringOut
+		MNewLine
+
+		popa
+		j	(hl)
+
+
+TestStringCompare:
 		pusha	
 
 		ld	ft,{ DC_STR "test1" }
@@ -241,3 +264,7 @@ TestShift:
 
 		popa
 		j	(hl)
+
+
+		SECTION	"Vars",BSS_S
+testString:	DS_STR
