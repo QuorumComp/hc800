@@ -2,11 +2,14 @@
 		INCLUDE	"lowlevel/rc800.i"
 
 		INCLUDE	"stdlib/stream.i"
+		INCLUDE	"stdlib/string.i"
 		INCLUDE	"stdlib/syscall.i"
 
 		SECTION	"Monitor",CODE
 
 Entry::
+		jal	TestStrings
+
 		jal	TestPrint
 		jal	TestShift
 		jal	TestAdd
@@ -15,6 +18,58 @@ Entry::
 
 		sys	KExit
 
+
+TestStrings:
+		pusha	
+
+		ld	ft,{ DC_STR "test1" }
+		ld	bc,{ DC_STR "test2" }
+		jal	.test
+
+		ld	ft,{ DC_STR "test2" }
+		ld	bc,{ DC_STR "test1" }
+		jal	.test
+
+		ld	ft,{ DC_STR "test" }
+		ld	bc,{ DC_STR "tested" }
+		jal	.test
+
+		ld	ft,{ DC_STR "tested" }
+		ld	bc,{ DC_STR "test" }
+		jal	.test
+
+		ld	ft,{ DC_STR "test" }
+		ld	bc,{ DC_STR "test" }
+		jal	.test
+
+		popa
+		j	(hl)
+
+.test
+		push	ft/bc/hl
+		jal	StringCompare
+		ld	de,.equal
+		ld/ltu	de,.ltu
+		ld/gtu	de,.gtu
+
+		pop	ft
+		ld	bc,ft
+		jal	StreamDataStringOut
+
+		ld	ft,de
+		ld	bc,ft
+		jal	StreamDataStringOut
+
+		pop	bc
+		jal	StreamDataStringOut
+		MNewLine
+
+		pop	hl
+		j	(hl)
+
+.equal		DC_STR	" is equal to "
+.ltu		DC_STR	" is less than "
+.gtu		DC_STR	" is greater than "
 
 TestPrint:
 		pusha
