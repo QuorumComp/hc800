@@ -298,10 +298,7 @@ FileClose:
 
 		pop	ft
 		jal	(hl)
-
-		ld	t,ERROR_SUCCESS
-		ld	f,FLAGS_EQ
-
+		
 		pop	bc-hl
 		j	(hl)
 
@@ -549,6 +546,40 @@ DirectoryRead:
 		; get read function
 		ld	ft,bc
 		add	ft,fs_ReadDir
+		ld	l,(ft)
+		add	ft,1
+		ld	h,(ft)
+
+		pop	ft
+		MDebugRegisters
+
+		jal	(hl)
+
+		pop	bc-hl
+		j	(hl)
+
+
+; ---------------------------------------------------------------------------
+; -- Close directory scan object
+; --
+; -- Inputs:
+; --   ft - pointer to directory struct
+; --
+		SECTION	"DirectoryClose",CODE
+DirectoryClose:
+		pusha
+
+		MDebugPrint <"DirectoryClose\n">
+		MDebugMemory ft,16
+
+		; bc <- volume (file system structure )
+		ld	c,(ft)
+		add	ft,1
+		ld	b,(ft)
+
+		; get read function
+		ld	ft,bc
+		add	ft,fs_CloseDir
 		ld	l,(ft)
 		add	ft,1
 		ld	h,(ft)

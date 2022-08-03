@@ -49,6 +49,7 @@ UartInitialize:
 		DW	uartRead
 		DW	uartOpenDir
 		DW	uartReadDir
+		DW	uartCloseDir
 .fs_end
 
 	IF .fs_end-.fs~=ufs_SIZEOF
@@ -116,15 +117,21 @@ uartOpen:
 ; -- Inputs:
 ; --   ft - pointer to file struct
 ; --
-; -- Output:
-; --    t - Error code
-; --    f - "eq" if success
-; --
 		SECTION	"UartClose",CODE
 uartClose:
 		MDebugPrint <"uartClose\n">
-		ld	f,FLAGS_EQ
-		ld	t,ERROR_SUCCESS
+		j	(hl)
+
+
+; ---------------------------------------------------------------------------
+; -- Close directory
+; --
+; -- Inputs:
+; --   ft - pointer to directory struct
+; --
+		SECTION	"UartCloseDir",CODE
+uartCloseDir:
+		MDebugPrint <"uartCloseDir\n">
 		j	(hl)
 
 

@@ -74,7 +74,11 @@ Entry::
 		sys	KReadDirectory
 		j/eq	.print_dir
 
-.done		popa
+.done
+		ld	ft,dirInfo
+		sys	KCloseDirectory
+
+		popa
 		sys	KExit
 
 		SECTION	"Variables",BSS_S

@@ -5,6 +5,8 @@
 		INCLUDE	"kernal/error.i"
 		INCLUDE	"kernal/filesystems.i"
 
+		INCLUDE	"stdlib/string.i"
+
 		INCLUDE	"blockdevice.i"
 		INCLUDE	"fat32.i"
 
@@ -37,13 +39,18 @@ ATTR_DEVICE		EQU	$40
 DIRENT_NAME		EQU	$00
 DIRENT_EXT		EQU	$08
 DIRENT_ATTR		EQU	$0B
+DIRENT_CLUSTER_HIGH	EQU	$14
+DIRENT_CLUSTER_LOW	EQU	$1A
 DIRENT_LENGTH		EQU	$1C
 DIRENT_SIZEOF		EQU	32
 
-DIRENTS_PER_SECTOR	EQU	512/DIRENT_SIZEOF
+BYTES_PER_SECTOR	EQU	512
+
+DIRENTS_PER_SECTOR	EQU	BYTES_PER_SECTOR/DIRENT_SIZEOF
 
 			RSSET	dir_PRIVATE
 udir_File		RB	2
+udir_StartCluster	RB	4
 udir_SIZEOF		RB	0
 
 			RSSET	file_PRIVATE
@@ -70,7 +77,7 @@ Fat32FsMake:
 		MDebugPrint <"Fat32FsMake enter\n">
 		push	bc-hl
 
-		MStackAlloc 512
+		MStackAlloc BYTES_PER_SECTOR
 		ld	de,ft	; de = volume boot record
 
 		jal	loadVolumeBootRecord
@@ -90,7 +97,7 @@ Fat32FsMake:
 
 		ld	f,FLAGS_EQ
 
-.exit		MStackFree 512
+.exit		MStackFree BYTES_PER_SECTOR
 		pop	bc-hl
 		j	(hl)
 
@@ -201,6 +208,7 @@ fillFsStruct:
 		DW	fileRead
 		DW	dirOpen
 		DW	dirRead
+		DW	dirClose
 .template_end
 
 		; -- Calc data base cluster
@@ -254,6 +262,7 @@ fillFsStruct:
 ; --    f - "eq" if directory could be opened. Directory struct is filled in
 ; --        with information on first file
 ; --
+		SECTION	"Fat32DirOpen",CODE
 dirOpen:
 		pusha
 
@@ -278,6 +287,32 @@ dirOpen:
 		jal	dirRead
 
 		pop	bc-hl
+		j	(hl)
+
+
+; ---------------------------------------------------------------------------
+; -- Close a directory
+; --
+; -- Inputs:
+; --   ft - pointer to directory struct
+; --   bc - pointer to filesystem struct
+; --
+		SECTION	"Fat32DirClose",CODE
+dirClose:
+		pusha
+
+		ld	de,ft
+		add	de,udir_File
+		ld	ft,(de+)
+
+		push	ft
+		jal	fileClose
+		pop	ft
+
+		; clear file index
+		jal	BlockFreeSector
+
+		popa
 		j	(hl)
 
 
@@ -406,6 +441,15 @@ dirRead:
 		MPush32 ft,(de)
 		MPop32	(bc),ft
 
+		add	bc,udir_StartCluster-dir_Length
+		add	de,DIRENT_CLUSTER_LOW-DIRENT_LENGTH
+		ld	ft,(de)
+		ld	(bc+),ft
+		add	bc,1
+		add	de,DIRENT_CLUSTER_HIGH-DIRENT_CLUSTER_LOW
+		ld	ft,(de)
+		ld	(bc+),ft
+
 		popa
 		ld	f,FLAGS_EQ
 		MStackFree 32
@@ -424,34 +468,88 @@ dirRead:
 ; --    t - Error code
 ; --    f - "eq" if success
 ; --
+		SECTION	"Fat32FileOpen",CODE
 fileOpen:
 		push	bc-hl
 
-		MDebugMemory ft,16
-
+		ld	bc,ft	; bc - filename
+		MStackAlloc dir_SIZEOF
 		push	ft
-		MStackAlloc 512
+
+		jal	dirOpen
+		j/ne	.not_found
+
+.check		pop	ft
+		push	ft
+		add	ft,dir_Filename
+		jal	StringCompare
+		j/eq	.found
+
+		push	bc
+		ld	ft,de
 		ld	bc,ft
 		pop	ft
+		push	ft
+		jal	dirRead
+		pop	bc
+		j/eq	.check
 
-		; --   ft - file name path
-		; --   bc - sector buffer
-		; --   de - pointer to filesystem struct
-;		jal	findFile
-;		j/eq	.found
+.not_found	ld	ft,de
+		ld	bc,ft
+		pop	ft
+		jal	dirClose
 
+		MStackFree dir_SIZEOF
+
+		pop	bc-hl
 		ld	f,FLAGS_NE
 		ld	t,ERROR_NOT_AVAILABLE
-		j	.exit
-
-.found		ld	f,FLAGS_EQ
-.exit		
-		MStackFree 512		
-		pop	bc-hl
 		j	(hl)
 
+.found
+		pop	ft
+		push	ft
+		ld	bc,ft
+		add	bc,udir_StartCluster
+		MLoad32	ft,(bc)
+		
+		pop	bc/de
+		push	bc/de
+
+		jal	openFileSector
+
+		push	ft
+		ld	ft,de
+		ld	bc,ft
+		pick	ft,2
+		jal	dirClose
+
+		MStackFree dir_SIZEOF
+
+		pop	bc-hl
+		pop	ft
+		swap	ft
+		pop	ft
+		j	(hl)
+
+
+; ---------------------------------------------------------------------------
+; -- Close file
+; --
+; -- Inputs:
+; --   ft - pointer to file struct
+; --   bc - pointer to filesystem struct
+; --
+		SECTION	"Fat32FileClose",CODE
 fileClose:
-		ld	f,FLAGS_EQ
+		pusha
+
+		ld	bc,ft
+		add	bc,ufile_SectorData
+		ld	ft,(bc+)
+		jal	BlockFreeSector
+
+		popa
 		j	(hl)
 
 ; ---------------------------------------------------------------------------
@@ -465,6 +563,7 @@ fileClose:
 ; -- Output:
 ; --   ft - bytes actually read
 ; --
+		SECTION	"Fat32FileRead",CODE
 fileRead:
 		pusha
 		push	ft
@@ -498,7 +597,7 @@ fileRead:
 
 		add	bc,ufile_SectorData-(ufile_RemainingBytes+1)
 		ld	ft,(bc+)
-		add	ft,512
+		add	ft,BYTES_PER_SECTOR
 		sub	ft,hl
 		ld	bc,ft	; bc <- source
 
@@ -985,7 +1084,7 @@ readNextFileSector:
 		pop	ft
 		push	ft
 		add	ft,ufile_RemainingBytes
-		ld	bc,512
+		ld	bc,BYTES_PER_SECTOR
 		ld	(ft+),bc
 
 		popa
@@ -1039,7 +1138,7 @@ getNextCluster:
 		ld	bc,ft
 		; bc - block device
 
-		MStackAlloc 512
+		MStackAlloc BYTES_PER_SECTOR
 		ld	de,ft
 		; de - sector data
 		pop	ft
@@ -1079,7 +1178,7 @@ getNextCluster:
 .not_end1	pop	ft
 .not_end2	ld	f,FLAGS_EQ
 .exit
-		MStackFree	512
+		MStackFree	BYTES_PER_SECTOR
 
 		pop	bc-hl
 		j	(hl)

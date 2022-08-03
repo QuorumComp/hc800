@@ -65,6 +65,7 @@ KVector:	MACRO
 		KVector	openFile
 		KVector	closeFile
 		KVector	readFile
+		KVector	closeDirectory
 
 
 		SECTION "PrintError",CODE
@@ -112,6 +113,13 @@ openDirectory:
 		SECTION "ReadDirectory",CODE
 readDirectory:
 		jal	DirectoryRead
+		pop	hl
+		reti
+		
+
+		SECTION "CloseDirectory",CODE
+closeDirectory:
+		jal	DirectoryClose
 		pop	hl
 		reti
 		

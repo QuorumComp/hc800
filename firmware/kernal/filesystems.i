@@ -13,6 +13,7 @@ FILESYSTEMS_I_INCLUDED_ = 1
 		GLOBAL	FileClose
 		GLOBAL	DirectoryOpen
 		GLOBAL	DirectoryRead
+		GLOBAL	DirectoryClose
 		GLOBAL	PathRemoveComponent
 		GLOBAL	PathAppend
 
@@ -90,6 +91,19 @@ fs_OpenDir	RW	1
 ; --        "ne" when no more files present.
 ; --
 fs_ReadDir	RW	1
+
+; ---------------------------------------------------------------------------
+; -- Open directory
+; --
+; -- Inputs:
+; --   ft - pointer to directory struct
+; --   bc - pointer to filesystem struct
+; --
+; -- Output:
+; --    f - "eq" if directory could be opened. Directory struct is filled in
+; --        with information on first file
+; --
+fs_CloseDir	RW	1
 
 fs_PRIVATE	RB	0
 
