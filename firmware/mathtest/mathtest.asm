@@ -10,14 +10,54 @@
 Entry::
 		jal	TestStringDrop
 		jal	TestStringCompare
+		jal	TestCompare
 		jal	TestPrint
 		jal	TestShift
 		jal	TestAdd
+		jal	TestSub
 		jal	TestMul
 		jal	TestDiv
 
 		sys	KExit
 
+
+TestCompare:
+		pusha
+
+		MPrintString <"$EDCBA988 cmp $1234568 = $">
+		MLoad32	ft,$EDCBA988
+		MLoad32	bc,$1234568
+		jal	MathCompareLong
+		ld	t,f
+		jal	StreamHexByteOut
+		MNewLine
+
+		MPrintString <"$EDCB0000 cmp $EDBC0000 = $">
+		MLoad32	ft,$EDCB0000
+		MLoad32	bc,$EDCB0000
+		jal	MathCompareLong
+		ld	t,f
+		jal	StreamHexByteOut
+		MNewLine
+
+		MPrintString <"$EDCB0001 cmp $EDBC0000 = $">
+		MLoad32	ft,$EDCB0001
+		MLoad32	bc,$EDCB0000
+		jal	MathCompareLong
+		ld	t,f
+		jal	StreamHexByteOut
+		MNewLine
+
+		MPrintString <"$EDCB0000 cmp $EDBC0001 = $">
+		MLoad32	ft,$EDCB0000
+		MLoad32	bc,$EDCB0001
+		jal	MathCompareLong
+		ld	t,f
+		jal	StreamHexByteOut
+		MNewLine
+
+		popa
+		j	(hl)
 
 TestStringDrop:
 		pusha
@@ -206,6 +246,33 @@ TestAdd:
 		pop	bc
 
 		MPrintString "0x11111110 + 0xF3E2F1E0 = (expect 04F402F0) "
+		jal	StreamHexLongOut
+		MNewLine
+
+		popa
+		j	(hl)
+
+
+TestSub:
+		pusha
+
+		MPush32	ft,$12345678
+		MPush32	bc,$FEDCBA98
+		j @+2
+		jal	MathSub_32_32
+		pop	bc
+		pop	bc
+
+		MPrintString "0x12345678 - 0xFEDCBA98 = (expect 13579BE0) "
+		jal	StreamHexLongOut
+		MNewLine
+
+		MPush32	bc,$F3E2F1E0
+		jal	MathSub_32_32
+		pop	bc
+		pop	bc
+
+		MPrintString "0x13579BE0 - 0xF3E2F1E0 = (expect 1F74AA00) "
 		jal	StreamHexLongOut
 		MNewLine
 
