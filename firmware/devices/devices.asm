@@ -56,22 +56,20 @@ printDevice:
 		pop	bc	; remove $FFFFFFFF from BC
 		pop	bc
 		j/eq	.unknown
-		pop	ft	; remove compare result
+
+		pop	ft	; discard compare result
 
 		ld	b,11
 		jal	MathShiftRight_32
 		pop	ft
 		jal	StreamDecimalWordOut
 
-		pop	ft
 		MPrintString <" MiB\n">
-		pop	ft
 
 		popa
 		j	(hl)
 
 .unknown
-		pop	ft
 		pop	ft
 		pop	ft
 		MPrintString <"unknown\n">

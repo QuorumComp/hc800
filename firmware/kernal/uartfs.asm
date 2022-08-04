@@ -75,6 +75,7 @@ uartOpen:
 		push	bc-hl
 
 		MDebugPrint <"uartOpen entry\n">
+		MDebugMemory bc,file_SIZEOF
 
 		ld	bc,uartFile1
 		ld	de,ft
@@ -88,12 +89,12 @@ uartOpen:
 		jal	UartByteInSync
 		j/ne	.timeout
 
-		add	de,file_Flags
-		ld	(de),t
+		pop	bc
+		push	bc
+		add	bc,file_Flags
+		ld	(bc),t
 
-		add	de,file_Length-file_Flags
-		ld	ft,de
-		ld	bc,ft
+		add	bc,file_Length-file_Flags
 		ld	de,4
 		jal	UartMemoryInSync
 		sub	bc,file_Length

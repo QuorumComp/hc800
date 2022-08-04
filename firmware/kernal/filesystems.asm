@@ -218,6 +218,7 @@ FileOpen:
 
 		MDebugPrint <"FileOpen\n">
 		MDebugMemory ft,32
+		MDebugMemory bc,file_SIZEOF
 		MDebugStacks
 
 		; clear file handle structure
@@ -358,11 +359,18 @@ FileSkip:
 		SECTION	"FileRead",CODE
 FileRead:
 		MDebugPrint <"FileRead entry ">
+		MDebugMemory bc,file_SIZEOF
 		MDebugStacks
 
 		push	bc-hl
 
+		; adjust bytes to read
+		jal	.adjust_to_read
+
 		push	ft-bc
+		tst	ft
+		j/eq	.not_available
+
 		; get volume
 		ld	ft,bc
 		ld	c,(ft)
@@ -416,6 +424,53 @@ FileRead:
 		MDebugStacks
 
 		j	(hl)
+
+.not_available
+		pop	bc
+		popa
+
+		ld	t,ERROR_NOT_AVAILABLE
+		ld	f,FLAGS_NE
+
+		j	(hl)
+
+.adjust_to_read
+		push	bc-hl
+
+		exg	ft,bc
+		ld	de,ft
+
+		push	bc	; bytes to read
+
+		add	ft,file_Offset
+		MPush32	bc,(ft)
+		add	de,file_Length
+		MPush32	ft,(de)
+		jal	MathSub_32_32
+
+		pop	bc
+		ld	bc,0
+
+		MPush32	ft
+		jal	MathCompareLong
+		pop	bc
+		pop	bc
+		j/ltu	.adjust_use_max
+
+		pop	ft
+		pop	ft
+		ld	ft,bc
+		swap	ft
+		popa
+		j	(hl)
+
+.adjust_use_max	pop	ft
+		pop	ft
+		swap	ft
+		popa
+
+		j	(hl)
+
 
 
 ; ---------------------------------------------------------------------------

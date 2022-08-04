@@ -511,12 +511,37 @@ fileOpen:
 		j	(hl)
 
 .found
-		pop	ft
+		MDebugPrint <"Found file\n">
+
+		pop	ft	; dir structure
 		push	ft
-		ld	bc,ft
-		add	bc,udir_StartCluster
-		MLoad32	ft,(bc)
+		ld	de,ft
+
+		pop	bc
+		push	bc
+
+		add	de,dir_Length
+		MPush32	ft,(de)
+		add	bc,file_Length
+		MPop32	(bc),ft
+
+		add	bc,file_Offset-file_Length
+		ld	t,0
+		ld	(bc+),t
+		ld	(bc+),t
+		ld	(bc+),t
+		ld	(bc+),t
+
+		ld	t,ERROR_SUCCESS
+		ld	(bc+),t	; error
+		ld	t,0
+		ld	(bc),t	; flags
+
+		add	de,udir_StartCluster-dir_Length
+		MLoad32	ft,(de)
 		
+;		j @+2
+
 		pop	bc/de
 		push	bc/de
 
@@ -989,6 +1014,9 @@ openFileSector:
 		ld	(bc+),ft
 
 		pop	bc-hl
+
+		ld	f,FLAGS_EQ
+		ld	t,ERROR_SUCCESS
 		j	(hl)
 
 
