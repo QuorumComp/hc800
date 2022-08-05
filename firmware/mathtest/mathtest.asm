@@ -258,7 +258,6 @@ TestSub:
 
 		MPush32	ft,$12345678
 		MPush32	bc,$FEDCBA98
-		j @+2
 		jal	MathSub_32_32
 		pop	bc
 		pop	bc

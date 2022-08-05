@@ -8,9 +8,12 @@
 		INCLUDE "text.i"
 
 MPrintString:	MACRO
-		j	.skip\@
+		PUSHS
+		SECTION "Strings",DATA
 .string\@	DB	\1
-.skip\@		pusha
+.skip\@
+		POPS
+		pusha
 		ld	t,.skip\@-.string\@
 		ld	bc,.string\@
 		jal	TextCodeStringOut
@@ -28,13 +31,55 @@ Main:
 		MPrintString "HC800 Boot ROM"
 		MNewline
 
-.wait_uart	jal	WaitUart
+		jal	CheckKernal
+		j/eq	.kernel_ok
+
+		MPrintString <"Kernel in memory has bad checksum, hard reset or boot from UART">
+		MNewline
+		MNewline
+
+		j	.boot_uart
+
+.kernel_ok	MPrintString <"Kernel in memory OK, check UART host">
+		MNewline
+		jal	EmptyReceiveBuffer
+		jal	ComIdentify
+		j/eq	.kernel_ok_ask_boot
+
+		sys	0		
+
+.boot_uart	jal	WaitUart
 
 		jal	LoadKernal
-		j/ne	.wait_uart
+		j/ne	.boot_uart
 
 		jal	CheckKernal
-		j/ne	.wait_uart
+		j/ne	Main
+
+		sys	0
+
+.kernel_ok_ask_boot
+		MNewline
+		MPrintString <"Press U to load kernel over UART">
+		MNewline
+		MPrintString <"Press any other key to use kernel in memory">
+		MNewline
+		MNewline
+
+		ld	b,IO_KEYBOARD_BASE
+		ld	c,IO_KEYBOARD_STATUS
+.wait_key	lio	t,(bc)
+		cmp	t,0
+		j/eq	.wait_key
+
+		ld	c,IO_KEYBOARD_DATA
+		lio	t,(bc)
+		cmp	t,0
+		j/ge	.wait_key
+
+		and	t,$7F
+		cmp	t,'U'
+		j/eq	.boot_uart
 
 		sys	0
 
@@ -99,8 +144,8 @@ CheckKernal:
 		dj	e,.checksum
 		dj	d,.checksum
 
-		; t equals zero (ERROR_SUCCESS) if checksum match
-		cmp	t,0
+		; t equals $A5 if checksum match
+		cmp	t,$A5
 		j/eq	.done
 
 .ident_false	MPrintString "Kernal checksum mismatch. Failure."
