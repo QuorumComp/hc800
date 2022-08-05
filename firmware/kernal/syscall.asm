@@ -174,6 +174,7 @@ clearScreen:
 
 		SECTION "reset",CODE
 reset:
+		di
 		ld	b,IO_MMU_BASE
 		ld	c,IO_MMU_UPDATE_INDEX
 		ld	t,MMU_CFG_KERNAL
@@ -185,6 +186,10 @@ reset:
 		ld	c,IO_MMU_CODE_BANK0
 		lio	(bc),t
 		ld	c,IO_MMU_DATA_BANK0
+		lio	(bc),t
+
+		ld	c,IO_MMU_ACTIVE_INDEX
+		ld	t,MMU_CFG_KERNAL
 		lio	(bc),t
 
 		pop	hl

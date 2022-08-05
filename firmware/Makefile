@@ -7,6 +7,7 @@ TARGETS = \
 	devices/devices \
 	dir/dir \
 	mathtest/mathtest \
+	reset/reset \
 	type/type \
 	volumes/volumes
 
