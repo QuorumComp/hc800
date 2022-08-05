@@ -4,7 +4,7 @@
 
 
 ; ---------------------------------------------------------------------------
-; -- Set default kernal MMU configurations
+; -- Set default kernel MMU configurations
 ; --
 		SECTION "MmuInitialize",CODE
 MmuInitialize:
@@ -15,8 +15,8 @@ MmuInitialize:
 		ld	t,MMU_CFG_LOAD
 		jal	internalMmuSetConfigCode
 
-		ld	de,.mmuDataKernal
-		ld	f,.mmuDataKernalEnd-.mmuDataKernal
+		ld	de,.mmuDataKernel
+		ld	f,.mmuDataKernelEnd-.mmuDataKernel
 
 		ld	t,MMU_CFG_CLIENT
 		jal	internalMmuSetConfigCode
@@ -36,11 +36,11 @@ MmuInitialize:
 		popa
 		j	(hl)
 
-.mmuDataKernal:	DB	MMU_CFG_HARVARD		; config bits
+.mmuDataKernel:	DB	MMU_CFG_HARVARD		; config bits
 		DB	$01,$81,$82,$83		; code banks
 		DB	$80,$81,BANK_PALETTE,BANK_ATTRIBUTE	; data banks
 		DB	$01,$80			; system code/data
-.mmuDataKernalEnd:
+.mmuDataKernelEnd:
 
 .mmuDataLoad:	DB	MMU_CFG_HARVARD|MMU_CFG_DATA_48K ; config bits
 		DB	$01,$81,$82,$83		; code banks

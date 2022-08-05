@@ -34,7 +34,7 @@ SysGetBlockDevice::
 		jal	BlockDeviceGet
 		j/ne	.fail
 
-		; bc - kernal device structure
+		; bc - kernel device structure
 		; de - syscall block device information structure
 
 		ld	t,1
@@ -43,7 +43,7 @@ SysGetBlockDevice::
 		exg	de,ft
 		exg	bc,ft
 
-		; ft - kernal device structure
+		; ft - kernel device structure
 		; bc - syscall block device structure
 
 		add	bc,bdinf_Size-bdinf_Valid

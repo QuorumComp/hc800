@@ -2,7 +2,7 @@
 
 KERNEL_FAT32_I_INCLUDED__ = 1
 
-		INCLUDE	"kernal/filesystems.i"
+		INCLUDE	"kernel/filesystems.i"
 
 		GLOBAL	Fat32FsMake
 

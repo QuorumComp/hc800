@@ -87,7 +87,7 @@ clearIrq:
 		j	(hl)
 
 ; --
-; -- Set MMU to a config suitable for loading kernal
+; -- Set MMU to a config suitable for loading kernel
 ; --
 InitializeMMU:
 		ld	b,IO_MMU_BASE

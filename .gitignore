@@ -13,7 +13,7 @@ spinal/target/
 specnext/ISE/_xmsgs/
 firmware/ascii/ascii.com
 firmware/_image_/
-firmware/kernal/kernal.bin
+firmware/kernel/kernel.bin
 firmware/monitor/monitor.com
 firmware/stdlib/std.lib
 specnext/ISE/HC800_SpecNext.gise

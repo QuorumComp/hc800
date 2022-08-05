@@ -2,7 +2,7 @@ IMAGEDIR = _image_
 
 TARGETS = \
 	boot/boot.bin \
-	kernal/kernal.bin \
+	kernel/kernel.bin \
 	ascii/ascii \
 	devices/devices \
 	dir/dir \

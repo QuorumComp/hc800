@@ -23,7 +23,7 @@ SRCS = startup.asm \
 LIBS = $(STD)std.lib $(LOWLEVEL)lowlevel.lib
 
 ASMFLAGS = -g -el -z0 -i../
-TARGET = kernal.bin
+TARGET = kernel.bin
 
 ASM = motorrc8
 LIB = xlib

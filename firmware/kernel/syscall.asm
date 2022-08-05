@@ -4,7 +4,7 @@
 
 		INCLUDE	"stdlib/string.i"
 
-		INCLUDE	"kernal/keyboard.i"
+		INCLUDE	"kernel/keyboard.i"
 
 		INCLUDE	"editor.i"
 		INCLUDE	"error.i"

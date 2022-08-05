@@ -27,7 +27,7 @@
 Main:
 		di
 
-		; initialize kernal BSS to zeroes
+		; initialize kernel BSS to zeroes
 
 		ld	bc,$0000
 		ld	de,$4000

@@ -2,8 +2,8 @@
 		INCLUDE	"lowlevel/rc800.i"
 		INCLUDE	"lowlevel/stack.i"
 
-		INCLUDE	"kernal/error.i"
-		INCLUDE	"kernal/filesystems.i"
+		INCLUDE	"kernel/error.i"
+		INCLUDE	"kernel/filesystems.i"
 
 		INCLUDE	"stdlib/string.i"
 

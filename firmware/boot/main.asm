@@ -31,7 +31,7 @@ Main:
 		MPrintString "HC800 Boot ROM"
 		MNewline
 
-		jal	CheckKernal
+		jal	CheckKernel
 		j/eq	.kernel_ok
 
 		MPrintString <"Kernel in memory has bad checksum, hard reset or boot from UART">
@@ -50,10 +50,10 @@ Main:
 
 .boot_uart	jal	WaitUart
 
-		jal	LoadKernal
+		jal	LoadKernel
 		j/ne	.boot_uart
 
-		jal	CheckKernal
+		jal	CheckKernel
 		j/ne	Main
 
 		sys	0
@@ -85,12 +85,12 @@ Main:
 
 
 ; --
-; -- Load kernal into kernal bank
+; -- Load kernel into kernel bank
 ; --
 ; -- Returns:
 ; --    f - "z" condition if success
 ; --
-LoadKernal:
+LoadKernel:
 		push	bc-hl
 
 		ld	bc,$4000
@@ -98,9 +98,9 @@ LoadKernal:
 		ld	t,0
 		jal	SetMemory
 
-		MPrintString "Loading kernal"
-		ld	t,.kernal_length
-		ld	bc,.kernal_name
+		MPrintString "Loading kernel"
+		ld	t,.kernel_length
+		ld	bc,.kernel_name
 		ld	de,$4000
 		jal	ComLoadFile
 
@@ -121,17 +121,17 @@ LoadKernal:
 		pop	bc-hl
 		j	(hl)
 
-.kernal_name	DB	"/kernal.bin"
-.kernal_length	EQU	@-.kernal_name
+.kernel_name	DB	"/kernel.bin"
+.kernel_length	EQU	@-.kernel_name
 
 ; --
-; -- Check if kernal is a valid kernal
+; -- Check if kernel is a valid kernel
 ; --
 ; -- Returns:
 ; --    f - "z" condition if success
 ; --    t - error code
 ; --
-CheckKernal:
+CheckKernel:
 		push	bc-hl
 
 		ld	bc,$4000
@@ -148,7 +148,7 @@ CheckKernal:
 		cmp	t,$A5
 		j/eq	.done
 
-.ident_false	MPrintString "Kernal checksum mismatch. Failure."
+.ident_false	MPrintString "Kernel checksum mismatch. Failure."
 		MNewline
 		ld	t,ERROR_PROTOCOL
 		ld	f,FLAGS_NE
