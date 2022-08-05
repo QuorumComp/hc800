@@ -26,6 +26,9 @@ else
 	@cp $? $(IMAGEDIR)
 endif
 
+disk: install
+	sudo ./mkdisk.sh
+
 clean: $(CLEAN)
 ifeq ($(MAKE_HOST),Windows32)
 	del /S /Q $(IMAGEDIR)
