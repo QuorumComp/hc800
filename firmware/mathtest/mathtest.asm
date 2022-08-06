@@ -8,8 +8,9 @@
 		SECTION	"Monitor",CODE
 
 Entry::
-		jal	TestStringDrop
-		jal	TestStringCompare
+		;jal	TestPick
+		;jal	TestStringDrop
+		;jal	TestStringCompare
 		jal	TestCompare
 		jal	TestPrint
 		jal	TestShift
@@ -20,6 +21,26 @@ Entry::
 
 		sys	KExit
 
+
+TestPick:
+		pusha
+
+		MPrintString <"PICK expect $ABCD = $">
+		ld	ft,$ABCD
+		push	ft
+		ld	ft,$5678
+		push	ft
+		ld	ft,$1234
+
+		pick	ft,1
+		jal	StreamHexWordOut
+		MNewLine
+
+		pop	ft
+		pop	ft
+
+		popa
+		j	(hl)
 
 TestCompare:
 		pusha

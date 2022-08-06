@@ -48,7 +48,8 @@ module top(
 
 localparam CONF_STR = {
 	"HC800;;",
-	"S1,VHD,Mount;",
+	"S1U,VHD,Mount :v0;",
+	"S0U,VHD,Mount :v1 (or whole SD);",
 	"V,1.0"
 };
 
@@ -126,7 +127,7 @@ wire  [8:0] sd_buff_addr;
 wire  [1:0] img_mounted;
 wire [31:0] img_size;
 
-user_io#(.STRLEN(7 + 13 + 5), .ROM_DIRECT_UPLOAD(0)) userIo(
+user_io#(.STRLEN(7 + 18 + 32 + 5), .ROM_DIRECT_UPLOAD(0)) userIo(
 	.clk_sys   (clk_13_5M),
 	
 	.SPI_CLK   (SPI_SCK),
@@ -436,7 +437,7 @@ HC800 hc800(
 	.io_ramBus_dataFromMaster(ram_data_out),
 	.io_ramBus_address(ram_address),
 	
-	.io_sd_cs({sd_cs1,sd_cs0}),
+	.io_sd_cs({sd_cs0,sd_cs1}),
 	.io_sd_clock(sd_clock),
 	.io_sd_di(sd_di),
 	.io_sd_do(sd_do)

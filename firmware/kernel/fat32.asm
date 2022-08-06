@@ -74,7 +74,7 @@ ufile_SIZEOF		RB	0
 ; --
 		SECTION	"Fat32FsMake",CODE
 Fat32FsMake:
-		MDebugPrint <"Fat32FsMake enter\n">
+		;MDebugPrint <"Fat32FsMake enter\n">
 		push	bc-hl
 
 		MStackAlloc BYTES_PER_SECTOR
@@ -86,13 +86,13 @@ Fat32FsMake:
 		jal	checkFat32
 		j/ne	.exit
 
-		MDebugPrint <"FAT32 found\n">
+		;MDebugPrint <"FAT32 found\n">
 
 		ld	ft,de
 		ld	bc,ft	; bc = volume boot record
 		swap	de	; restore fs structure
 		jal	fillFsStruct
-		MDebugMemory de,32
+		;MDebugMemory de,32
 		swap	de	; put fs structure back in place
 
 		ld	f,FLAGS_EQ
@@ -152,7 +152,7 @@ fillFsStruct:
 		ld	t,l
 		ld	(de),t
 .no_label
-		MDebugMemory de,16
+		;MDebugMemory de,16
 		; determine how much to shift a cluster number to get sector
 
 		add	bc,BPB_SECTORS_PER_CLUSTER-BS_LABEL
@@ -399,7 +399,7 @@ dirRead:
 		j/eq	.attr_ok
 
 .skip_file
-		MDebugPrint <".skip_file\n">
+		;MDebugPrint <".skip_file\n">
 		MStackFree 32
 		ld	ft,bc
 		ld	de,ft
@@ -408,7 +408,7 @@ dirRead:
 		ld	hl,.next_file_entry
 		j	(hl)
 .attr_ok
-		MDebugPrint <".attr_ok\n">
+		;MDebugPrint <".attr_ok\n">
 		add	bc,dir_Filename+1
 		push	bc
 		ld	f,8
@@ -470,12 +470,18 @@ dirRead:
 ; --
 		SECTION	"Fat32FileOpen",CODE
 fileOpen:
-		MDebugMemory ft,32
+		;MDelay	10000
+		;MDebugPrint <"Fat32FileOpen\n">
+		;MDebugMemory ft,32
 		push	bc-hl
+
+		MDebugMemory ft,16
 
 		ld	bc,ft	; bc - filename
 		ld	t,1
 		jal	StringDropLeft
+
+		MDebugMemory bc,16
 
 		MStackAlloc dir_SIZEOF
 		push	ft
@@ -483,9 +489,12 @@ fileOpen:
 		jal	dirOpen
 		j/ne	.not_found
 
-.check		pop	ft
+.check		;MDebugPrint <"Fat32FileOpen check name\n">
+		pop	ft
 		push	ft
 		add	ft,dir_Filename
+		;MDebugMemory ft,16
+		;MDebugMemory bc,16
 		jal	StringCompareCase
 		j/eq	.found
 
@@ -498,7 +507,8 @@ fileOpen:
 		pop	bc
 		j/eq	.check
 
-.not_found	ld	ft,de
+.not_found	MDebugPrint <"Fat32FileOpen not found\n">
+		ld	ft,de
 		ld	bc,ft
 		pop	ft
 		jal	dirClose
@@ -511,7 +521,7 @@ fileOpen:
 		j	(hl)
 
 .found
-		MDebugPrint <"Found file\n">
+		;MDebugPrint <"Found file\n">
 
 		pop	ft	; dir structure
 		push	ft
@@ -697,7 +707,7 @@ fileRead:
 loadVolumeBootRecord:
 		push	hl
 
-		MDebugPrint <"loadVolumeBootRecord\n">
+		;MDebugPrint <"loadVolumeBootRecord\n">
 
 		; load volume boot record
 
@@ -718,7 +728,7 @@ loadVolumeBootRecord:
 		SECTION	"checkFat32",CODE
 checkFat32:	push	bc-hl
 
-		MDebugPrint <"checkFat32\n">
+		;MDebugPrint <"checkFat32\n">
 
 		add	de,BS_BOOT_RECORD_SIG
 		ld	t,(de)
@@ -1028,7 +1038,7 @@ openFileSector:
 ; --   bc - pointer to filesystem structure
 ; --
 readNextFileSector:
-		MDebugPrint <"readNextFileSector\n">
+		;MDebugPrint <"readNextFileSector\n">
 		pusha
 
 		; read sector
@@ -1135,7 +1145,7 @@ readNextFileSector:
 ; --   ft':ft'' - present if cluster was found
 ; --
 getNextCluster:
-		MDebugPrint <"getNextCluster\n">
+		;MDebugPrint <"getNextCluster\n">
 		push	bc-hl
 
 		swap	ft
