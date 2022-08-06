@@ -486,7 +486,7 @@ fileOpen:
 .check		pop	ft
 		push	ft
 		add	ft,dir_Filename
-		jal	StringCompare
+		jal	StringCompareCase
 		j/eq	.found
 
 		push	bc
