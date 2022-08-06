@@ -13,6 +13,7 @@
 		INCLUDE	"mmu.i"
 		INCLUDE	"text.i"
 		INCLUDE	"uart_commands.i"
+		INCLUDE	"version.i"
 		INCLUDE	"video.i"
 
 		IMPORT	SysExecuteCommandLine
@@ -66,6 +67,7 @@ KVector:	MACRO
 		KVector	closeFile
 		KVector	readFile
 		KVector	closeDirectory
+		KVector	getKernelVersion
 
 
 		SECTION "PrintError",CODE
@@ -121,6 +123,21 @@ readDirectory:
 closeDirectory:
 		jal	DirectoryClose
 		pop	hl
+		reti
+		
+
+		SECTION "GetKernelVersion",CODE
+getKernelVersion:
+		push	ft-de
+
+		ld	b,VERSION_MAJOR
+		ld	(ft+),b
+		ld	b,VERSION_MINOR
+		ld	(ft+),b
+		ld	b,VERSION_REVISION
+		ld	(ft),b
+
+		popa
 		reti
 		
 

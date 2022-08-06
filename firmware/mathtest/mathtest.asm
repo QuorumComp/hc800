@@ -32,7 +32,7 @@ TestPick:
 		push	ft
 		ld	ft,$1234
 
-		pick	ft,1
+		pick	ft,2
 		jal	StreamHexWordOut
 		MNewLine
 

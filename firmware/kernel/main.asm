@@ -63,8 +63,7 @@ Main:
 		ld	de,totalBanks
 		ld	t,(de)
 		ld	f,0
-		ld	c,4
-		ls	ft,c
+		ls	ft,4
 		jal	StreamDecimalWordOut
 		MPrintString " KiB\n"
 
