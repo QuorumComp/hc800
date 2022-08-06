@@ -114,10 +114,10 @@ FileInitialize:
 
 		; de - UART volume, set as current
 
+		ld	ft,volumes
+		ld	de,(ft+)
 		ld	ft,currentFs
-		ld	(ft),e
-		add	ft,1
-		ld	(ft),d
+		ld	(ft+),de
 
 		; initialize current path
 

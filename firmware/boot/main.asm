@@ -148,9 +148,7 @@ CheckKernel:
 		cmp	t,$A5
 		j/eq	.done
 
-.ident_false	MPrintString "Kernel checksum mismatch. Failure."
-		MNewline
-		ld	t,ERROR_PROTOCOL
+.ident_false	ld	t,ERROR_PROTOCOL
 		ld	f,FLAGS_NE
 .done
 		pop	bc-hl
