@@ -384,7 +384,7 @@ object HC800TopLevel {
 
 	def main(args: Array[String]): Unit = {
 		//generate("../specnext/hc800_zxnext.v", BoardId.Board.zxNext.position, Vendor.Xilinx)
-		generate("../mist/hc800_mist.v", BoardId.Board.mist, Vendor.Altera)
+		//generate("../../../rtl/hc800_mist.v", BoardId.Board.mist, Vendor.Altera)
 		//generate("hc800_nexys3.v", BoardId.Board.nexys3.position, Vendor.Xilinx)
 		//generate("../../../rtl/hc800_mister.v", BoardId.Board.mister, Vendor.Altera)
 	}
