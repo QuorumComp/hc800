@@ -119,7 +119,7 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 
 	val ramMap = new {
 		val boot       = M"00000000--------------"
-		val kernal     = M"00000001--------------"
+		val kernel     = M"00000001--------------"
 		val chargen    = M"00001000--------------"
 		val palette    = M"00111000--------------"
 		val attributes = M"00111100--------------"
@@ -223,7 +223,7 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 
 		// Machine bus enables
 		val bootEnable       = machineBus.address === ramMap.boot
-		val kernalEnable     = machineBus.address === ramMap.kernal
+		val kernelEnable     = machineBus.address === ramMap.kernel
 		val fontEnable       = machineBus.address === ramMap.chargen
 		val attrMemEnable    = machineBus.address === ramMap.attributes
 		val paletteMemEnable = machineBus.address === ramMap.palette
@@ -255,7 +255,7 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 		val interruptController = new InterruptController()
 		val math = new Math()
 		val bootROM = new BootROM()
-		val kernal = new RAM(size = 16384)
+		val kernel = new RAM(size = 16384) initWith("../firmware/kernel/kernel.bin")
 		val font = new Font()
 		val uart = new UART()
 		val sd = new SD()
@@ -288,7 +288,7 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 
 		val memDataIn =
 			machineBus.wireClient(bootROM.io, bootEnable) |
-			machineBus.wireClient(kernal.io, kernalEnable) |
+			machineBus.wireClient(kernel.io, kernelEnable) |
 			machineBus.wireClient(font.io, fontEnable) |
 			machineBus.wireClient(attributeMemBus, attrMemEnable) |
 			machineBus.wireClient(paletteMemBus, paletteMemEnable) |
