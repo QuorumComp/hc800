@@ -78,13 +78,7 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 		val blue  = out UInt(5 bits)
 		val hsync = out Bool()
 		val vsync = out Bool()
-
-		val dblRed   = out UInt(5 bits)
-		val dblGreen = out UInt(5 bits)
-		val dblBlue  = out UInt(5 bits)
-		val dblHSync = out Bool()
-		val dblVSync = out Bool()
-		val dblBlank = out Bool()
+		val blank = out Bool()
 
 		val txd = out Bool()
 		val rxd = in  Bool()
@@ -140,7 +134,7 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 		frequency = FixedFrequency(Constants.baseFrequency * 2),
 		config = ClockDomainConfig(
 			clockEdge        = RISING,
-			resetKind        = ASYNC,
+			resetKind        = SYNC,
 			resetActiveLevel = HIGH
 		)
 	)
@@ -157,15 +151,7 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 
 	val graphicsDomain = mainDomain
 
-	val cpuDomain = ClockDomain.external(
-		name = "cpu",
-		frequency = FixedFrequency(Constants.baseFrequency),
-		config = ClockDomainConfig(
-			clockEdge        = RISING,
-			resetKind        = ASYNC,
-			resetActiveLevel = HIGH
-		)
-	)
+	val cpuDomain = mainDomain.newClockDomainSlowedBy(2)
 
 	val memoryDomain = mainDomain
 
@@ -249,7 +235,7 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 
 		val keyboard =
 			if (boardIsZxNext) mkZxNextKeyboard()
-			else if (boardIsMist) mkMistKeyboard()
+			else if (boardIsMist || boardIsMister) mkMistKeyboard()
 			else new hc800.keyboard.NullKeyboard()
 
 		val interruptController = new InterruptController()
@@ -320,31 +306,15 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 
 	// --- CHIPSET ---
 
-	val scanDoubleDomain = ClockDomain.external(
-		name = "dbl",
-		frequency = FixedFrequency(Constants.baseFrequency * 4),
-		config = ClockDomainConfig(
-			clockEdge        = RISING,
-			resetKind        = ASYNC,
-			resetActiveLevel = HIGH
-		)
-	)
-
 	val graphicsArea = new ClockingArea(graphicsDomain) {
-		val videoGenerator = new VideoGenerator(scanDoubleDomain)
+		val videoGenerator = new VideoGenerator()
 
 		io.red   <> videoGenerator.io.red
 		io.green <> videoGenerator.io.green
 		io.blue  <> videoGenerator.io.blue
 		io.hsync <> videoGenerator.io.hSync
 		io.vsync <> videoGenerator.io.vSync
-
-		io.dblRed   <> videoGenerator.io.dblRed
-		io.dblGreen <> videoGenerator.io.dblGreen
-		io.dblBlue  <> videoGenerator.io.dblBlue
-		io.dblHSync <> videoGenerator.io.dblHSync
-		io.dblVSync <> videoGenerator.io.dblVSync
-		io.dblBlank <> videoGenerator.io.dblBlank
+		io.blank := videoGenerator.io.hBlanking || videoGenerator.io.vBlanking
 
 		videoGenerator.io.memBus <> memoryArea.chipMemBus
 
@@ -386,6 +356,6 @@ object HC800TopLevel {
 		//generate("../specnext/hc800_zxnext.v", BoardId.Board.zxNext.position, Vendor.Xilinx)
 		//generate("../../../rtl/hc800_mist.v", BoardId.Board.mist, Vendor.Altera)
 		//generate("hc800_nexys3.v", BoardId.Board.nexys3.position, Vendor.Xilinx)
-		//generate("../../../rtl/hc800_mister.v", BoardId.Board.mister, Vendor.Altera)
+		generate("../../../rtl/hc800_mister.v", BoardId.Board.mister, Vendor.Altera)
 	}
 }
