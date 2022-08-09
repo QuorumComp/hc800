@@ -78,15 +78,15 @@ class VideoTileMode(secondPlane: Boolean, hTotal: Int) extends Component {
 	def secondPlaneFetch(mask: Bits): Bits =
 		if (secondPlane) mask.rotateRight(2) else mask
 
-	val shiftMask = hires ? B"1111111111111111" | B"1010101010101010"
+	val shiftMask = hires ? B"1111111111111111" | B"0101010101010101"
 	val fetchMask = secondPlaneFetch((hires ## depth).mux (
-		B"000" -> B"1000000000000000",
-		B"001" -> B"1000000010000000",
-		B"010" -> B"1000100010001000",
-		B"011" -> B"1010101010101010",
-		B"100" -> B"1000000010000000",
-		B"101" -> B"1000100010001000",
-		B"110" -> B"1010101010101010",
+		B"000" -> B"0100000000000000",
+		B"001" -> B"0100000001000000",
+		B"010" -> B"0100010001000100",
+		B"011" -> B"0101010101010101",
+		B"100" -> B"0100000001000000",
+		B"101" -> B"0100010001000100",
+		B"110" -> B"0101010101010101",
 		B"111" -> B"0000000000000000"))
 
 	val readyMask = fetchMask.rotateRight(2)
@@ -107,8 +107,8 @@ class VideoTileMode(secondPlane: Boolean, hTotal: Int) extends Component {
 	
 	val normalizedHPos = (io.hBlank ? (io.hPos - hTotal) | io.hPos)
 
-	val attrXAddressHires = normalizedHPos(9 downto 3) + 4 + (hScrollPos(9 downto 4) << 1)
-	val attrXAddressLores = normalizedHPos(9 downto 4) + 3 + (hScrollPos(9 downto 4))
+	val attrXAddressHires = normalizedHPos(9 downto 3) + 3 + (hScrollPos(9 downto 4) << 1)
+	val attrXAddressLores = normalizedHPos(9 downto 4) + 2 + (hScrollPos(9 downto 4))
 	val attrXAddress = hires ? attrXAddressHires | attrXAddressLores
 	io.attrBus.address := (attrLine(7 downto 3) ## attrXAddress).resize(12 bits).asUInt
 	io.attrBus.enable := True

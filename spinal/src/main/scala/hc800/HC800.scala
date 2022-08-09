@@ -122,7 +122,7 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 
 	//  |-----|     |-----|     |-----|     |-----|       Lores pixels
 	//  |-----|     |-----|-----|-----|     |-----|-----| Graphics memory access
-	//        |-----|                 |-----|             CPU memory access
+	//                    |-----|                 |-----| CPU memory access
 	//  |-----|     |-----|     |-----|     |-----|       CPU active
 	//	+--+  +--+  +--+  +--+  +--+  +--+  +--+  +--+  +
 	//  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
@@ -134,18 +134,18 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 		frequency = FixedFrequency(Constants.baseFrequency * 2),
 		config = ClockDomainConfig(
 			clockEdge        = RISING,
-			resetKind        = SYNC,
+			resetKind        = ASYNC,
 			resetActiveLevel = HIGH
 		)
 	)
 
 	val mainArea = new ClockingArea(mainDomain) {
-		val cycleCounter = Reg(UInt(4 bits)) init(Constants.firstCycle)
+		val cycleCounter = Reg(UInt(4 bits)) init(0)
 		cycleCounter := cycleCounter + 1
 
 		private val lowCycleCounter = cycleCounter(2 downto 0)
 
-		val cpuBusMaster = (lowCycleCounter === 1) || (lowCycleCounter === 5)
+		val cpuBusMaster = (lowCycleCounter === 0) || (lowCycleCounter === 4)
 		val chipsetBusMaster = !cpuBusMaster
 	}
 
@@ -354,8 +354,8 @@ object HC800TopLevel {
 
 	def main(args: Array[String]): Unit = {
 		//generate("../specnext/hc800_zxnext.v", BoardId.Board.zxNext.position, Vendor.Xilinx)
-		//generate("../../../rtl/hc800_mist.v", BoardId.Board.mist, Vendor.Altera)
+		generate("../../../rtl/hc800_mist.v", BoardId.Board.mist, Vendor.Altera)
 		//generate("hc800_nexys3.v", BoardId.Board.nexys3.position, Vendor.Xilinx)
-		generate("../../../rtl/hc800_mister.v", BoardId.Board.mister, Vendor.Altera)
+		//generate("../../../rtl/hc800_mister.v", BoardId.Board.mister, Vendor.Altera)
 	}
 }

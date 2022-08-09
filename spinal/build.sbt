@@ -25,7 +25,7 @@ lazy val hc800 = (project in file("."))
 		buildMachineCode := {
 			val s: TaskStreams = streams.value
 			val shell: Seq[String] = if (sys.props("os.name").contains("Windows")) Seq("cmd", "/c") else Seq("bash", "-c")
-			val buildr8r: Seq[String] = shell :+ "cd ../firmware/boot && make"
+			val buildr8r: Seq[String] = shell :+ "cd ../firmware && make"
 			s.log.info("Building machine code...")
 			if ((buildr8r !) == 0) {
 				s.log.success("Machine code build successful!")
