@@ -345,17 +345,17 @@ object Vendor extends Enumeration {
 
 //Generate the MyTopLevel's Verilog
 object HC800TopLevel {
-	def generate(name: String, board: Int, vendor: Vendor.Value): Unit = {
+	def generate(name: String, board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.Components): Unit = {
 		new SpinalConfig(
 			defaultClockDomainFrequency = FixedFrequency(Constants.baseFrequency * 2),
 			netlistFileName = name
-		).generateVerilog(new HC800(board, vendor)(rc800.lpm.blackbox.Components)).printPruned()
+		).generateVerilog(new HC800(board, vendor)).printPruned()
 	}
 
 	def main(args: Array[String]): Unit = {
-		//generate("../specnext/hc800_zxnext.v", BoardId.Board.zxNext.position, Vendor.Xilinx)
-		generate("../../../rtl/hc800_mist.v", BoardId.Board.mist, Vendor.Altera)
+		//generate("../../../rtl/hc800_zxnext.v", BoardId.Board.zxNext, Vendor.Xilinx)(rc800.lpm.generic.Components)
+		//generate("../../../rtl/hc800_mist.v", BoardId.Board.mist, Vendor.Altera)(rc800.lpm.blackbox.Components)
 		//generate("hc800_nexys3.v", BoardId.Board.nexys3.position, Vendor.Xilinx)
-		//generate("../../../rtl/hc800_mister.v", BoardId.Board.mister, Vendor.Altera)
+		//generate("../../../rtl/hc800_mister.v", BoardId.Board.mister, Vendor.Altera)(rc800.lpm.blackbox.Components)
 	}
 }
