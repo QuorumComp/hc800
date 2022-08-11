@@ -111,3 +111,4 @@ firmware/.metals/metals.log
 firmware/type/type
 firmware/reset/reset
 firmware/hd.img
+firmware/gfxtest/gfxtest

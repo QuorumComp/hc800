@@ -6,6 +6,7 @@ TARGETS = \
 	ascii/ascii \
 	devices/devices \
 	dir/dir \
+	gfxtest/gfxtest \
 	mathtest/mathtest \
 	reset/reset \
 	type/type \
@@ -23,7 +24,7 @@ ifeq ($(MAKE_HOST),Windows32)
 	@cmd /Q /C for %%G in ($(subst /,\\,$?)) do xcopy %%G $(IMAGEDIR) /Y /Q >NUL
 else
 	@mkdir -p $(IMAGEDIR)
-	@cp $? $(IMAGEDIR)
+	@cp addons/* $? $(IMAGEDIR)
 endif
 
 disk: install
