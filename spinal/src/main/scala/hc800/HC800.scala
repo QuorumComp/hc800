@@ -143,9 +143,9 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 		val cycleCounter = Reg(UInt(4 bits)) init(0)
 		cycleCounter := cycleCounter + 1
 
-		private val lowCycleCounter = cycleCounter(2 downto 0)
+		private val lowCycleCounter = cycleCounter(1 downto 0)
 
-		val cpuBusMaster = (lowCycleCounter === 0) || (lowCycleCounter === 4)
+		val cpuBusMaster = (lowCycleCounter === 0)
 		val chipsetBusMaster = !cpuBusMaster
 	}
 

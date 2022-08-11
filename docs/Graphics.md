@@ -11,24 +11,18 @@
 |------------------------------|---|---|---|---|---|---|---|---|---|---|----|----|----|----|----|----|
 | Hires pixel                  | x | x | x | x | x | x | x | x | x | x |  x |  x |  x |  x |  x |  x |
 | Lores pixel                  | x |   | x |   | x |   | x |   | x |   |  x |    |  x |    |  x |    |
-| CPU mem                      |   | x |   |   |   | x |   |   |   | x |    |    |    |  x |    |    |
-| Lores P0 mem, 2 color        | x |   |   |   |   |   |   |   |   |   |    |    |    |    |    |    |
-| Lores P1 mem, 2 color        |   |   | x |   |   |   |   |   |   |   |    |    |    |    |    |    |
-| Lores P0 mem, 4 color        | x |   |   |   |   |   |   |   | x |   |    |    |    |    |    |    |
-| Lores P1 mem, 4 color        |   |   | x |   |   |   |   |   |   |   | x  |    |    |    |    |    |
-| Lores P0 mem, 16 color       | x |   |   |   | x |   |   |   | x |   |    |    |  x |    |    |    |
-| Lores P1 mem, 16 color       |   |   | x |   |   |   | x |   |   |   | x  |    |    |    | x  |    |
-| Lores mem, 256 color         | x |   | x |   | x |   | x |   | x |   | x  |    |  x |    | x  |    |
-| Hires mem, 2 color           | x |   |   |   |   |   |   |   | x |   |    |    |    |    |    |    |
-| Hires mem, 4 color           | x |   |   |   | x |   |   |   | x |   |    |    |  x |    |    |    |
-| Hires mem, 16 color          | x |   | x |   | x |   | x |   | x |   | x  |    |  x |    | x  |    |
+| CPU mem                      | x |   |   |   | x |   |   |   | x |   |    |    |  x |    |    |    |
+| Lores P0 mem, 2 color        |   | x |   |   |   |   |   |   |   |   |    |    |    |    |    |    |
+| Lores P1 mem, 2 color        |   |   |   | x |   |   |   |   |   |   |    |    |    |    |    |    |
+| Lores P0 mem, 4 color        |   | x |   |   |   |   |   |   |   | x |    |    |    |    |    |    |
+| Lores P1 mem, 4 color        |   |   |   | x |   |   |   |   |   |   |    | x  |    |    |    |    |
+| Lores P0 mem, 16 color       |   | x |   |   |   | x |   |   |   | x |    |    |    |  x |    |    |
+| Lores P1 mem, 16 color       |   |   |   | x |   |   |   | x |   |   |    | x  |    |    |    | x  |
+| Lores mem, 256 color         |   | x |   | x |   | x |   | x |   | x |    | x  |    |  x |    | x  |
+| Hires mem, 2 color           |   | x |   |   |   |   |   |   |   | x |    |    |    |    |    |    |
+| Hires mem, 4 color           |   | x |   |   |   | x |   |   |   | x |    |    |    |  x |    |    |
+| Hires mem, 16 color          |   | x |   | x |   | x |   | x |   | x |    | x  |    |  x |    | x  |
 
-
-| Lores Sprite mem, 2 color    |   |   |   | x |   |   |   |   |   |   |    |    |    |    |    |    |
-| Lores Sprite mem, 4 color    |   |   |   | x |   |   |   |   |   |   |    | x  |    |    |    |    |
-| Lores Sprite mem, 16 color   |   |   |   | x |   |   |   | x |   |   |    | x  |    |    |    | x  |
-| Hires Sprite mem, 2 color    |   |   |   | x |   |   |   |   |   |   |    | x  |    |    |    |    |
-| Hires Sprite mem, 4 color    |   |   |   | x |   |   |   | x |   |   |    | x  |    |    |    | x  |
 
 ## Off screen Timing
 
@@ -40,12 +34,12 @@
 |------------------------------|---|---|---|---|---|---|---|---|---|---|----|----|----|----|----|----|
 | Hires pixel                  | x | x | x | x | x | x | x | x | x | x |  x |  x |  x |  x |  x |  x |
 | Lores pixel                  | x |   | x |   | x |   | x |   | x |   |  x |    |  x |    |  x |    |
-| CPU mem                      |   | x |   |   |   | x |   |   |   | x |    |    |    |  x |    |    |
-| Lores Sprite mem, 2 color    | x |   | x | x | x |   | x | x | x |   |  x |  x |  x |    |  x |  x |
-| Lores Sprite mem, 4 color    | x |   | x | x | x |   | x | x | x |   |  x |  x |  x |    |  x |  x |
-| Lores Sprite mem, 16 color   | x |   | x | x | x |   | x | x | x |   |  x |  x |  x |    |  x |  x |
-| Hires Sprite mem, 2 color    | x |   | x | x | x |   | x | x | x |   |  x |  x |  x |    |  x |  x |
-| Hires Sprite mem, 4 color    | x |   | x | x | x |   | x | x | x |   |  x |  x |  x |    |  x |  x |
+| CPU mem                      | x |   |   |   | x |   |   |   | x |   |    |    |  x |    |    |    |
+| Lores Sprite mem, 2 color    |   | x | x | x |   | x | x | x |   | x |  x |  x |    |  x |  x |  x |
+| Lores Sprite mem, 4 color    |   | x | x | x |   | x | x | x |   | x |  x |  x |    |  x |  x |  x |
+| Lores Sprite mem, 16 color   |   | x | x | x |   | x | x | x |   | x |  x |  x |    |  x |  x |  x |
+| Hires Sprite mem, 2 color    |   | x | x | x |   | x | x | x |   | x |  x |  x |    |  x |  x |  x |
+| Hires Sprite mem, 4 color    |   | x | x | x |   | x | x | x |   | x |  x |  x |    |  x |  x |  x |
 
 ## Attributes
 
