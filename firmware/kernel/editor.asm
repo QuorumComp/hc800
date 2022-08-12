@@ -9,8 +9,10 @@
 
 		INCLUDE	"editor.i"
 		INCLUDE	"keyboard.i"
-		INCLUDE	"uart_commands.i"
 		INCLUDE	"text.i"
+
+		INCLUDE	"uart_commands.i"
+		INCLUDE	"uart_commands_disabled.i"
 
 		IMPORT	ResetWhenCombo
 
@@ -20,16 +22,6 @@ ScreenInitialize:
 		pusha
 		jal	TextClearScreen
 		jal	InitializeLines
-
-		; Figure out we're running on the emulator and set flag
-		ld	b,IO_BOARD_ID_BASE
-		ld	c,IO_BID_IDENTIFIER
-		lio	t,(bc)
-		cmp	t,$FF
-		ld	t,0
-		ld/eq	t,1
-		ld	bc,isEmulator
-		ld	(bc),t
 
 		ld	t,0
 		ld	bc,isInsert
@@ -117,8 +109,14 @@ copyAcceptedLine:
 		add	bc,1
 		push	bc
 
-.copy		ld	(bc),t
-		add	bc,1
+.copy		ld	(bc+),t
+		MDebugHexByte t
+
+		;pusha
+		;ld	bc,0
+		;MDebugMemory bc,8
+		;popa
+
 		cmp	h,0
 		j/z	.line_done
 		push	hl
@@ -128,6 +126,7 @@ copyAcceptedLine:
 		j	.copy
 
 .line_done
+		MDebugNewLine
 		; length byte
 
 		ld	ft,bc
@@ -135,6 +134,8 @@ copyAcceptedLine:
 		sub	ft,bc
 		sub	bc,1
 		ld	(bc),t
+
+		MDebugMemory bc,8
 
 		jal	StringTrimRight
 
@@ -179,16 +180,6 @@ InitializeLines:
 handleKeyboardInput:
 		push	hl
 
-		ld	hl,isEmulator
-		ld	t,(hl)
-		cmp	t,0
-		j/eq	.not_emulator
-
-		jal	ComRequestChar
-		j/nz	.exit
-		j	.char_out
-
-.not_emulator
 		jal	KeyboardRead
 		j/z	.exit_f
 
@@ -1201,6 +1192,5 @@ ScreenVBlank:
 		
 		SECTION	"EditorVars",BSS
 isInsert:	DS	1		
-isEmulator:	DS	1
 blinkCount:	DS	1
 lineLengths:	DS	LINES_ON_SCREEN	; -1 means the line is joined to the one above
