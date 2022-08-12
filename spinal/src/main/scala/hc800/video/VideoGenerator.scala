@@ -31,7 +31,7 @@ object VideoGenerator {
 }
 
 
-class VideoGenerator() extends Component {
+class VideoGenerator(scanDoubleDomain: ClockDomain) extends Component {
 	import VideoGenerator._
 
 	val io = new Bundle {
@@ -43,6 +43,13 @@ class VideoGenerator() extends Component {
 		val hBlanking = out Bool()
 		val vBlanking = out Bool()
 
+		val dblRed   = out UInt(5 bits)
+		val dblGreen = out UInt(5 bits)
+		val dblBlue  = out UInt(5 bits)
+		val dblHSync = out Bool()
+		val dblVSync = out Bool()
+		val dblBlank = out Bool()
+		
 		val attrBus = master(ReadOnlyBus(addressWidth = 12, dataWidth = 16))
         val paletteBus = master(ReadOnlyBus(addressWidth = 8, dataWidth = 16))
 		val memBus = master(ReadOnlyBus(addressWidth = 16))
@@ -96,6 +103,51 @@ class VideoGenerator() extends Component {
 		io.vBlanking := vBlankingOut
 	}
 
+	private val double = new ClockingArea(scanDoubleDomain) {
+		private val vDisp      = 480
+		private val vSyncStart = 9+vDisp
+		private val vSyncEnd   = 6+vSyncStart
+		private val vTotal     = 17+vSyncEnd
+
+		private val sync = new VideoSync(initialHPos = hTotal - 2, initialVPos = vTotal - 3)
+		sync.io.hDisp      := hDisp
+		sync.io.hSyncStart := hSyncStart
+		sync.io.hSyncEnd   := hSyncEnd
+		sync.io.hEnd       := hTotal-1
+
+		sync.io.vDisp      := vDisp
+		sync.io.vSyncStart := vSyncStart
+		sync.io.vSyncEnd   := vSyncEnd
+		sync.io.vEnd       := vTotal-1
+
+		io.dblHSync := Delay(sync.io.hSync, 1)
+		io.dblVSync := Delay(sync.io.vSync, 1)
+		io.dblBlank := Delay(!sync.io.pixelEnable, 2)
+
+		val hPos = sync.io.hPos
+		val vPos = sync.io.vPos
+	}
+
+	private val scanDoubler = new ScanDoubler(scanDoubleDomain)
+	scanDoubler.io.pixelEnableIn := native.pixelEnableOut
+	scanDoubler.io.hPosIn   := native.hPosOut
+	scanDoubler.io.vPosIn   := native.vPosOut(7 downto 0)
+	scanDoubler.io.redIn    := io.red
+	scanDoubler.io.greenIn  := io.green
+	scanDoubler.io.blueIn   := io.blue
+	scanDoubler.io.hPosOut  := double.hPos
+	scanDoubler.io.vPosOut  := double.vPos
+
+	when (io.dblBlank) {
+		io.dblRed   := 0
+		io.dblGreen := 0
+		io.dblBlue  := 0
+	} otherwise {
+		io.dblRed   := scanDoubler.io.redOut
+		io.dblGreen := scanDoubler.io.greenOut
+		io.dblBlue  := scanDoubler.io.blueOut
+	}
+	
 	val plane0Enable = Reg(Bool()) init(True)
 	val plane1Enable = Reg(Bool()) init(False)
 	val frameEnable  = Reg(Bool()) init(False)
