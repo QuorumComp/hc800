@@ -112,3 +112,10 @@ firmware/type/type
 firmware/reset/reset
 firmware/hd.img
 firmware/gfxtest/gfxtest
+.vscode/configurationCache.log
+.vscode/dryrun.log
+.vscode/targets.log
+firmware/.vscode/configurationCache.log
+.gitignore
+firmware/.vscode/dryrun.log
+firmware/.vscode/targets.log
