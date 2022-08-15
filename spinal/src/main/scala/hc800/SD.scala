@@ -33,14 +33,17 @@ class SD extends Component {
 	clockCount := clockCount + 1;
 
 	val sdClock = RegInit(False)
-	val shiftData = RegInit(False)
+	val shiftDataOut = RegInit(False)
+	val shiftDataIn = RegInit(False)
 	when (processing) {
 		when (fastClock) {
 			sdClock := clockCount(1)
-			shiftData := clockCount(1 downto 0) === 0
+			shiftDataOut := clockCount(1 downto 0) === 0
+			shiftDataIn := clockCount(1 downto 0) === 2
 		} otherwise {
 			sdClock := clockCount(4)
-			shiftData := clockCount === 7
+			shiftDataOut := clockCount === 7
+			shiftDataIn := clockCount === 23
 		}
 	} otherwise {
 		sdClock := False
@@ -49,7 +52,7 @@ class SD extends Component {
 	io.sd_cs := ~cardSelect
 	io.sd_clock := sdClock
 
-	when (processing && shiftData) {
+	when (processing && shiftDataOut) {
 		when (count === 8) {
 			count := 0
 			inDataProcessing := False
@@ -59,13 +62,13 @@ class SD extends Component {
 		}
 	}
 
-	when (inDataProcessing && shiftData) {
+	when (inDataProcessing && shiftDataIn) {
 		spiDataIn := spiDataIn(6 downto 0) ## io.sd_do;
 	}
 
 	when (outDataProcessing) {
 		io.sd_di := spiDataOut(8)
-		when (shiftData) {
+		when (shiftDataOut) {
 			spiDataOut := spiDataOut(7 downto 0) ## False;
 		}
 	} otherwise {
