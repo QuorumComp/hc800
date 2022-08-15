@@ -128,6 +128,7 @@ SdGetTotalBlocks:
 		MHexByteOut
 		and	t,$1F	; 60:56
 		exg	f,t
+		nop
 		lio	t,(bc)	; 55:48
 		MHexByteOut
 
@@ -162,9 +163,11 @@ SdGetTotalBlocks:
 		lio	t,(bc)
 		and	t,$03
 		ld	f,t
+		nop
 		lio	t,(bc)
 		ls	ft,2
 		ld	de,ft
+		nop
 		lio	t,(bc)
 		ld	f,0
 		ls	ft,2
@@ -179,6 +182,7 @@ SdGetTotalBlocks:
 		lio	t,(bc)
 		and	t,$03
 		ld	f,t
+		nop
 		lio	t,(bc)
 		rs	ft,7	; ft = C_SIZE_MULT
 		add	ft,2
@@ -233,6 +237,7 @@ SdWriteSingleBlock:
 ; --
 		SECTION	"SdReadSingleBlock",CODE
 SdReadSingleBlock:
+		MDebugPrint <"SdReadSingleBlock\n">
 		pusha
 
 		SELECT
@@ -261,6 +266,7 @@ SdReadSingleBlock:
 		lio	t,(bc)
 		ld	(de),t
 		add	de,1
+		nop
 		ENDR
 		dj	l,.read_loop
 
@@ -268,6 +274,7 @@ SdReadSingleBlock:
 
 		; CRC
 		lio	t,(bc)
+		nop
 		nop
 		nop
 		lio	t,(bc)
@@ -330,10 +337,7 @@ SdInit:		push	bc-hl
 ; --
 sdSendBlockNumber:
 		MDebugPrint <"sdSendBlockNumber ">
-		MDebugHexWord ft
-		swap	ft
-		MDebugHexWord ft
-		swap	ft
+		MDebugHexLong ft
 		MDebugNewLine
 
 		pusha
@@ -348,10 +352,7 @@ sdSendBlockNumber:
 		jal	MathShiftLeft_32
 
 		MDebugPrint <"sdSendBlockNumber byte ">
-		MDebugHexWord ft
-		swap	ft
-		MDebugHexWord ft
-		swap	ft
+		MDebugHexLong ft
 		MDebugNewLine
 
 		ld	b,IO_SDCARD_BASE
@@ -359,11 +360,8 @@ sdSendBlockNumber:
 
 .hc		pop	ft
 .continue
-		MDebugPrint <"sdSendBlockNumber ">
-		MDebugHexWord ft
-		swap	ft
-		MDebugHexWord ft
-		swap	ft
+		MDebugPrint <"sdSendBlockNumber block ">
+		MDebugHexLong ft
 		MDebugNewLine
 
 		jal	sdSendInt32
@@ -420,18 +418,23 @@ sdSendInt32:
 
 		exg	f,t
 		lio	(bc),t
-		exg	f,t
+
 		nop
+		nop
+		exg	f,t
 		lio	(bc),t
 
+		nop
 		pop	ft
-
 		exg	f,t
 		lio	(bc),t
-		exg	f,t
+
 		nop
+		nop
+		exg	f,t
 		lio	(bc),t
 
+		nop
 		pop	bc
 		j	(hl)
 
@@ -451,6 +454,7 @@ sdSendBytes6:
 .loop		lco	t,(de)
 		add	de,1
 		lio	(bc),t
+		nop
 		dj	f,.loop
 
 		popa
@@ -482,6 +486,7 @@ sdSkipBytes6:
 .entry		ld	c,IO_SD_DATA
 .loop		lio	t,(bc)
 		MHexByteOut
+		nop
 		nop
 		dj	f,.loop
 
@@ -538,6 +543,8 @@ sdInitV2:
 		ld	t,SDTYPE_V2_HC
 		ld/eq	t,SDTYPE_V2
 		ld	f,FLAGS_EQ
+
+		MDebugPrint <"sdInitV2 - success\n">
 
 .fail		pop	de/hl
 		j	(hl)
@@ -600,12 +607,15 @@ sdReadOcr:
 
 		ld	c,IO_SD_DATA
 		lio	t,(bc)
-		ld	d,t
+
 		nop
+		nop
+		ld	d,t
 		lio	t,(bc)
+
+		nop
 		ld	e,t
 		push	de
-
 		lio	t,(bc)
 		ld	d,t
 
@@ -643,6 +653,7 @@ sdSendOpCond:
 		ld	t,41|$40	;ACMD41
 		lio	(bc),t
 
+		nop
 		nop
 		ld	t,d
 		lio	(bc),t
@@ -718,8 +729,10 @@ sdSendIfCond:
 
 		nop
 		nop
+		nop
 		lio	t,(bc)		;R7[23:16]
 
+		nop
 		nop
 		nop
 		lio	t,(bc)		;R7[15:8]
@@ -789,6 +802,7 @@ sdInFirst:
 		or	t,IO_STAT_IN_ACTIVE
 		ld	c,IO_SD_STATUS
 		lio	(bc),t
+		nop
 
 		ld	e,100
 .loop		ld	c,IO_SD_DATA
@@ -829,6 +843,8 @@ sdInLast:
 		and	t,IO_STAT_SELECT0|IO_STAT_SELECT1
 		lio	(bc),t
 
+		nop
+		nop
 		ld	c,IO_SD_DATA
 		lio	t,(bc)
 		MHexByteOut
@@ -866,9 +882,12 @@ sdFinalBits4:
 		ld	t,$00
 .arg		lio	(bc),t
 		nop
+		nop
 		dj	f,.arg
 		ld	t,$01
 		lio	(bc),t
+		nop
+		nop
 
 		j	(hl)
 

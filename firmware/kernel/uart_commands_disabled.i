@@ -24,6 +24,10 @@ MDebugHexByte:	MACRO
 MDebugHexWord:	MACRO	;register
 		ENDM
 
+		PURGE	MDebugHexLong
+MDebugHexLong:	MACRO	;register
+		ENDM
+
 		PURGE	MDebugRegisters
 MDebugRegisters: MACRO
 		ENDM
