@@ -22,15 +22,26 @@ class SD extends Component {
 	val inDataProcessing = RegInit(False)
 	val outDataProcessing = RegInit(False)
 	val spiDataIn = RegInit(B(0, 8 bits))
-	val spiDataOut = RegInit(B(0, 8 bits))
-	val count = RegInit(U(0, 3 bits))
+	val spiDataOut = RegInit(B(0, 9 bits))
+	val count = RegInit(U(0, 4 bits))
 	val processing = inDataProcessing || outDataProcessing
+	val fastClock = RegInit(True)
 
 	// External interface
 
+	val clockCount = RegInit(U(0, 5 bits))
+	clockCount := clockCount + 1;
+
 	val sdClock = RegInit(False)
+	val shiftData = RegInit(False)
 	when (processing) {
-		sdClock := !sdClock
+		when (fastClock) {
+			sdClock := clockCount(1)
+			shiftData := clockCount(1 downto 0) === 0
+		} otherwise {
+			sdClock := clockCount(4)
+			shiftData := clockCount === 7
+		}
 	} otherwise {
 		sdClock := False
 	}
@@ -38,8 +49,8 @@ class SD extends Component {
 	io.sd_cs := ~cardSelect
 	io.sd_clock := sdClock
 
-	when (processing && sdClock) {
-		when (count === 7) {
+	when (processing && shiftData) {
+		when (count === 8) {
 			count := 0
 			inDataProcessing := False
 			outDataProcessing := False
@@ -48,14 +59,14 @@ class SD extends Component {
 		}
 	}
 
-	when (inDataProcessing && sdClock) {
+	when (inDataProcessing && shiftData) {
 		spiDataIn := spiDataIn(6 downto 0) ## io.sd_do;
 	}
 
 	when (outDataProcessing) {
-		io.sd_di := spiDataOut(7)
-		when (sdClock) {
-			spiDataOut := spiDataOut(6 downto 0) ## False;
+		io.sd_di := spiDataOut(8)
+		when (shiftData) {
+			spiDataOut := spiDataOut(7 downto 0) ## False;
 		}
 	} otherwise {
 		io.sd_di := False
@@ -71,7 +82,7 @@ class SD extends Component {
 	when (io.bus.enable && !io.bus.write) {
 		ioDataOut := busRegister.mux (
 			Register.data -> spiDataIn,
-			Register.status -> B(cardSelect ## outDataProcessing ## inDataEnabled).resize(8 bits)
+			Register.status -> B(fastClock ## cardSelect ## outDataProcessing ## inDataEnabled).resize(8 bits)
 		)
 
 		when (busRegister === Register.data) {
@@ -84,10 +95,13 @@ class SD extends Component {
 	when (io.bus.enable && io.bus.write) {
 		switch (busRegister) {
 			is (Register.data) {
-				spiDataOut := io.bus.dataFromMaster
+				spiDataOut(7 downto 0) := io.bus.dataFromMaster
+				spiDataOut(8) := io.bus.dataFromMaster(7)
 				outDataProcessing := True
+				clockCount := 0
 			}
 			is (Register.status) {
+				fastClock := io.bus.dataFromMaster(4)
 				cardSelect := io.bus.dataFromMaster(3 downto 2)
 
 				val newInEnabled = io.bus.dataFromMaster(0)
@@ -132,7 +146,7 @@ object SD {
 		component.clockDomain.waitRisingEdge()
 		val value = component.io.bus.dataToMaster.toInt
 
-		System.out.println(f"R$reg -> 0x$value%02X")
+		//System.out.println(f"R$reg -> 0x$value%02X")
 		value
 	}
 
@@ -193,7 +207,7 @@ object SD {
 	def main(args: Array[String]) {
 		import spinal.sim._
 		import spinal.core.sim._
-		SimConfig.withWave.doSim(new SD) { dut =>
+		SimConfig.withWave.compile(new SD).doSim { dut =>
 			dut.io.bus.enable #= false
 			dut.io.bus.write #= false
 			dut.io.bus.address #= 0
@@ -204,11 +218,11 @@ object SD {
 
 			fork {
 				while (true) {
-					waitUntil(!dut.io.sd_cs(0).toBoolean)
+					waitUntil((dut.io.sd_cs.toInt & 1) == 0)
 
 					var count = 0
 					var result = 0xA5
-					while (!dut.io.sd_cs(0).toBoolean) {
+					while ((dut.io.sd_cs.toInt & 1) == 0) {
 						dut.io.sd_do #= ((result >>> 7) & 1) != 0
 						waitUntil(dut.io.sd_clock.toBoolean)
 						result = ((result >> 7) & 1) | ((result & 0x7F) << 1)
