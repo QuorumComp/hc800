@@ -29,7 +29,7 @@ class SD extends Component {
 
 	// External interface
 
-	val clockCount = RegInit(U(0, 5 bits))
+	val clockCount = RegInit(U(0, 6 bits))
 	clockCount := clockCount + 1;
 
 	val sdClock = RegInit(False)
@@ -37,9 +37,9 @@ class SD extends Component {
 	val shiftDataIn = RegInit(False)
 	when (processing) {
 		when (slowClock) {
-			sdClock := clockCount(4)
-			shiftDataOut := clockCount === 7
-			shiftDataIn := clockCount === 23
+			sdClock := clockCount(5)
+			shiftDataOut := clockCount(5 downto 0) === 15
+			shiftDataIn := clockCount(5 downto 0) === 47
 		} otherwise {
 			sdClock := clockCount(1)
 			shiftDataOut := clockCount(1 downto 0) === 0
@@ -47,6 +47,8 @@ class SD extends Component {
 		}
 	} otherwise {
 		sdClock := False
+		shiftDataIn := False
+		shiftDataOut := False
 	}
 
 	io.sd_cs := ~cardSelect
@@ -54,7 +56,6 @@ class SD extends Component {
 
 	when (processing && shiftDataOut) {
 		when (count === 8) {
-			count := 0
 			inDataProcessing := False
 			outDataProcessing := False
 		} otherwise {
@@ -82,6 +83,13 @@ class SD extends Component {
 
 	val busRegister = io.bus.address.as(Register())
 
+	def restartProcess(): Unit = {
+		clockCount := 0
+		count := 0
+		shiftDataIn := False
+		shiftDataOut := False
+	}
+
 	when (io.bus.enable && !io.bus.write) {
 		ioDataOut := busRegister.mux (
 			Register.data -> spiDataIn,
@@ -90,6 +98,7 @@ class SD extends Component {
 
 		when (busRegister === Register.data) {
 			inDataProcessing := inDataEnabled
+			restartProcess()
 		}
 	} otherwise {
 		ioDataOut := 0
@@ -101,7 +110,7 @@ class SD extends Component {
 				spiDataOut(7 downto 0) := io.bus.dataFromMaster
 				spiDataOut(8) := io.bus.dataFromMaster(7)
 				outDataProcessing := True
-				clockCount := 0
+				restartProcess()
 			}
 			is (Register.status) {
 				slowClock := io.bus.dataFromMaster(4)
@@ -110,6 +119,7 @@ class SD extends Component {
 				val newInEnabled = io.bus.dataFromMaster(0)
 				when (newInEnabled && !inDataEnabled) {
 					inDataProcessing := True
+					restartProcess()
 				}
 				inDataEnabled := newInEnabled
 			}

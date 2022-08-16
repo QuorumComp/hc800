@@ -21,7 +21,7 @@ BLOCKLEN:	EQU	512
 
 HCS:		EQU	$40	;high capacity supported
 
-REPLY_IDLE:		EQU	$01
+REPLY_IDLE		EQU	$01
 REPLY_ERASE_RESET	EQU	$02
 REPLY_ILLEGAL_COMMAND	EQU	$04
 REPLY_CRC_ERROR		EQU	$08
@@ -36,6 +36,15 @@ SELECT:		MACRO
 		ld	t,(bc)
 		ld	b,IO_SDCARD_BASE
 		ld	c,IO_SD_STATUS
+		lio	(bc),t
+		ENDM
+
+SELECT_SLOW:	MACRO
+		ld	bc,SdSelect
+		ld	t,(bc)
+		ld	b,IO_SDCARD_BASE
+		ld	c,IO_SD_STATUS
+		or	t,IO_STAT_SLOW
 		lio	(bc),t
 		ENDM
 
@@ -129,6 +138,7 @@ SdGetTotalBlocks:
 		and	t,$1F	; 60:56
 		exg	f,t
 		nop
+		nop
 		lio	t,(bc)	; 55:48
 		MHexByteOut
 
@@ -164,9 +174,11 @@ SdGetTotalBlocks:
 		and	t,$03
 		ld	f,t
 		nop
+		nop
 		lio	t,(bc)
 		ls	ft,2
 		ld	de,ft
+		nop
 		nop
 		lio	t,(bc)
 		ld	f,0
@@ -182,6 +194,7 @@ SdGetTotalBlocks:
 		lio	t,(bc)
 		and	t,$03
 		ld	f,t
+		nop
 		nop
 		lio	t,(bc)
 		rs	ft,7	; ft = C_SIZE_MULT
@@ -267,6 +280,7 @@ SdReadSingleBlock:
 		ld	(de),t
 		add	de,1
 		nop
+		nop
 		ENDR
 		dj	l,.read_loop
 
@@ -274,6 +288,7 @@ SdReadSingleBlock:
 
 		; CRC
 		lio	t,(bc)
+		nop
 		nop
 		nop
 		nop
@@ -421,9 +436,11 @@ sdSendInt32:
 
 		nop
 		nop
+		nop
 		exg	f,t
 		lio	(bc),t
 
+		nop
 		nop
 		pop	ft
 		exg	f,t
@@ -431,9 +448,11 @@ sdSendInt32:
 
 		nop
 		nop
+		nop
 		exg	f,t
 		lio	(bc),t
 
+		nop
 		nop
 		pop	bc
 		j	(hl)
@@ -453,8 +472,33 @@ sdSendBytes6:
 		ld	f,6
 .loop		lco	t,(de)
 		add	de,1
-		lio	(bc),t
 		nop
+		lio	(bc),t
+		dj	f,.loop
+
+		popa
+		j	(hl)
+
+
+; ---------------------------------------------------------------------------
+; -- Send six bytes to SD card using the slow frequency
+; --
+; -- Inputs:
+; --   de - pointer to six bytes in code segment
+; --
+		SECTION	"sdSendBytes",CODE
+sdSendBytes6_Slow:
+		pusha
+
+		ld	c,IO_SD_DATA
+		ld	f,6
+.loop		lco	t,(de)
+		add	de,1
+		lio	(bc),t
+
+		ld	l,61
+.wait		dj	l,.wait
+
 		dj	f,.loop
 
 		popa
@@ -486,6 +530,7 @@ sdSkipBytes6:
 .entry		ld	c,IO_SD_DATA
 .loop		lio	t,(bc)
 		MHexByteOut
+		nop
 		nop
 		nop
 		dj	f,.loop
@@ -610,9 +655,11 @@ sdReadOcr:
 
 		nop
 		nop
+		nop
 		ld	d,t
 		lio	t,(bc)
 
+		nop
 		nop
 		ld	e,t
 		push	de
@@ -653,6 +700,7 @@ sdSendOpCond:
 		ld	t,41|$40	;ACMD41
 		lio	(bc),t
 
+		nop
 		nop
 		nop
 		ld	t,d
@@ -730,8 +778,10 @@ sdSendIfCond:
 		nop
 		nop
 		nop
+		nop
 		lio	t,(bc)		;R7[23:16]
 
+		nop
 		nop
 		nop
 		nop
@@ -767,12 +817,15 @@ sdGoIdleState:
 		MDebugPrint <"sdGoIdleState\n">
 		push	hl
 
-		SELECT
+		SELECT_SLOW
+
+		ld	de,.bytesFF
+		jal	sdSendBytes6_Slow
 
 		ld	de,.bytes
-		jal	sdSendBytes6
+		jal	sdSendBytes6_Slow
 
-		jal	sdInFirst	;R1
+		jal	sdInFirst_GoIdle	;R1
 
 		DESELECT
 
@@ -780,6 +833,7 @@ sdGoIdleState:
 		j	(hl)
 
 .bytes		DB	0|$40,0,0,0,0,CMD0_CRC
+.bytesFF	DB	$FF,$FF,$FF,$FF,$FF,$FF
 
 
 ; ---------------------------------------------------------------------------
@@ -803,6 +857,7 @@ sdInFirst:
 		ld	c,IO_SD_STATUS
 		lio	(bc),t
 		nop
+		nop
 
 		ld	e,100
 .loop		ld	c,IO_SD_DATA
@@ -817,6 +872,52 @@ sdInFirst:
 		j	.exit
 
 .done		MNewLine
+		ld	t,REPLY_ERRORS
+		and	t,d
+		cmp	t,0	; set success flag
+		ld	t,d
+
+.exit		pop	de/hl
+		j	(hl)
+		
+
+; ---------------------------------------------------------------------------
+; -- Fetch first reply byte (R1)
+; --
+; -- Inputs:
+; --   	b - IO_SDCARD_BASE
+; --
+; -- Returns:
+; --    f - "eq" condition if success
+; --    t - byte
+; --
+		SECTION	"sdInFirst",CODE
+sdInFirst_GoIdle:
+		MDebugPrint <"sdInFirst_GoIdle\n">
+		push	de/hl
+
+		ld	ft,SdSelect
+		ld	t,(ft)
+		or	t,IO_STAT_IN_ACTIVE|IO_STAT_SLOW
+		ld	c,IO_SD_STATUS
+		lio	(bc),t
+
+		ld	e,100
+.loop		ld	l,64
+.wait		dj	l,.wait
+		ld	c,IO_SD_DATA
+		lio	t,(bc)
+		MHexByteOut
+		ld	d,t
+		cmp	t,REPLY_IDLE
+		j/eq	.done
+		dj	e,.loop
+		ld	f,FLAGS_NE
+		j	.exit
+
+.done		MNewLine
+		MDebugHexByte d
+		MNewLine
 		ld	t,REPLY_ERRORS
 		and	t,d
 		cmp	t,0	; set success flag
@@ -843,6 +944,7 @@ sdInLast:
 		and	t,IO_STAT_SELECT0|IO_STAT_SELECT1
 		lio	(bc),t
 
+		nop
 		nop
 		nop
 		ld	c,IO_SD_DATA
@@ -883,9 +985,11 @@ sdFinalBits4:
 .arg		lio	(bc),t
 		nop
 		nop
+		nop
 		dj	f,.arg
 		ld	t,$01
 		lio	(bc),t
+		nop
 		nop
 		nop
 
