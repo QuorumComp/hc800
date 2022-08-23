@@ -54,11 +54,17 @@ SysExecuteCommandLine::
 		ld	bc,lastCommandLine
 		jal	tokenizeCommandLine
 
+		MDebugPrint <"KExecute activate MMU load config\n">
+
 		ld	t,MMU_CFG_LOAD|MMU_INDEX_PUSH
 		jal	MmuActivateConfig
 
+		MDebugPrint <"KExecute load executable\n">
+
 		ld	de,lastCommandLine
 		jal	readExecutable
+
+		MDebugPrint <"KExecute restore MMU config\n">
 
 		push	ft
 		ld	t,MMU_INDEX_POP
@@ -68,8 +74,12 @@ SysExecuteCommandLine::
 
 		; top of hl stack is return address
 
+		MDebugPrint <"KExecute activate client config\n">
+
 		ld	t,MMU_CFG_CLIENT
 		jal	MmuActivateConfig
+
+		MDebugPrint <"KExecute jump\n">
 
 		ld	hl,0
 		push	hl	;push HL for reti pop

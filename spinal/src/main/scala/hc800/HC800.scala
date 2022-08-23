@@ -212,16 +212,16 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 		val paletteMemBus = Bus(addressWidth = hc800.video.PaletteMemory.byteWidth)
 		
 		val machineBus = Bus(addressWidth = 22)
-		machineBus.enable := (mainArea.cpuBusMaster ? cpuArea.cpuBus.enable | mainArea.chipsetBusMaster)
-		machineBus.write := (mainArea.cpuBusMaster ? cpuArea.cpuBus.write | False)
-		machineBus.dataFromMaster := cpuArea.cpuBus.dataFromMaster
+		machineBus.enable := RegNext(mainArea.cpuBusMaster ? cpuArea.cpuBus.enable | mainArea.chipsetBusMaster)
+		machineBus.write := RegNext(mainArea.cpuBusMaster ? cpuArea.cpuBus.write | False)
+		machineBus.dataFromMaster := RegNext(cpuArea.cpuBus.dataFromMaster)
 
 		val mmu = new MMU()
 		mmu.io.mapAddressIn := (mainArea.cpuBusMaster ? cpuArea.cpuBus.address | chipMemBus.address)
-		mmu.io.mapAddressOut <> machineBus.address
 		mmu.io.mapSource := source
 		mmu.io.mapCode   := cpuArea.code
 		mmu.io.mapSystem := cpuArea.system
+		machineBus.address := RegNext(mmu.io.mapAddressOut)
 
 		// Machine bus enables
 		val bootEnable       = machineBus.address === ramMap.boot
@@ -296,9 +296,8 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 			machineBus.wireClient(paletteMemBus, paletteMemEnable) |
 			machineBus.wireClient(io.ramBus, ramEnable)
 
-		val delayMemDataIn = Delay(memDataIn, 1)
-		cpuArea.cpuBus.dataToMaster := delayMemDataIn
-		chipMemBus.dataToMaster := delayMemDataIn
+		cpuArea.cpuBus.dataToMaster := memDataIn
+		chipMemBus.dataToMaster := memDataIn
 
 		val nexys3IoDataIn = 
 			if (boardIsNexys3) cpuArea.ioBus.wireClient(nexys3.io.bus, boardEnable)
@@ -377,7 +376,7 @@ object HC800TopLevel {
 
 	def main(args: Array[String]): Unit = {
 		//generate("../../../rtl/hc800_zxnext.v", BoardId.Board.zxNext, Vendor.Xilinx)(rc800.lpm.generic.Components)
-		//generate("../../../rtl/hc800_mist.v", BoardId.Board.mist, Vendor.Altera)(rc800.lpm.blackbox.Components)
+		generate("../../../rtl/hc800_mist.v", BoardId.Board.mist, Vendor.Altera)(rc800.lpm.blackbox.Components)
 		//generate("hc800_nexys3.v", BoardId.Board.nexys3.position, Vendor.Xilinx)
 		//generate("../../../rtl/hc800_mister.v", BoardId.Board.mister, Vendor.Altera)(rc800.lpm.blackbox.Components)
 	}
