@@ -37,30 +37,6 @@ case class CPU(memoryDomain: ClockDomain)(implicit lpmComponents: rc800.lpm.Comp
 }
 
 
-case class BusCPU(memoryDomain: ClockDomain)(implicit lpmComponents: rc800.lpm.Components) extends Component {
-	val io = new Bundle {
-		val irq = in Bool()
-
-		val cpuBus = master(Bus(addressWidth = 16))
-		val ioBus = master(Bus(addressWidth = 16))
-
-		val code   = out Bool()
-		val system = out Bool()
-	}
-
-	private val cpu = CPU(memoryDomain)
-
-	cpu.io.irq := io.irq
-
-	cpu.io.bus.dataToMaster :=
-		cpu.io.bus.wireClient(io.cpuBus, !cpu.io.io) |
-		cpu.io.bus.wireClient(io.ioBus, cpu.io.io)
-
-	io.code := cpu.io.code
-	io.system := cpu.io.system
-}
-
-
 class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.Components) extends Component {
 
 	val boardIsZxNext = board == BoardId.Board.zxNext
@@ -106,24 +82,21 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 		val ps2Strobe = (boardIsMist || boardIsMister) generate (in Bool())
 	}
 
-	val ioMap = new {
-		val intCtrl  = M"000000000000----"
-		val mmu      = M"000000010000----"
-		val math     = M"000000100000----"
-		val keyboard = M"000000110000----"
-		val uart     = M"000001000000----"
-		val graphics = M"00000101--------"
-		val sd       = M"000001100000----"
-		val id       = M"011111111111----"
-		val board    = M"1---------------"
-	}
-
 	val ramMap = new {
 		val boot       = M"00000000--------------"
 		val kernel     = M"00000001--------------"
 		val chargen    = M"00001000--------------"
-		val palette    = M"00111000--------------"
-		val attributes = M"00111100--------------"
+		val intCtrl    = M"010000000000000000----"
+		val mmu        = M"010000000000010000----"
+		val math       = M"010000000000100000----"
+		val keyboard   = M"010000000000110000----"
+		val uart       = M"010000000001000000----"
+		val graphics   = M"01000000000101--------"
+		val sd         = M"010000000001100000----"
+		val board      = M"01000001111110000-----"
+		val id         = M"010000011111111111----"
+		val palette    = M"01000010--------------"
+		val attributes = M"01000011--------------"
 		val ram        = M"1---------------------"
 	}
 
@@ -177,32 +150,21 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 	val cpuArea = new ClockingArea(cpuDomain) {
 		val irq = Bool() addTag(crossClockDomain)
 
-		private val cpu = BusCPU(memoryDomain)
+		private val cpu = CPU(memoryDomain)
 
 		cpu.io.irq := irq
 
+		val io = cpu.io.io addTag(crossClockDomain)
 		val code = cpu.io.code addTag(crossClockDomain)
 		val system = cpu.io.system addTag(crossClockDomain)
 
-		val cpuBus = cpu.io.cpuBus addTag(crossClockDomain)
-		val ioBus = cpu.io.ioBus addTag(crossClockDomain)
+		val cpuBus = cpu.io.bus addTag(crossClockDomain)
 	}
 
 
 	// --- MEMORY/BUS ---
 
 	val memoryArea = new ClockingArea(memoryDomain) {
-		// I/O bus enables
-		val mmuEnable      = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.mmu))
-		val boardIdEnable  = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.id))
-		val graphicsEnable = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.graphics))
-		val keyboardEnable = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.keyboard))
-		val boardEnable    = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.board))
-		val mathEnable     = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.math))
-		val uartEnable     = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.uart))
-		val sdEnable       = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.sd))
-		val intCtrlEnable  = (mainArea.cpuBusMaster && (cpuArea.ioBus.address === ioMap.intCtrl))
-
 		val chipSource = MMU.MapSource()
 		val source = mainArea.cpuBusMaster ? MMU.MapSource.cpu | chipSource
 
@@ -219,11 +181,21 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 		val mmu = new MMU()
 		mmu.io.mapAddressIn := (mainArea.cpuBusMaster ? cpuArea.cpuBus.address | chipMemBus.address)
 		mmu.io.mapSource := source
+		mmu.io.mapIo     := cpuArea.io
 		mmu.io.mapCode   := cpuArea.code
 		mmu.io.mapSystem := cpuArea.system
 		machineBus.address := RegNext(mmu.io.mapAddressOut)
 
 		// Machine bus enables
+		val mmuEnable        = machineBus.address === ramMap.mmu
+		val boardIdEnable    = machineBus.address === ramMap.id
+		val graphicsEnable   = machineBus.address === ramMap.graphics
+		val keyboardEnable   = machineBus.address === ramMap.keyboard
+		val boardEnable      = machineBus.address === ramMap.board
+		val mathEnable       = machineBus.address === ramMap.math
+		val uartEnable       = machineBus.address === ramMap.uart
+		val sdEnable         = machineBus.address === ramMap.sd
+		val intCtrlEnable    = machineBus.address === ramMap.intCtrl
 		val bootEnable       = machineBus.address === ramMap.boot
 		val kernelEnable     = machineBus.address === ramMap.kernel
 		val fontEnable       = machineBus.address === ramMap.chargen
@@ -288,7 +260,20 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 		sd.io.sd_di <> io.sd_di
 		sd.io.sd_do <> io.sd_do
 
+		val nexys3IoDataIn = 
+			if (boardIsNexys3) machineBus.wireClient(nexys3.io.bus, boardEnable)
+			else B"00000000"
+
 		val memDataIn =
+			nexys3IoDataIn |
+			machineBus.wireClient(graphicsRegBus, graphicsEnable) |
+			machineBus.wireClient(mmu.io.regBus, mmuEnable) |
+			machineBus.wireClient(boardId.io, boardIdEnable) |
+			machineBus.wireClient(keyboard.io.bus, keyboardEnable) |
+			machineBus.wireClient(math.io, mathEnable) |
+			machineBus.wireClient(uart.io.bus, uartEnable) |
+			machineBus.wireClient(sd.io.bus, sdEnable) |
+			machineBus.wireClient(interruptController.io.regBus, intCtrlEnable) |
 			machineBus.wireClient(bootROM.io, bootEnable) |
 			machineBus.wireClient(kernel.io, kernelEnable) |
 			machineBus.wireClient(font.io, fontEnable) |
@@ -298,24 +283,6 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 
 		cpuArea.cpuBus.dataToMaster := memDataIn
 		chipMemBus.dataToMaster := memDataIn
-
-		val nexys3IoDataIn = 
-			if (boardIsNexys3) cpuArea.ioBus.wireClient(nexys3.io.bus, boardEnable)
-			else B"00000000"
-
-		val ioDataIn =
-			nexys3IoDataIn |
-			cpuArea.ioBus.wireClient(graphicsRegBus, graphicsEnable) |
-			cpuArea.ioBus.wireClient(mmu.io.regBus, mmuEnable) |
-			cpuArea.ioBus.wireClient(boardId.io, boardIdEnable) |
-			cpuArea.ioBus.wireClient(keyboard.io.bus, keyboardEnable) |
-			cpuArea.ioBus.wireClient(math.io, mathEnable) |
-			cpuArea.ioBus.wireClient(uart.io.bus, uartEnable) |
-			cpuArea.ioBus.wireClient(sd.io.bus, sdEnable) |
-			cpuArea.ioBus.wireClient(interruptController.io.regBus, intCtrlEnable)
-
-		val delayIoDataIn = Delay(ioDataIn, 1)
-		cpuArea.ioBus.dataToMaster := delayIoDataIn
 	}
 
 

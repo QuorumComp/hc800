@@ -50,6 +50,7 @@ class MMU extends Component {
 		val mapSource     = in  (MapSource())
 		val mapCode       = in  Bool()
 		val mapSystem     = in  Bool()
+		val mapIo         = in  Bool()
 		val mapAddressIn  = in  UInt(16 bits)
 		val mapAddressOut = out UInt(22 bits)
 	}
@@ -64,6 +65,8 @@ class MMU extends Component {
 		val systemData = Reg(Bits(8 bits)) init(0)
 		val systemHarvard = Reg(Bool()) init(False)
 	}
+
+	val ioBank = U(0x40, 8 bits)
 
 	val configurationStack = Reg(UInt(8 bits))
 
@@ -85,20 +88,24 @@ class MMU extends Component {
 			)
 
 		when (io.mapSource === MapSource.cpu) {
-			val segment = io.mapAddressIn(15 downto 14)
-			val codeSegment = mapUpperSize(segment, config.userCodeUpperSize)
-			val dataSegment = mapUpperSize(segment, config.userDataUpperSize)
+			when (io.mapIo) {
+				io.mapAddressOut := (ioBank(7 downto 2) ## io.mapAddressIn).asUInt
+			} otherwise {
+				val segment = io.mapAddressIn(15 downto 14)
+				val codeSegment = mapUpperSize(segment, config.userCodeUpperSize)
+				val dataSegment = mapUpperSize(segment, config.userDataUpperSize)
 
-			val userCode = config.userCode(codeSegment)
-			val userData = config.userHarvard ? config.userData(dataSegment) | userCode
-			val userBank = io.mapCode ? userCode | userData
+				val userCode = config.userCode(codeSegment)
+				val userData = config.userHarvard ? config.userData(dataSegment) | userCode
+				val userBank = io.mapCode ? userCode | userData
 
-			val systemCode = config.systemCode
-			val systemData = config.systemHarvard ? config.systemData | systemCode
-			val systemBank = io.mapCode ? systemCode | systemData
+				val systemCode = config.systemCode
+				val systemData = config.systemHarvard ? config.systemData | systemCode
+				val systemBank = io.mapCode ? systemCode | systemData
 
-			val bank = Mux (io.mapSystem && segment === 0, systemBank, userBank)
-			io.mapAddressOut := (bank ## io.mapAddressIn.resize(14 bits)).asUInt
+				val bank = Mux (io.mapSystem && segment === 0, systemBank, userBank)
+				io.mapAddressOut := (bank ## io.mapAddressIn.resize(14 bits)).asUInt
+			}
 		}.elsewhen (io.mapSource === MapSource.chipsetCharGen) {
 			io.mapAddressOut := ((chipsetCharGen ## B(0, 14 bits)).asUInt + io.mapAddressIn.resize(22 bits))
 		}.otherwise {

@@ -9,7 +9,7 @@ import hc800.Bus
 
 class Nexys3 extends Component {
 	val io = new Bundle {
-		val bus = slave(Bus(addressWidth = 15))
+		val bus = slave(Bus(addressWidth = 5))
 
 		val segments = out Bits(8 bits)
 		val anode    = out Bits(4 bits)
@@ -18,8 +18,8 @@ class Nexys3 extends Component {
 	}
 
 	val ioMap = new {
-		val hexSegments = M"00000000000----"
-		val buttons     = M"00000000001----"
+		val hexSegments = M"0----"
+		val buttons     = M"1----"
 	}
 
 	val hexEnable = (io.bus.address === ioMap.hexSegments)

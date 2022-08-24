@@ -9,8 +9,8 @@
 | $040x   | 16   | UART       |
 | $05xx   | 256  | Display controller |
 | $060x   | 16   | SD card |
+| $7Exx   | 256 | Board specific functions |
 | $7FFx   | 16   | Board ID   |
-| $8000   | $8000 | Board specific functions |
 
 
 ## Interrupt controller
@@ -74,9 +74,9 @@ The system banks are in effect when handling interrupts and the SYS instruction.
 |---------|------|-------------------------|
 | $00     | 1    | Operation               |
 | $01     | 1    | Status                  |
-| $02     | 2    | 16 bit value #1 (x)     |
-| $04     | 2    | 16 bit value #2 (y)     |
-| $06     | 4    | 32 bit value #1 (z)     |
+| $02     | 4    | 32 bit value #1 (x)     |
+| $04     | 4    | 32 bit value #2 (y)     |
+| $06     | 8    | 64 bit value #1 (z)     |
 
 ### Operations
 | Value | Operation |
@@ -103,6 +103,8 @@ The system banks are in effect when handling interrupts and the SYS instruction.
 |-------|------------------|
 | $00   | ZX Spectrum Next |
 | $01   | Digilent Nexys 3 |
+| $02   | MiST |
+| $03   | MiSTer |
 | $FF   | HC800 Emulator   |
 
 ### Board ASCII description ($01)
@@ -110,7 +112,7 @@ This register returns an ASCII string containing a short human readable string w
 
 The string's first byte contains a start bit and the string length. If bit seven is set, bits six though zero contain the string length (excluding this first marker byte). Reading the register again will return the next character.
 
-To read the string reliably, the register should be read until a byte with the seventh bit set is retrieved, and then reading the number of characters indicated by bits six though zero.
+To read the string reliably, the register should be read until a byte with the seventh bit set is retrieved, and then reading the number of characters indicated by bits six through zero.
 
 ## UART
 | Address | Content |
@@ -133,8 +135,8 @@ To read the string reliably, the register should be read until a byte with the s
 ### Status
 | Bit | Content | Function |
 |-----|---------|----------|
-| 0   | In active | Set to retrieve bytes. The byte will be available when 16 machine cycles have elapsed (two instructions). When data register is read and active bit is set, the next byte will be retrieved. |
-| 1   | Out active (read only) | Will be set when data register is written. The byte will be transmitted in 16 machine cycles (two instructions) |
+| 0   | In active | Set to retrieve bytes. The byte will be available when 32 machine cycles have elapsed (four instructions). When data register is read and active bit is set, the next byte will be retrieved. |
+| 1   | Out active (read only) | Will be set when data register is written. The byte will be transmitted in 32 machine cycles (four instructions) |
 | 2   | Card select #0 | Selects card #0 |
 | 3   | Card select #1 | Selects card #1 |
 
