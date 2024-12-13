@@ -36,7 +36,7 @@ Main:
 
 		jal	initializeMemory
 		
-		MStackInit 4096
+		MStackInit 4096,BSS
 
 		MDebugStacks
 		MDebugPrint <"Initialize palette\n">

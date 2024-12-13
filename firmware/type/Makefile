@@ -32,7 +32,7 @@ $(DEPDIR)/%.d: ;
 .PRECIOUS: $(DEPDIR)/%.d
 
 $(TARGET) : $(notdir $(SRCS:asm=obj)) $(LIBS)
-	$(LINK) -sEntry -m$@.sym -o$@ -chc800s -fhc800 $+
+	$(LINK) -sEntry -m$@.sym -o$@ -chc8s -fhc800 $+
 
 clean :
 	$(REMOVEALL)
