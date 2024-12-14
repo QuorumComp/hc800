@@ -342,6 +342,7 @@ object HC800TopLevel {
 	}
 
 	def main(args: Array[String]): Unit = {
+		generate("../../../rtl/hc800_mega65.v", BoardId.Board.mega65, Vendor.Xilinx)(rc800.lpm.generic.Components)
 		//generate("../../../rtl/hc800_zxnext.v", BoardId.Board.zxNext, Vendor.Xilinx)(rc800.lpm.generic.Components)
 		//generate("../../../rtl/hc800_mist.v", BoardId.Board.mist, Vendor.Altera)(rc800.lpm.blackbox.Components)
 		//generate("hc800_nexys3.v", BoardId.Board.nexys3.position, Vendor.Xilinx)

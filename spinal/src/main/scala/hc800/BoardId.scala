@@ -18,7 +18,7 @@ class BoardId(board: Int) extends Component {
 
 	val bytes = ((identifier.length | 0x80).toByte :: identifier.map((ch : Char) => ch.toByte).toList).toArray
 
-    val io = slave(ReadOnlyBus(addressWidth = 1))
+	val io = slave(ReadOnlyBus(addressWidth = 1))
 
 	val counter = Reg(UInt(log2Up(bytes.length) bits))
 	val dataOutR = Reg(Bits(8 bits))
@@ -44,7 +44,7 @@ class BoardId(board: Int) extends Component {
 		dataOutR := 0
 	}
 
-    noIoPrefix()
+	noIoPrefix()
 }
 
 
@@ -54,5 +54,6 @@ object BoardId {
 		val nexys3 = 1
 		val mist = 2
 		val mister = 3
+		val mega65 = 4
 	}
 }

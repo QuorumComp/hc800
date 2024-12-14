@@ -10,7 +10,7 @@ lazy val hc800 = (project in file("."))
 
 		version := "1.0",
 
-		scalaVersion := "2.12.11",
+		scalaVersion := "2.12.20",
 
 		libraryDependencies ++= Seq(
 			"com.github.spinalhdl" % "spinalhdl-core_2.12" % spinalVersion,
