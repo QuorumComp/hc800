@@ -36,5 +36,5 @@ lazy val hc800 = (project in file("."))
 
 		Compile / unmanagedSourceDirectories += baseDirectory.value / "rc800",
 
-		(run in Compile) := ((run in Compile) dependsOn buildMachineCode).evaluated,
+		Compile / run := ((Compile / run) dependsOn buildMachineCode)
 	)

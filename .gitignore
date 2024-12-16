@@ -3,6 +3,8 @@ target/streams
 firmware/bios/bios.bin
 firmware/**/.d/*
 firmware/**/*.obj
+firmware/**/*.map
+firmware/**/*.list
 firmware/**/*.sym
 spinal/.metals
 spinal/.bloop
@@ -119,3 +121,4 @@ firmware/.vscode/configurationCache.log
 .gitignore
 firmware/.vscode/dryrun.log
 firmware/.vscode/targets.log
+firmware/boot/boot.list
