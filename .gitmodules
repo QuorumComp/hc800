@@ -7,5 +7,5 @@
 	url = https://github.com/QuorumComp/hc800-stdlib.git
 	branch = main
 [submodule "rtl/hc800"]
-	path = rtl/hc800
+	path = rtl/rc800
 	url = https://github.com/QuorumComp/rc800.git
