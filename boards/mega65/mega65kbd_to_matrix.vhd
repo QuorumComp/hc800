@@ -110,7 +110,8 @@ begin  -- behavioural
 
          -- modified by sy2002 in December 2020:
          -- original value for the MEGA65 @ 40 MHz was 64
-         if clock_divider /= 45 then
+         -- HC800 @ 13.5 is 22
+         if clock_divider /= 22 then
             clock_divider <= clock_divider + 1;
          else
             clock_divider <= 0;

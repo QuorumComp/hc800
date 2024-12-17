@@ -40,9 +40,10 @@ case class CPU(memoryDomain: ClockDomain)(implicit lpmComponents: rc800.lpm.Comp
 class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.Components) extends Component {
 
 	val boardIsZxNext = board == BoardId.Board.zxNext
-	val boardIsMist = board == BoardId.Board.mist
+	val boardIsMist   = board == BoardId.Board.mist
 	val boardIsMister = board == BoardId.Board.mister
 	val boardIsNexys3 = board == BoardId.Board.nexys3
+	val boardIsMega65 = board == BoardId.Board.mega65
 
 	val io = new Bundle {
 		val btn = boardIsNexys3 generate (in Bits(5 bits))
@@ -73,9 +74,16 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 		val sd_di = out Bool()
 		val sd_do = in Bool()
 
+		// ZX Spectrum Next
 		val keyboardColumns = boardIsZxNext generate (in  Bits(7 bits))
 		val keyboardRows    = boardIsZxNext generate (out Bits(8 bits))
 
+		// MEGA65
+		val kio8_o  = boardIsMega65 generate (out Bool())
+		val kio9_o  = boardIsMega65 generate (out Bool())
+		val kio10_i = boardIsMega65 generate (in Bool())
+
+		// MiST and MiSTer
 		val ps2Code   = (boardIsMist || boardIsMister) generate (in Bits(8 bits))
 		val ps2Make   = (boardIsMist || boardIsMister) generate (in Bool())
 		val ps2Extend = (boardIsMist || boardIsMister) generate (in Bool())
@@ -212,6 +220,14 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 			kbd
 		} 
 
+		def mkMega65Keyboard(): hc800.keyboard.Mega65Keyboard = {
+			val kbd = new hc800.keyboard.Mega65Keyboard()
+			kbd.io.kio8_o  <> io.kio8_o
+			kbd.io.kio9_o  <> io.kio9_o
+			kbd.io.kio10_i <> io.kio10_i
+			kbd
+		} 
+
 		def mkMistKeyboard(): hc800.keyboard.MistKeyboard = {
 			val kbd = new hc800.keyboard.MistKeyboard()
 			kbd.io.keyCode <> io.ps2Code
@@ -224,6 +240,7 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 		val keyboard =
 			if (boardIsZxNext) mkZxNextKeyboard()
 			else if (boardIsMist || boardIsMister) mkMistKeyboard()
+			else if (boardIsMega65) mkMega65Keyboard()
 			else new hc800.keyboard.NullKeyboard()
 
 		val interruptController = new InterruptController()

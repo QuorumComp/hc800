@@ -9,6 +9,10 @@
         "editor.tabSize": 8,
         "editor.insertSpaces": false
     },
+    "[scala]": {
+        "editor.tabSize": 4,
+        "editor.insertSpaces": false
+    },
     "files.exclude": {
         "**/*.obj": true
     },

@@ -28,9 +28,8 @@ module HC800 (
   output              io_sd_clock,
   output              io_sd_di,
   input               io_sd_do,
-  output              io_kio8_o,
-  output              io_kio9_o,
-  input               io_kio10_i,
+  input      [6:0]    io_keyboardColumns,
+  output     [7:0]    io_keyboardRows,
   input               bus_clk,
   input               dbl_clk,
   input               bus_reset,
@@ -71,8 +70,7 @@ module HC800 (
   wire       [21:0]   memoryArea_mmu_io_mapAddressOut;
   wire       [7:0]    memoryArea_boardId_dataToMaster;
   wire       [7:0]    memoryArea_keyboard_io_bus_dataToMaster;
-  wire                memoryArea_keyboard_io_kio8_o;
-  wire                memoryArea_keyboard_io_kio9_o;
+  wire       [7:0]    memoryArea_keyboard_io_rows;
   wire                memoryArea_interruptController_io_outRequest;
   wire       [7:0]    memoryArea_interruptController_io_regBus_dataToMaster;
   wire       [7:0]    memoryArea_math_io_dataToMaster;
@@ -209,13 +207,12 @@ module HC800 (
     .bus_clk         (bus_clk                               ), //i
     .bus_reset       (bus_reset                             )  //i
   );
-  Mega65Keyboard memoryArea_keyboard (
+  ZxNextMembrane memoryArea_keyboard (
     .io_bus_enable          (memoryArea_keyboard_io_bus_enable             ), //i
     .io_bus_dataToMaster    (memoryArea_keyboard_io_bus_dataToMaster[7:0]  ), //o
     .io_bus_address         (memoryArea_keyboard_io_bus_address            ), //i
-    .io_kio8_o              (memoryArea_keyboard_io_kio8_o                 ), //o
-    .io_kio9_o              (memoryArea_keyboard_io_kio9_o                 ), //o
-    .io_kio10_i             (io_kio10_i                                    ), //i
+    .io_rows                (memoryArea_keyboard_io_rows[7:0]              ), //o
+    .io_columns             (io_keyboardColumns[6:0]                       ), //i
     .bus_clk                (bus_clk                                       ), //i
     .bus_reset              (bus_reset                                     )  //i
   );
@@ -387,8 +384,7 @@ module HC800 (
   assign memoryArea_attrMemEnable = ((memoryArea_machineBus_address & 22'h3fc000) == 22'h10c000);
   assign memoryArea_paletteMemEnable = ((memoryArea_machineBus_address & 22'h3fc000) == 22'h108000);
   assign memoryArea_ramEnable = ((memoryArea_machineBus_address & 22'h200000) == 22'h200000);
-  assign io_kio8_o = memoryArea_keyboard_io_kio8_o;
-  assign io_kio9_o = memoryArea_keyboard_io_kio9_o;
+  assign io_keyboardRows = memoryArea_keyboard_io_rows;
   always @(*) begin
     _zz_io_inRequest = 7'h0;
     _zz_io_inRequest[0] = memoryArea_vBlanking;
@@ -1462,7 +1458,7 @@ module Font (
 
   assign _zz_dataOut_1 = _zz_dataOut[11:0];
   initial begin
-    $readmemb("hc800_mega65.v_toplevel_memoryArea_font_memory.bin",memory);
+    $readmemb("hc800_zxnext.v_toplevel_memoryArea_font_memory.bin",memory);
   end
   always @(posedge bus_clk) begin
     if(io_enable) begin
@@ -1504,7 +1500,7 @@ module RAM (
   reg [7:0] memory [0:16383];
 
   initial begin
-    $readmemb("hc800_mega65.v_toplevel_memoryArea_kernel_memory.bin",memory);
+    $readmemb("hc800_zxnext.v_toplevel_memoryArea_kernel_memory.bin",memory);
   end
   always @(posedge bus_clk) begin
     if(io_enable) begin
@@ -1549,7 +1545,7 @@ module BootROM (
   reg [7:0] memory [0:2047];
 
   initial begin
-    $readmemb("hc800_mega65.v_toplevel_memoryArea_bootROM_memory.bin",memory);
+    $readmemb("hc800_zxnext.v_toplevel_memoryArea_bootROM_memory.bin",memory);
   end
   always @(posedge bus_clk) begin
     if(io_enable) begin
@@ -1977,35 +1973,30 @@ module InterruptController (
 
 endmodule
 
-module Mega65Keyboard (
+module ZxNextMembrane (
   input               io_bus_enable,
   output     [7:0]    io_bus_dataToMaster,
   input      [0:0]    io_bus_address,
-  output              io_kio8_o,
-  output              io_kio9_o,
-  input               io_kio10_i,
+  output     [7:0]    io_rows,
+  input      [6:0]    io_columns,
   input               bus_clk,
   input               bus_reset
 );
   localparam Register_2_data = 1'd0;
   localparam Register_2_status = 1'd1;
 
+  wire                fifo_io_push_valid;
+  wire       [2:0]    slowArea_scanCode_io_row;
+  reg        [2:0]    slowArea_scanCode_io_column;
   wire                fifo_io_push_ready;
   wire                fifo_io_pop_valid;
   wire       [7:0]    fifo_io_pop_payload;
   wire       [2:0]    fifo_io_occupancy;
   wire       [2:0]    fifo_io_availability;
-  wire                matrix_kio8_o;
-  wire                matrix_kio9_o;
-  wire       [7:0]    matrix_matrix_col_o;
-  wire                matrix_delete_out_o;
-  wire                matrix_return_out_o;
-  wire                matrix_fastkey_out_o;
-  wire                matrix_restore_o;
-  wire                matrix_capslock_out_o;
-  wire                matrix_leftkey_o;
-  wire                matrix_upkey_o;
+  wire       [6:0]    slowArea_scanCode_io_scanCode;
   wire       [0:0]    _zz__zz_busDataOut;
+  reg        [6:0]    _zz_slowArea_debouncedColumns;
+  reg        [6:0]    _zz_slowArea_columnsChanged;
   wire       [0:0]    busRegister;
   wire       [0:0]    _zz_busRegister;
   wire                readingData;
@@ -2018,6 +2009,52 @@ module Mega65Keyboard (
   wire                getNextValue;
   reg        [7:0]    busDataOut;
   reg        [7:0]    _zz_busDataOut;
+  reg        [5:0]    _zz_when_ClockDomain_l353;
+  wire                when_ClockDomain_l353;
+  reg                 when_ClockDomain_l353_regNext;
+  reg        [7:0]    slowArea_rowOut;
+  reg        [2:0]    slowArea_decodedRow;
+  reg        [2:0]    slowArea_row;
+  reg        [6:0]    slowArea_columnsIn;
+  reg        [6:0]    slowArea_matrix_0;
+  reg        [6:0]    slowArea_matrix_1;
+  reg        [6:0]    slowArea_matrix_2;
+  reg        [6:0]    slowArea_matrix_3;
+  reg        [6:0]    slowArea_matrix_4;
+  reg        [6:0]    slowArea_matrix_5;
+  reg        [6:0]    slowArea_matrix_6;
+  reg        [6:0]    slowArea_matrix_7;
+  wire       [7:0]    _zz_1;
+  wire       [6:0]    slowArea_debouncedColumns;
+  reg        [6:0]    slowArea_debouncedMatrix_0;
+  reg        [6:0]    slowArea_debouncedMatrix_1;
+  reg        [6:0]    slowArea_debouncedMatrix_2;
+  reg        [6:0]    slowArea_debouncedMatrix_3;
+  reg        [6:0]    slowArea_debouncedMatrix_4;
+  reg        [6:0]    slowArea_debouncedMatrix_5;
+  reg        [6:0]    slowArea_debouncedMatrix_6;
+  reg        [6:0]    slowArea_debouncedMatrix_7;
+  wire       [7:0]    _zz_2;
+  wire       [6:0]    slowArea_columnsChanged;
+  wire       [6:0]    slowArea_columnsPressed;
+  reg                 slowArea_capsLockState;
+  reg        [7:0]    slowArea_fifoPayload;
+  reg                 slowArea_fifoPush;
+  wire                when_SpectrumNext_l82;
+  wire                when_SpectrumNext_l84;
+  wire                when_SpectrumNext_l82_1;
+  wire                when_SpectrumNext_l84_1;
+  wire                when_SpectrumNext_l82_2;
+  wire                when_SpectrumNext_l84_2;
+  wire                when_SpectrumNext_l82_3;
+  wire                when_SpectrumNext_l84_3;
+  wire                when_SpectrumNext_l82_4;
+  wire                when_SpectrumNext_l84_4;
+  wire                when_SpectrumNext_l82_5;
+  wire                when_SpectrumNext_l84_5;
+  wire                when_SpectrumNext_l82_6;
+  wire                when_SpectrumNext_l84_6;
+  reg                 slowArea_fifoPush_regNext;
   `ifndef SYNTHESIS
   reg [47:0] busRegister_string;
   reg [47:0] _zz_busRegister_string;
@@ -2026,9 +2063,9 @@ module Mega65Keyboard (
 
   assign _zz__zz_busDataOut = keyCodeReady;
   StreamFifo fifo (
-    .io_push_valid      (1'b0                       ), //i
+    .io_push_valid      (fifo_io_push_valid         ), //i
     .io_push_ready      (fifo_io_push_ready         ), //o
-    .io_push_payload    (8'h0                       ), //i
+    .io_push_payload    (slowArea_fifoPayload[7:0]  ), //i
     .io_pop_valid       (fifo_io_pop_valid          ), //o
     .io_pop_ready       (getNextValue               ), //i
     .io_pop_payload     (fifo_io_pop_payload[7:0]   ), //o
@@ -2038,24 +2075,48 @@ module Mega65Keyboard (
     .bus_clk            (bus_clk                    ), //i
     .bus_reset          (bus_reset                  )  //i
   );
-  mega65kbd_to_matrix matrix (
-    .ioclock_i           (bus_clk                   ), //i
-    .flopmotor_i         (1'b0                      ), //i
-    .flopled_i           (1'b0                      ), //i
-    .powerled_i          (1'b1                      ), //i
-    .kio8_o              (matrix_kio8_o             ), //o
-    .kio9_o              (matrix_kio9_o             ), //o
-    .kio10_i             (io_kio10_i                ), //i
-    .matrix_col_o        (matrix_matrix_col_o[7:0]  ), //o
-    .matrix_col_idx_i    (4'b0000                   ), //i
-    .delete_out_o        (matrix_delete_out_o       ), //o
-    .return_out_o        (matrix_return_out_o       ), //o
-    .fastkey_out_o       (matrix_fastkey_out_o      ), //o
-    .restore_o           (matrix_restore_o          ), //o
-    .capslock_out_o      (matrix_capslock_out_o     ), //o
-    .leftkey_o           (matrix_leftkey_o          ), //o
-    .upkey_o             (matrix_upkey_o            )  //o
+  MembraneMatrixToScanCode slowArea_scanCode (
+    .io_row         (slowArea_scanCode_io_row[2:0]       ), //i
+    .io_column      (slowArea_scanCode_io_column[2:0]    ), //i
+    .io_scanCode    (slowArea_scanCode_io_scanCode[6:0]  )  //o
   );
+  always @(*) begin
+    case(slowArea_row)
+      3'b000 : begin
+        _zz_slowArea_debouncedColumns = slowArea_matrix_0;
+        _zz_slowArea_columnsChanged = slowArea_debouncedMatrix_0;
+      end
+      3'b001 : begin
+        _zz_slowArea_debouncedColumns = slowArea_matrix_1;
+        _zz_slowArea_columnsChanged = slowArea_debouncedMatrix_1;
+      end
+      3'b010 : begin
+        _zz_slowArea_debouncedColumns = slowArea_matrix_2;
+        _zz_slowArea_columnsChanged = slowArea_debouncedMatrix_2;
+      end
+      3'b011 : begin
+        _zz_slowArea_debouncedColumns = slowArea_matrix_3;
+        _zz_slowArea_columnsChanged = slowArea_debouncedMatrix_3;
+      end
+      3'b100 : begin
+        _zz_slowArea_debouncedColumns = slowArea_matrix_4;
+        _zz_slowArea_columnsChanged = slowArea_debouncedMatrix_4;
+      end
+      3'b101 : begin
+        _zz_slowArea_debouncedColumns = slowArea_matrix_5;
+        _zz_slowArea_columnsChanged = slowArea_debouncedMatrix_5;
+      end
+      3'b110 : begin
+        _zz_slowArea_debouncedColumns = slowArea_matrix_6;
+        _zz_slowArea_columnsChanged = slowArea_debouncedMatrix_6;
+      end
+      default : begin
+        _zz_slowArea_debouncedColumns = slowArea_matrix_7;
+        _zz_slowArea_columnsChanged = slowArea_debouncedMatrix_7;
+      end
+    endcase
+  end
+
   `ifndef SYNTHESIS
   always @(*) begin
     case(busRegister)
@@ -2091,11 +2152,237 @@ module Mega65Keyboard (
     endcase
   end
 
-  assign io_kio8_o = matrix_kio8_o;
-  assign io_kio9_o = matrix_kio9_o;
+  assign when_ClockDomain_l353 = (_zz_when_ClockDomain_l353 == 6'h3f);
+  assign io_rows = slowArea_rowOut;
+  always @(*) begin
+    casez(slowArea_rowOut)
+      8'b???????0 : begin
+        slowArea_decodedRow = 3'b000;
+      end
+      8'b??????0? : begin
+        slowArea_decodedRow = 3'b001;
+      end
+      8'b?????0?? : begin
+        slowArea_decodedRow = 3'b010;
+      end
+      8'b????0??? : begin
+        slowArea_decodedRow = 3'b011;
+      end
+      8'b???0???? : begin
+        slowArea_decodedRow = 3'b100;
+      end
+      8'b??0????? : begin
+        slowArea_decodedRow = 3'b101;
+      end
+      8'b?0?????? : begin
+        slowArea_decodedRow = 3'b110;
+      end
+      8'b0??????? : begin
+        slowArea_decodedRow = 3'b111;
+      end
+      default : begin
+        slowArea_decodedRow = 3'b000;
+      end
+    endcase
+  end
+
+  assign _zz_1 = ({7'd0,1'b1} <<< slowArea_row);
+  assign slowArea_debouncedColumns = (_zz_slowArea_debouncedColumns & slowArea_columnsIn);
+  assign _zz_2 = ({7'd0,1'b1} <<< slowArea_row);
+  assign slowArea_columnsChanged = (slowArea_debouncedColumns ^ _zz_slowArea_columnsChanged);
+  assign slowArea_columnsPressed = (slowArea_debouncedColumns & slowArea_columnsChanged);
+  always @(*) begin
+    slowArea_scanCode_io_column = 3'b000;
+    casez(slowArea_columnsChanged)
+      7'b??????1 : begin
+        slowArea_scanCode_io_column = 3'b000;
+      end
+      7'b?????1? : begin
+        slowArea_scanCode_io_column = 3'b001;
+      end
+      7'b????1?? : begin
+        slowArea_scanCode_io_column = 3'b010;
+      end
+      7'b???1??? : begin
+        slowArea_scanCode_io_column = 3'b011;
+      end
+      7'b??1???? : begin
+        slowArea_scanCode_io_column = 3'b100;
+      end
+      7'b?1????? : begin
+        slowArea_scanCode_io_column = 3'b101;
+      end
+      7'b1?????? : begin
+        slowArea_scanCode_io_column = 3'b110;
+      end
+      default : begin
+      end
+    endcase
+  end
+
+  assign slowArea_scanCode_io_row = slowArea_row;
+  always @(*) begin
+    slowArea_fifoPayload = 8'h0;
+    casez(slowArea_columnsChanged)
+      7'b??????1 : begin
+        if(when_SpectrumNext_l82) begin
+          if(when_SpectrumNext_l84) begin
+            slowArea_fifoPayload = {(! slowArea_capsLockState),slowArea_scanCode_io_scanCode};
+          end
+        end else begin
+          slowArea_fifoPayload = {slowArea_columnsPressed[0],slowArea_scanCode_io_scanCode};
+        end
+      end
+      7'b?????1? : begin
+        if(when_SpectrumNext_l82_1) begin
+          if(when_SpectrumNext_l84_1) begin
+            slowArea_fifoPayload = {(! slowArea_capsLockState),slowArea_scanCode_io_scanCode};
+          end
+        end else begin
+          slowArea_fifoPayload = {slowArea_columnsPressed[1],slowArea_scanCode_io_scanCode};
+        end
+      end
+      7'b????1?? : begin
+        if(when_SpectrumNext_l82_2) begin
+          if(when_SpectrumNext_l84_2) begin
+            slowArea_fifoPayload = {(! slowArea_capsLockState),slowArea_scanCode_io_scanCode};
+          end
+        end else begin
+          slowArea_fifoPayload = {slowArea_columnsPressed[2],slowArea_scanCode_io_scanCode};
+        end
+      end
+      7'b???1??? : begin
+        if(when_SpectrumNext_l82_3) begin
+          if(when_SpectrumNext_l84_3) begin
+            slowArea_fifoPayload = {(! slowArea_capsLockState),slowArea_scanCode_io_scanCode};
+          end
+        end else begin
+          slowArea_fifoPayload = {slowArea_columnsPressed[3],slowArea_scanCode_io_scanCode};
+        end
+      end
+      7'b??1???? : begin
+        if(when_SpectrumNext_l82_4) begin
+          if(when_SpectrumNext_l84_4) begin
+            slowArea_fifoPayload = {(! slowArea_capsLockState),slowArea_scanCode_io_scanCode};
+          end
+        end else begin
+          slowArea_fifoPayload = {slowArea_columnsPressed[4],slowArea_scanCode_io_scanCode};
+        end
+      end
+      7'b?1????? : begin
+        if(when_SpectrumNext_l82_5) begin
+          if(when_SpectrumNext_l84_5) begin
+            slowArea_fifoPayload = {(! slowArea_capsLockState),slowArea_scanCode_io_scanCode};
+          end
+        end else begin
+          slowArea_fifoPayload = {slowArea_columnsPressed[5],slowArea_scanCode_io_scanCode};
+        end
+      end
+      7'b1?????? : begin
+        if(when_SpectrumNext_l82_6) begin
+          if(when_SpectrumNext_l84_6) begin
+            slowArea_fifoPayload = {(! slowArea_capsLockState),slowArea_scanCode_io_scanCode};
+          end
+        end else begin
+          slowArea_fifoPayload = {slowArea_columnsPressed[6],slowArea_scanCode_io_scanCode};
+        end
+      end
+      default : begin
+      end
+    endcase
+  end
+
+  always @(*) begin
+    slowArea_fifoPush = 1'b0;
+    casez(slowArea_columnsChanged)
+      7'b??????1 : begin
+        if(when_SpectrumNext_l82) begin
+          if(when_SpectrumNext_l84) begin
+            slowArea_fifoPush = 1'b1;
+          end
+        end else begin
+          slowArea_fifoPush = 1'b1;
+        end
+      end
+      7'b?????1? : begin
+        if(when_SpectrumNext_l82_1) begin
+          if(when_SpectrumNext_l84_1) begin
+            slowArea_fifoPush = 1'b1;
+          end
+        end else begin
+          slowArea_fifoPush = 1'b1;
+        end
+      end
+      7'b????1?? : begin
+        if(when_SpectrumNext_l82_2) begin
+          if(when_SpectrumNext_l84_2) begin
+            slowArea_fifoPush = 1'b1;
+          end
+        end else begin
+          slowArea_fifoPush = 1'b1;
+        end
+      end
+      7'b???1??? : begin
+        if(when_SpectrumNext_l82_3) begin
+          if(when_SpectrumNext_l84_3) begin
+            slowArea_fifoPush = 1'b1;
+          end
+        end else begin
+          slowArea_fifoPush = 1'b1;
+        end
+      end
+      7'b??1???? : begin
+        if(when_SpectrumNext_l82_4) begin
+          if(when_SpectrumNext_l84_4) begin
+            slowArea_fifoPush = 1'b1;
+          end
+        end else begin
+          slowArea_fifoPush = 1'b1;
+        end
+      end
+      7'b?1????? : begin
+        if(when_SpectrumNext_l82_5) begin
+          if(when_SpectrumNext_l84_5) begin
+            slowArea_fifoPush = 1'b1;
+          end
+        end else begin
+          slowArea_fifoPush = 1'b1;
+        end
+      end
+      7'b1?????? : begin
+        if(when_SpectrumNext_l82_6) begin
+          if(when_SpectrumNext_l84_6) begin
+            slowArea_fifoPush = 1'b1;
+          end
+        end else begin
+          slowArea_fifoPush = 1'b1;
+        end
+      end
+      default : begin
+      end
+    endcase
+  end
+
+  assign when_SpectrumNext_l82 = (slowArea_scanCode_io_scanCode == 7'h61);
+  assign when_SpectrumNext_l84 = slowArea_columnsPressed[0];
+  assign when_SpectrumNext_l82_1 = (slowArea_scanCode_io_scanCode == 7'h61);
+  assign when_SpectrumNext_l84_1 = slowArea_columnsPressed[1];
+  assign when_SpectrumNext_l82_2 = (slowArea_scanCode_io_scanCode == 7'h61);
+  assign when_SpectrumNext_l84_2 = slowArea_columnsPressed[2];
+  assign when_SpectrumNext_l82_3 = (slowArea_scanCode_io_scanCode == 7'h61);
+  assign when_SpectrumNext_l84_3 = slowArea_columnsPressed[3];
+  assign when_SpectrumNext_l82_4 = (slowArea_scanCode_io_scanCode == 7'h61);
+  assign when_SpectrumNext_l84_4 = slowArea_columnsPressed[4];
+  assign when_SpectrumNext_l82_5 = (slowArea_scanCode_io_scanCode == 7'h61);
+  assign when_SpectrumNext_l84_5 = slowArea_columnsPressed[5];
+  assign when_SpectrumNext_l82_6 = (slowArea_scanCode_io_scanCode == 7'h61);
+  assign when_SpectrumNext_l84_6 = slowArea_columnsPressed[6];
+  assign fifo_io_push_valid = (slowArea_fifoPush && (! slowArea_fifoPush_regNext));
   always @(posedge bus_clk or posedge bus_reset) begin
     if(bus_reset) begin
       keyCodeReady <= 1'b0;
+      _zz_when_ClockDomain_l353 <= 6'h0;
+      when_ClockDomain_l353_regNext <= 1'b0;
     end else begin
       if(when_Keyboard_l26) begin
         keyCodeReady <= 1'b0;
@@ -2103,6 +2390,11 @@ module Mega65Keyboard (
       if(getNextValue) begin
         keyCodeReady <= 1'b1;
       end
+      _zz_when_ClockDomain_l353 <= (_zz_when_ClockDomain_l353 + 6'h01);
+      if(when_ClockDomain_l353) begin
+        _zz_when_ClockDomain_l353 <= 6'h0;
+      end
+      when_ClockDomain_l353_regNext <= when_ClockDomain_l353;
     end
   end
 
@@ -2117,6 +2409,142 @@ module Mega65Keyboard (
     end else begin
       busDataOut <= 8'h0;
     end
+    slowArea_fifoPush_regNext <= slowArea_fifoPush;
+  end
+
+  always @(posedge bus_clk or posedge bus_reset) begin
+    if(bus_reset) begin
+      slowArea_rowOut <= 8'hfe;
+      slowArea_matrix_0 <= 7'h0;
+      slowArea_matrix_1 <= 7'h0;
+      slowArea_matrix_2 <= 7'h0;
+      slowArea_matrix_3 <= 7'h0;
+      slowArea_matrix_4 <= 7'h0;
+      slowArea_matrix_5 <= 7'h0;
+      slowArea_matrix_6 <= 7'h0;
+      slowArea_matrix_7 <= 7'h0;
+      slowArea_debouncedMatrix_0 <= 7'h0;
+      slowArea_debouncedMatrix_1 <= 7'h0;
+      slowArea_debouncedMatrix_2 <= 7'h0;
+      slowArea_debouncedMatrix_3 <= 7'h0;
+      slowArea_debouncedMatrix_4 <= 7'h0;
+      slowArea_debouncedMatrix_5 <= 7'h0;
+      slowArea_debouncedMatrix_6 <= 7'h0;
+      slowArea_debouncedMatrix_7 <= 7'h0;
+      slowArea_capsLockState <= 1'b0;
+    end else begin
+      if(when_ClockDomain_l353_regNext) begin
+        slowArea_rowOut <= {slowArea_rowOut[6 : 0],slowArea_rowOut[7 : 7]};
+        if(_zz_1[0]) begin
+          slowArea_matrix_0 <= slowArea_columnsIn;
+        end
+        if(_zz_1[1]) begin
+          slowArea_matrix_1 <= slowArea_columnsIn;
+        end
+        if(_zz_1[2]) begin
+          slowArea_matrix_2 <= slowArea_columnsIn;
+        end
+        if(_zz_1[3]) begin
+          slowArea_matrix_3 <= slowArea_columnsIn;
+        end
+        if(_zz_1[4]) begin
+          slowArea_matrix_4 <= slowArea_columnsIn;
+        end
+        if(_zz_1[5]) begin
+          slowArea_matrix_5 <= slowArea_columnsIn;
+        end
+        if(_zz_1[6]) begin
+          slowArea_matrix_6 <= slowArea_columnsIn;
+        end
+        if(_zz_1[7]) begin
+          slowArea_matrix_7 <= slowArea_columnsIn;
+        end
+        if(_zz_2[0]) begin
+          slowArea_debouncedMatrix_0 <= slowArea_debouncedColumns;
+        end
+        if(_zz_2[1]) begin
+          slowArea_debouncedMatrix_1 <= slowArea_debouncedColumns;
+        end
+        if(_zz_2[2]) begin
+          slowArea_debouncedMatrix_2 <= slowArea_debouncedColumns;
+        end
+        if(_zz_2[3]) begin
+          slowArea_debouncedMatrix_3 <= slowArea_debouncedColumns;
+        end
+        if(_zz_2[4]) begin
+          slowArea_debouncedMatrix_4 <= slowArea_debouncedColumns;
+        end
+        if(_zz_2[5]) begin
+          slowArea_debouncedMatrix_5 <= slowArea_debouncedColumns;
+        end
+        if(_zz_2[6]) begin
+          slowArea_debouncedMatrix_6 <= slowArea_debouncedColumns;
+        end
+        if(_zz_2[7]) begin
+          slowArea_debouncedMatrix_7 <= slowArea_debouncedColumns;
+        end
+        casez(slowArea_columnsChanged)
+          7'b??????1 : begin
+            if(when_SpectrumNext_l82) begin
+              if(when_SpectrumNext_l84) begin
+                slowArea_capsLockState <= (! slowArea_capsLockState);
+              end
+            end
+          end
+          7'b?????1? : begin
+            if(when_SpectrumNext_l82_1) begin
+              if(when_SpectrumNext_l84_1) begin
+                slowArea_capsLockState <= (! slowArea_capsLockState);
+              end
+            end
+          end
+          7'b????1?? : begin
+            if(when_SpectrumNext_l82_2) begin
+              if(when_SpectrumNext_l84_2) begin
+                slowArea_capsLockState <= (! slowArea_capsLockState);
+              end
+            end
+          end
+          7'b???1??? : begin
+            if(when_SpectrumNext_l82_3) begin
+              if(when_SpectrumNext_l84_3) begin
+                slowArea_capsLockState <= (! slowArea_capsLockState);
+              end
+            end
+          end
+          7'b??1???? : begin
+            if(when_SpectrumNext_l82_4) begin
+              if(when_SpectrumNext_l84_4) begin
+                slowArea_capsLockState <= (! slowArea_capsLockState);
+              end
+            end
+          end
+          7'b?1????? : begin
+            if(when_SpectrumNext_l82_5) begin
+              if(when_SpectrumNext_l84_5) begin
+                slowArea_capsLockState <= (! slowArea_capsLockState);
+              end
+            end
+          end
+          7'b1?????? : begin
+            if(when_SpectrumNext_l82_6) begin
+              if(when_SpectrumNext_l84_6) begin
+                slowArea_capsLockState <= (! slowArea_capsLockState);
+              end
+            end
+          end
+          default : begin
+          end
+        endcase
+      end
+    end
+  end
+
+  always @(posedge bus_clk) begin
+    if(when_ClockDomain_l353_regNext) begin
+      slowArea_row <= slowArea_decodedRow;
+      slowArea_columnsIn <= (~ io_columns);
+    end
   end
 
 
@@ -2130,7 +2558,7 @@ module BoardId (
   input               bus_reset
 );
 
-  reg        [2:0]    counter;
+  reg        [4:0]    counter;
   reg        [7:0]    dataOutR;
 
   assign dataToMaster = dataOutR;
@@ -2138,35 +2566,65 @@ module BoardId (
     if(enable) begin
       case(address)
         1'b0 : begin
-          dataOutR <= 8'h04;
+          dataOutR <= 8'h0;
         end
         default : begin
           case(counter)
-            3'b000 : begin
-              dataOutR <= 8'h86;
+            5'h0 : begin
+              dataOutR <= 8'h90;
             end
-            3'b001 : begin
-              dataOutR <= 8'h4d;
+            5'h01 : begin
+              dataOutR <= 8'h5a;
             end
-            3'b010 : begin
-              dataOutR <= 8'h45;
+            5'h02 : begin
+              dataOutR <= 8'h58;
             end
-            3'b011 : begin
-              dataOutR <= 8'h47;
+            5'h03 : begin
+              dataOutR <= 8'h20;
             end
-            3'b100 : begin
-              dataOutR <= 8'h41;
+            5'h04 : begin
+              dataOutR <= 8'h53;
             end
-            3'b101 : begin
-              dataOutR <= 8'h36;
+            5'h05 : begin
+              dataOutR <= 8'h70;
             end
-            3'b110 : begin
-              dataOutR <= 8'h35;
+            5'h06 : begin
+              dataOutR <= 8'h65;
+            end
+            5'h07 : begin
+              dataOutR <= 8'h63;
+            end
+            5'h08 : begin
+              dataOutR <= 8'h74;
+            end
+            5'h09 : begin
+              dataOutR <= 8'h72;
+            end
+            5'h0a : begin
+              dataOutR <= 8'h75;
+            end
+            5'h0b : begin
+              dataOutR <= 8'h6d;
+            end
+            5'h0c : begin
+              dataOutR <= 8'h20;
+            end
+            5'h0d : begin
+              dataOutR <= 8'h4e;
+            end
+            5'h0e : begin
+              dataOutR <= 8'h65;
+            end
+            5'h0f : begin
+              dataOutR <= 8'h78;
+            end
+            5'h10 : begin
+              dataOutR <= 8'h74;
             end
             default : begin
             end
           endcase
-          counter <= (counter + 3'b001);
+          counter <= (counter + 5'h01);
         end
       endcase
     end else begin
@@ -4449,6 +4907,244 @@ module MultiplierUnit32x32 (
   assign negateResult = (io_signed && (io_operand1[31] ^ io_operand2[31]));
   assign io_result = _zz_io_result;
   assign io_ready = multiplier_io_ready;
+
+endmodule
+
+module MembraneMatrixToScanCode (
+  input      [2:0]    io_row,
+  input      [2:0]    io_column,
+  output     [6:0]    io_scanCode
+);
+
+  wire       [7:0]    _zz_io_scanCode;
+  reg        [7:0]    _zz_io_scanCode_1;
+  wire       [2:0]    _zz_io_scanCode_2;
+  reg        [7:0]    codes_0;
+  reg        [7:0]    codes_1;
+  reg        [7:0]    codes_2;
+  reg        [7:0]    codes_3;
+  reg        [7:0]    codes_4;
+  reg        [7:0]    codes_5;
+  reg        [7:0]    codes_6;
+
+  assign _zz_io_scanCode = _zz_io_scanCode_1;
+  assign _zz_io_scanCode_2 = io_column;
+  always @(*) begin
+    case(_zz_io_scanCode_2)
+      3'b000 : _zz_io_scanCode_1 = codes_0;
+      3'b001 : _zz_io_scanCode_1 = codes_1;
+      3'b010 : _zz_io_scanCode_1 = codes_2;
+      3'b011 : _zz_io_scanCode_1 = codes_3;
+      3'b100 : _zz_io_scanCode_1 = codes_4;
+      3'b101 : _zz_io_scanCode_1 = codes_5;
+      default : _zz_io_scanCode_1 = codes_6;
+    endcase
+  end
+
+  always @(*) begin
+    case(io_row)
+      3'b000 : begin
+        codes_0 = 8'h62;
+      end
+      3'b001 : begin
+        codes_0 = 8'h41;
+      end
+      3'b010 : begin
+        codes_0 = 8'h51;
+      end
+      3'b011 : begin
+        codes_0 = 8'h31;
+      end
+      3'b100 : begin
+        codes_0 = 8'h30;
+      end
+      3'b101 : begin
+        codes_0 = 8'h50;
+      end
+      3'b110 : begin
+        codes_0 = 8'h0a;
+      end
+      default : begin
+        codes_0 = 8'h20;
+      end
+    endcase
+  end
+
+  always @(*) begin
+    case(io_row)
+      3'b000 : begin
+        codes_1 = 8'h5a;
+      end
+      3'b001 : begin
+        codes_1 = 8'h53;
+      end
+      3'b010 : begin
+        codes_1 = 8'h57;
+      end
+      3'b011 : begin
+        codes_1 = 8'h32;
+      end
+      3'b100 : begin
+        codes_1 = 8'h39;
+      end
+      3'b101 : begin
+        codes_1 = 8'h4f;
+      end
+      3'b110 : begin
+        codes_1 = 8'h4c;
+      end
+      default : begin
+        codes_1 = 8'h64;
+      end
+    endcase
+  end
+
+  always @(*) begin
+    case(io_row)
+      3'b000 : begin
+        codes_2 = 8'h58;
+      end
+      3'b001 : begin
+        codes_2 = 8'h44;
+      end
+      3'b010 : begin
+        codes_2 = 8'h45;
+      end
+      3'b011 : begin
+        codes_2 = 8'h33;
+      end
+      3'b100 : begin
+        codes_2 = 8'h38;
+      end
+      3'b101 : begin
+        codes_2 = 8'h49;
+      end
+      3'b110 : begin
+        codes_2 = 8'h4b;
+      end
+      default : begin
+        codes_2 = 8'h4d;
+      end
+    endcase
+  end
+
+  always @(*) begin
+    case(io_row)
+      3'b000 : begin
+        codes_3 = 8'h43;
+      end
+      3'b001 : begin
+        codes_3 = 8'h46;
+      end
+      3'b010 : begin
+        codes_3 = 8'h52;
+      end
+      3'b011 : begin
+        codes_3 = 8'h34;
+      end
+      3'b100 : begin
+        codes_3 = 8'h37;
+      end
+      3'b101 : begin
+        codes_3 = 8'h55;
+      end
+      3'b110 : begin
+        codes_3 = 8'h4a;
+      end
+      default : begin
+        codes_3 = 8'h4e;
+      end
+    endcase
+  end
+
+  always @(*) begin
+    case(io_row)
+      3'b000 : begin
+        codes_4 = 8'h56;
+      end
+      3'b001 : begin
+        codes_4 = 8'h47;
+      end
+      3'b010 : begin
+        codes_4 = 8'h54;
+      end
+      3'b011 : begin
+        codes_4 = 8'h35;
+      end
+      3'b100 : begin
+        codes_4 = 8'h36;
+      end
+      3'b101 : begin
+        codes_4 = 8'h59;
+      end
+      3'b110 : begin
+        codes_4 = 8'h48;
+      end
+      default : begin
+        codes_4 = 8'h42;
+      end
+    endcase
+  end
+
+  always @(*) begin
+    case(io_row)
+      3'b000 : begin
+        codes_5 = 8'h65;
+      end
+      3'b001 : begin
+        codes_5 = 8'h61;
+      end
+      3'b010 : begin
+        codes_5 = 8'h71;
+      end
+      3'b011 : begin
+        codes_5 = 8'h1b;
+      end
+      3'b100 : begin
+        codes_5 = 8'h3b;
+      end
+      3'b101 : begin
+        codes_5 = 8'h2c;
+      end
+      3'b110 : begin
+        codes_5 = 8'h08;
+      end
+      default : begin
+        codes_5 = 8'h02;
+      end
+    endcase
+  end
+
+  always @(*) begin
+    case(io_row)
+      3'b000 : begin
+        codes_6 = 8'h10;
+      end
+      3'b001 : begin
+        codes_6 = 8'h66;
+      end
+      3'b010 : begin
+        codes_6 = 8'h72;
+      end
+      3'b011 : begin
+        codes_6 = 8'h70;
+      end
+      3'b100 : begin
+        codes_6 = 8'h22;
+      end
+      3'b101 : begin
+        codes_6 = 8'h2e;
+      end
+      3'b110 : begin
+        codes_6 = 8'h06;
+      end
+      default : begin
+        codes_6 = 8'h0e;
+      end
+    endcase
+  end
+
+  assign io_scanCode = _zz_io_scanCode[6:0];
 
 endmodule
 

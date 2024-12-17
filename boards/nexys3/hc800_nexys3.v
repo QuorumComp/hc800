@@ -5,6 +5,9 @@
 `timescale 1ns/1ps 
 
 module HC800 (
+  input      [4:0]    io_btn,
+  output     [7:0]    io_seg,
+  output     [3:0]    io_an,
   output     [4:0]    io_red,
   output     [4:0]    io_green,
   output     [4:0]    io_blue,
@@ -28,9 +31,6 @@ module HC800 (
   output              io_sd_clock,
   output              io_sd_di,
   input               io_sd_do,
-  output              io_kio8_o,
-  output              io_kio9_o,
-  input               io_kio10_i,
   input               bus_clk,
   input               dbl_clk,
   input               bus_reset,
@@ -60,6 +60,8 @@ module HC800 (
   wire       [0:0]    memoryArea_uart_io_bus_address;
   wire                memoryArea_sd_io_bus_enable;
   wire       [0:0]    memoryArea_sd_io_bus_address;
+  wire                memoryArea_nexys3_io_bus_enable;
+  wire       [4:0]    memoryArea_nexys3_io_bus_address;
   wire                cpuArea_cpu_io_bus_enable;
   wire                cpuArea_cpu_io_bus_write;
   wire       [7:0]    cpuArea_cpu_io_bus_dataFromMaster;
@@ -71,8 +73,6 @@ module HC800 (
   wire       [21:0]   memoryArea_mmu_io_mapAddressOut;
   wire       [7:0]    memoryArea_boardId_dataToMaster;
   wire       [7:0]    memoryArea_keyboard_io_bus_dataToMaster;
-  wire                memoryArea_keyboard_io_kio8_o;
-  wire                memoryArea_keyboard_io_kio9_o;
   wire                memoryArea_interruptController_io_outRequest;
   wire       [7:0]    memoryArea_interruptController_io_regBus_dataToMaster;
   wire       [7:0]    memoryArea_math_io_dataToMaster;
@@ -85,6 +85,9 @@ module HC800 (
   wire       [1:0]    memoryArea_sd_io_sd_cs;
   wire                memoryArea_sd_io_sd_clock;
   wire                memoryArea_sd_io_sd_di;
+  wire       [7:0]    memoryArea_nexys3_io_bus_dataToMaster;
+  wire       [7:0]    memoryArea_nexys3_io_segments;
+  wire       [3:0]    memoryArea_nexys3_io_anode;
   wire       [4:0]    graphicsArea_videoGenerator_io_red;
   wire       [4:0]    graphicsArea_videoGenerator_io_green;
   wire       [4:0]    graphicsArea_videoGenerator_io_blue;
@@ -165,7 +168,6 @@ module HC800 (
   wire                memoryArea_hBlanking;
   wire                memoryArea_vBlanking;
   reg        [6:0]    _zz_io_inRequest;
-  wire       [7:0]    memoryArea_nexys3IoDataIn;
   wire       [7:0]    memoryArea_memDataIn;
   `ifndef SYNTHESIS
   reg [111:0] memoryArea_chipSource_string;
@@ -209,13 +211,10 @@ module HC800 (
     .bus_clk         (bus_clk                               ), //i
     .bus_reset       (bus_reset                             )  //i
   );
-  Mega65Keyboard memoryArea_keyboard (
+  NullKeyboard memoryArea_keyboard (
     .io_bus_enable          (memoryArea_keyboard_io_bus_enable             ), //i
     .io_bus_dataToMaster    (memoryArea_keyboard_io_bus_dataToMaster[7:0]  ), //o
     .io_bus_address         (memoryArea_keyboard_io_bus_address            ), //i
-    .io_kio8_o              (memoryArea_keyboard_io_kio8_o                 ), //o
-    .io_kio9_o              (memoryArea_keyboard_io_kio9_o                 ), //o
-    .io_kio10_i             (io_kio10_i                                    ), //i
     .bus_clk                (bus_clk                                       ), //i
     .bus_reset              (bus_reset                                     )  //i
   );
@@ -285,6 +284,18 @@ module HC800 (
     .io_sd_do                 (io_sd_do                                   ), //i
     .bus_clk                  (bus_clk                                    ), //i
     .bus_reset                (bus_reset                                  )  //i
+  );
+  Nexys3 memoryArea_nexys3 (
+    .io_bus_enable            (memoryArea_nexys3_io_bus_enable             ), //i
+    .io_bus_write             (memoryArea_machineBus_write                 ), //i
+    .io_bus_dataFromMaster    (memoryArea_machineBus_dataFromMaster[7:0]   ), //i
+    .io_bus_dataToMaster      (memoryArea_nexys3_io_bus_dataToMaster[7:0]  ), //o
+    .io_bus_address           (memoryArea_nexys3_io_bus_address[4:0]       ), //i
+    .io_segments              (memoryArea_nexys3_io_segments[7:0]          ), //o
+    .io_anode                 (memoryArea_nexys3_io_anode[3:0]             ), //o
+    .io_buttons               (io_btn[4:0]                                 ), //i
+    .bus_clk                  (bus_clk                                     ), //i
+    .bus_reset                (bus_reset                                   )  //i
   );
   VideoGenerator graphicsArea_videoGenerator (
     .io_red                        (graphicsArea_videoGenerator_io_red[4:0]                                      ), //o
@@ -387,8 +398,8 @@ module HC800 (
   assign memoryArea_attrMemEnable = ((memoryArea_machineBus_address & 22'h3fc000) == 22'h10c000);
   assign memoryArea_paletteMemEnable = ((memoryArea_machineBus_address & 22'h3fc000) == 22'h108000);
   assign memoryArea_ramEnable = ((memoryArea_machineBus_address & 22'h200000) == 22'h200000);
-  assign io_kio8_o = memoryArea_keyboard_io_kio8_o;
-  assign io_kio9_o = memoryArea_keyboard_io_kio9_o;
+  assign io_seg = memoryArea_nexys3_io_segments;
+  assign io_an = memoryArea_nexys3_io_anode;
   always @(*) begin
     _zz_io_inRequest = 7'h0;
     _zz_io_inRequest[0] = memoryArea_vBlanking;
@@ -400,7 +411,8 @@ module HC800 (
   assign io_sd_cs = memoryArea_sd_io_sd_cs;
   assign io_sd_clock = memoryArea_sd_io_sd_clock;
   assign io_sd_di = memoryArea_sd_io_sd_di;
-  assign memoryArea_nexys3IoDataIn = 8'h0;
+  assign memoryArea_nexys3_io_bus_enable = (memoryArea_machineBus_enable && memoryArea_boardEnable);
+  assign memoryArea_nexys3_io_bus_address = memoryArea_machineBus_address[4:0];
   assign memoryArea_graphicsRegBus_enable = (memoryArea_machineBus_enable && memoryArea_graphicsEnable);
   assign memoryArea_graphicsRegBus_write = memoryArea_machineBus_write;
   assign memoryArea_graphicsRegBus_dataFromMaster = memoryArea_machineBus_dataFromMaster;
@@ -437,7 +449,7 @@ module HC800 (
   assign io_ramBus_write = memoryArea_machineBus_write;
   assign io_ramBus_dataFromMaster = memoryArea_machineBus_dataFromMaster;
   assign io_ramBus_address = memoryArea_machineBus_address[20:0];
-  assign memoryArea_memDataIn = ((((((((((((((memoryArea_nexys3IoDataIn | memoryArea_graphicsRegBus_dataToMaster) | memoryArea_mmu_io_regBus_dataToMaster) | memoryArea_boardId_dataToMaster) | memoryArea_keyboard_io_bus_dataToMaster) | memoryArea_math_io_dataToMaster) | memoryArea_uart_io_bus_dataToMaster) | memoryArea_sd_io_bus_dataToMaster) | memoryArea_interruptController_io_regBus_dataToMaster) | memoryArea_bootROM_io_dataToMaster) | memoryArea_kernel_io_dataToMaster) | memoryArea_font_io_dataToMaster) | memoryArea_attributeMemBus_dataToMaster) | memoryArea_paletteMemBus_dataToMaster) | io_ramBus_dataToMaster);
+  assign memoryArea_memDataIn = ((((((((((((((memoryArea_nexys3_io_bus_dataToMaster | memoryArea_graphicsRegBus_dataToMaster) | memoryArea_mmu_io_regBus_dataToMaster) | memoryArea_boardId_dataToMaster) | memoryArea_keyboard_io_bus_dataToMaster) | memoryArea_math_io_dataToMaster) | memoryArea_uart_io_bus_dataToMaster) | memoryArea_sd_io_bus_dataToMaster) | memoryArea_interruptController_io_regBus_dataToMaster) | memoryArea_bootROM_io_dataToMaster) | memoryArea_kernel_io_dataToMaster) | memoryArea_font_io_dataToMaster) | memoryArea_attributeMemBus_dataToMaster) | memoryArea_paletteMemBus_dataToMaster) | io_ramBus_dataToMaster);
   assign memoryArea_chipMemBus_dataToMaster = memoryArea_memDataIn;
   assign io_red = graphicsArea_videoGenerator_io_red;
   assign io_green = graphicsArea_videoGenerator_io_green;
@@ -1031,6 +1043,55 @@ module VideoGenerator (
 
 endmodule
 
+module Nexys3 (
+  input               io_bus_enable,
+  input               io_bus_write,
+  input      [7:0]    io_bus_dataFromMaster,
+  output     [7:0]    io_bus_dataToMaster,
+  input      [4:0]    io_bus_address,
+  output     [7:0]    io_segments,
+  output     [3:0]    io_anode,
+  input      [4:0]    io_buttons,
+  input               bus_clk,
+  input               bus_reset
+);
+
+  wire                hexSegments_1_io_bus_enable;
+  wire       [0:0]    hexSegments_1_io_bus_address;
+  wire                buttons_1_io_bus_enable;
+  wire       [7:0]    hexSegments_1_io_segments;
+  wire       [3:0]    hexSegments_1_io_anode;
+  wire       [7:0]    buttons_1_io_bus_dataToMaster;
+  wire                hexEnable;
+  wire                buttonsEnable;
+
+  HexSegmentsDevice hexSegments_1 (
+    .io_bus_enable            (hexSegments_1_io_bus_enable     ), //i
+    .io_bus_dataFromMaster    (io_bus_dataFromMaster[7:0]      ), //i
+    .io_bus_address           (hexSegments_1_io_bus_address    ), //i
+    .io_segments              (hexSegments_1_io_segments[7:0]  ), //o
+    .io_anode                 (hexSegments_1_io_anode[3:0]     ), //o
+    .bus_clk                  (bus_clk                         ), //i
+    .bus_reset                (bus_reset                       )  //i
+  );
+  Buttons buttons_1 (
+    .io_bus_enable          (buttons_1_io_bus_enable             ), //i
+    .io_bus_dataToMaster    (buttons_1_io_bus_dataToMaster[7:0]  ), //o
+    .io_buttons             (io_buttons[4:0]                     ), //i
+    .bus_clk                (bus_clk                             ), //i
+    .bus_reset              (bus_reset                           )  //i
+  );
+  assign hexEnable = ((io_bus_address & 5'h10) == 5'h0);
+  assign buttonsEnable = ((io_bus_address & 5'h10) == 5'h10);
+  assign hexSegments_1_io_bus_enable = ((io_bus_enable && io_bus_write) && hexEnable);
+  assign hexSegments_1_io_bus_address = io_bus_address[0:0];
+  assign io_segments = hexSegments_1_io_segments;
+  assign io_anode = hexSegments_1_io_anode;
+  assign buttons_1_io_bus_enable = (io_bus_enable && buttonsEnable);
+  assign io_bus_dataToMaster = buttons_1_io_bus_dataToMaster;
+
+endmodule
+
 module SD (
   input               io_bus_enable,
   input               io_bus_write,
@@ -1462,7 +1523,7 @@ module Font (
 
   assign _zz_dataOut_1 = _zz_dataOut[11:0];
   initial begin
-    $readmemb("hc800_mega65.v_toplevel_memoryArea_font_memory.bin",memory);
+    $readmemb("hc800_nexys3.v_toplevel_memoryArea_font_memory.bin",memory);
   end
   always @(posedge bus_clk) begin
     if(io_enable) begin
@@ -1504,7 +1565,7 @@ module RAM (
   reg [7:0] memory [0:16383];
 
   initial begin
-    $readmemb("hc800_mega65.v_toplevel_memoryArea_kernel_memory.bin",memory);
+    $readmemb("hc800_nexys3.v_toplevel_memoryArea_kernel_memory.bin",memory);
   end
   always @(posedge bus_clk) begin
     if(io_enable) begin
@@ -1549,7 +1610,7 @@ module BootROM (
   reg [7:0] memory [0:2047];
 
   initial begin
-    $readmemb("hc800_mega65.v_toplevel_memoryArea_bootROM_memory.bin",memory);
+    $readmemb("hc800_nexys3.v_toplevel_memoryArea_bootROM_memory.bin",memory);
   end
   always @(posedge bus_clk) begin
     if(io_enable) begin
@@ -1977,13 +2038,10 @@ module InterruptController (
 
 endmodule
 
-module Mega65Keyboard (
+module NullKeyboard (
   input               io_bus_enable,
   output     [7:0]    io_bus_dataToMaster,
   input      [0:0]    io_bus_address,
-  output              io_kio8_o,
-  output              io_kio9_o,
-  input               io_kio10_i,
   input               bus_clk,
   input               bus_reset
 );
@@ -1995,16 +2053,6 @@ module Mega65Keyboard (
   wire       [7:0]    fifo_io_pop_payload;
   wire       [2:0]    fifo_io_occupancy;
   wire       [2:0]    fifo_io_availability;
-  wire                matrix_kio8_o;
-  wire                matrix_kio9_o;
-  wire       [7:0]    matrix_matrix_col_o;
-  wire                matrix_delete_out_o;
-  wire                matrix_return_out_o;
-  wire                matrix_fastkey_out_o;
-  wire                matrix_restore_o;
-  wire                matrix_capslock_out_o;
-  wire                matrix_leftkey_o;
-  wire                matrix_upkey_o;
   wire       [0:0]    _zz__zz_busDataOut;
   wire       [0:0]    busRegister;
   wire       [0:0]    _zz_busRegister;
@@ -2037,24 +2085,6 @@ module Mega65Keyboard (
     .io_availability    (fifo_io_availability[2:0]  ), //o
     .bus_clk            (bus_clk                    ), //i
     .bus_reset          (bus_reset                  )  //i
-  );
-  mega65kbd_to_matrix matrix (
-    .ioclock_i           (bus_clk                   ), //i
-    .flopmotor_i         (1'b0                      ), //i
-    .flopled_i           (1'b0                      ), //i
-    .powerled_i          (1'b1                      ), //i
-    .kio8_o              (matrix_kio8_o             ), //o
-    .kio9_o              (matrix_kio9_o             ), //o
-    .kio10_i             (io_kio10_i                ), //i
-    .matrix_col_o        (matrix_matrix_col_o[7:0]  ), //o
-    .matrix_col_idx_i    (4'b0000                   ), //i
-    .delete_out_o        (matrix_delete_out_o       ), //o
-    .return_out_o        (matrix_return_out_o       ), //o
-    .fastkey_out_o       (matrix_fastkey_out_o      ), //o
-    .restore_o           (matrix_restore_o          ), //o
-    .capslock_out_o      (matrix_capslock_out_o     ), //o
-    .leftkey_o           (matrix_leftkey_o          ), //o
-    .upkey_o             (matrix_upkey_o            )  //o
   );
   `ifndef SYNTHESIS
   always @(*) begin
@@ -2091,8 +2121,6 @@ module Mega65Keyboard (
     endcase
   end
 
-  assign io_kio8_o = matrix_kio8_o;
-  assign io_kio9_o = matrix_kio9_o;
   always @(posedge bus_clk or posedge bus_reset) begin
     if(bus_reset) begin
       keyCodeReady <= 1'b0;
@@ -2130,7 +2158,7 @@ module BoardId (
   input               bus_reset
 );
 
-  reg        [2:0]    counter;
+  reg        [4:0]    counter;
   reg        [7:0]    dataOutR;
 
   assign dataToMaster = dataOutR;
@@ -2138,35 +2166,65 @@ module BoardId (
     if(enable) begin
       case(address)
         1'b0 : begin
-          dataOutR <= 8'h04;
+          dataOutR <= 8'h01;
         end
         default : begin
           case(counter)
-            3'b000 : begin
-              dataOutR <= 8'h86;
+            5'h0 : begin
+              dataOutR <= 8'h90;
             end
-            3'b001 : begin
-              dataOutR <= 8'h4d;
+            5'h01 : begin
+              dataOutR <= 8'h44;
             end
-            3'b010 : begin
-              dataOutR <= 8'h45;
+            5'h02 : begin
+              dataOutR <= 8'h69;
             end
-            3'b011 : begin
-              dataOutR <= 8'h47;
+            5'h03 : begin
+              dataOutR <= 8'h67;
             end
-            3'b100 : begin
-              dataOutR <= 8'h41;
+            5'h04 : begin
+              dataOutR <= 8'h69;
             end
-            3'b101 : begin
-              dataOutR <= 8'h36;
+            5'h05 : begin
+              dataOutR <= 8'h6c;
             end
-            3'b110 : begin
-              dataOutR <= 8'h35;
+            5'h06 : begin
+              dataOutR <= 8'h65;
+            end
+            5'h07 : begin
+              dataOutR <= 8'h6e;
+            end
+            5'h08 : begin
+              dataOutR <= 8'h74;
+            end
+            5'h09 : begin
+              dataOutR <= 8'h20;
+            end
+            5'h0a : begin
+              dataOutR <= 8'h4e;
+            end
+            5'h0b : begin
+              dataOutR <= 8'h65;
+            end
+            5'h0c : begin
+              dataOutR <= 8'h78;
+            end
+            5'h0d : begin
+              dataOutR <= 8'h79;
+            end
+            5'h0e : begin
+              dataOutR <= 8'h73;
+            end
+            5'h0f : begin
+              dataOutR <= 8'h20;
+            end
+            5'h10 : begin
+              dataOutR <= 8'h33;
             end
             default : begin
             end
           endcase
-          counter <= (counter + 3'b001);
+          counter <= (counter + 5'h01);
         end
       endcase
     end else begin
@@ -4034,6 +4092,96 @@ module VideoSync (
 
 endmodule
 
+module Buttons (
+  input               io_bus_enable,
+  output     [7:0]    io_bus_dataToMaster,
+  input      [4:0]    io_buttons,
+  input               bus_clk,
+  input               bus_reset
+);
+
+  wire       [4:0]    _zz_dataToMaster;
+  reg        [4:0]    buttonsBuf1;
+  reg        [4:0]    buttonsBuf2;
+  reg        [7:0]    dataToMaster;
+
+  assign _zz_dataToMaster = (buttonsBuf1 & buttonsBuf2);
+  assign io_bus_dataToMaster = dataToMaster;
+  always @(posedge bus_clk or posedge bus_reset) begin
+    if(bus_reset) begin
+      buttonsBuf1 <= 5'h0;
+      buttonsBuf2 <= 5'h0;
+    end else begin
+      buttonsBuf1 <= io_buttons;
+      buttonsBuf2 <= buttonsBuf1;
+    end
+  end
+
+  always @(posedge bus_clk) begin
+    if(io_bus_enable) begin
+      dataToMaster <= {3'd0, _zz_dataToMaster};
+    end else begin
+      dataToMaster <= 8'h0;
+    end
+  end
+
+
+endmodule
+
+module HexSegmentsDevice (
+  input               io_bus_enable,
+  input      [7:0]    io_bus_dataFromMaster,
+  input      [0:0]    io_bus_address,
+  output     [7:0]    io_segments,
+  output     [3:0]    io_anode,
+  input               bus_clk,
+  input               bus_reset
+);
+
+  wire       [7:0]    kHzArea_segmentDriver_io_segments;
+  wire       [3:0]    kHzArea_segmentDriver_io_anode;
+  reg        [15:0]   hexSegments_1;
+  wire                when_HexSegments_l126;
+  reg        [13:0]   _zz_when_ClockDomain_l353;
+  wire                when_ClockDomain_l353;
+  reg                 when_ClockDomain_l353_regNext;
+
+  HexSegments kHzArea_segmentDriver (
+    .io_dataIn                        (hexSegments_1[15:0]                     ), //i
+    .io_segments                      (kHzArea_segmentDriver_io_segments[7:0]  ), //o
+    .io_anode                         (kHzArea_segmentDriver_io_anode[3:0]     ), //o
+    .bus_clk                          (bus_clk                                 ), //i
+    .bus_reset                        (bus_reset                               ), //i
+    .when_ClockDomain_l353_regNext    (when_ClockDomain_l353_regNext           )  //i
+  );
+  assign when_HexSegments_l126 = (io_bus_address == 1'b1);
+  assign when_ClockDomain_l353 = (_zz_when_ClockDomain_l353 == 14'h34bb);
+  assign io_segments = kHzArea_segmentDriver_io_segments;
+  assign io_anode = kHzArea_segmentDriver_io_anode;
+  always @(posedge bus_clk or posedge bus_reset) begin
+    if(bus_reset) begin
+      hexSegments_1 <= 16'h0;
+      _zz_when_ClockDomain_l353 <= 14'h0;
+      when_ClockDomain_l353_regNext <= 1'b0;
+    end else begin
+      if(io_bus_enable) begin
+        if(when_HexSegments_l126) begin
+          hexSegments_1[15 : 8] <= io_bus_dataFromMaster;
+        end else begin
+          hexSegments_1[7 : 0] <= io_bus_dataFromMaster;
+        end
+      end
+      _zz_when_ClockDomain_l353 <= (_zz_when_ClockDomain_l353 + 14'h0001);
+      if(when_ClockDomain_l353) begin
+        _zz_when_ClockDomain_l353 <= 14'h0;
+      end
+      when_ClockDomain_l353_regNext <= when_ClockDomain_l353;
+    end
+  end
+
+
+endmodule
+
 //StreamFifo_1 replaced by StreamFifo_1
 
 module StreamFifo_1 (
@@ -5454,6 +5602,46 @@ module RC811 (
     end
   end
 
+
+endmodule
+
+module HexSegments (
+  input      [15:0]   io_dataIn,
+  output     [7:0]    io_segments,
+  output     [3:0]    io_anode,
+  input               bus_clk,
+  input               bus_reset,
+  input               when_ClockDomain_l353_regNext
+);
+
+  wire       [3:0]    driver_io_segment3_data;
+  wire       [3:0]    driver_io_segment2_data;
+  wire       [3:0]    driver_io_segment1_data;
+  wire       [3:0]    driver_io_segment0_data;
+  wire       [7:0]    driver_io_segments;
+  wire       [3:0]    driver_io_anode;
+
+  HexSegmentArray driver (
+    .io_segment3_enable               (1'b1                           ), //i
+    .io_segment3_data                 (driver_io_segment3_data[3:0]   ), //i
+    .io_segment2_enable               (1'b1                           ), //i
+    .io_segment2_data                 (driver_io_segment2_data[3:0]   ), //i
+    .io_segment1_enable               (1'b1                           ), //i
+    .io_segment1_data                 (driver_io_segment1_data[3:0]   ), //i
+    .io_segment0_enable               (1'b1                           ), //i
+    .io_segment0_data                 (driver_io_segment0_data[3:0]   ), //i
+    .io_segments                      (driver_io_segments[7:0]        ), //o
+    .io_anode                         (driver_io_anode[3:0]           ), //o
+    .bus_clk                          (bus_clk                        ), //i
+    .bus_reset                        (bus_reset                      ), //i
+    .when_ClockDomain_l353_regNext    (when_ClockDomain_l353_regNext  )  //i
+  );
+  assign driver_io_segment3_data = io_dataIn[15 : 12];
+  assign driver_io_segment2_data = io_dataIn[11 : 8];
+  assign driver_io_segment1_data = io_dataIn[7 : 4];
+  assign driver_io_segment0_data = io_dataIn[3 : 0];
+  assign io_segments = driver_io_segments;
+  assign io_anode = driver_io_anode;
 
 endmodule
 
@@ -7651,6 +7839,109 @@ module Decoder (
         if(io_strobe) begin
           opcodeIn <= io_opcodeAsync;
         end
+      end
+    end
+  end
+
+
+endmodule
+
+module HexSegmentArray (
+  input               io_segment3_enable,
+  input      [3:0]    io_segment3_data,
+  input               io_segment2_enable,
+  input      [3:0]    io_segment2_data,
+  input               io_segment1_enable,
+  input      [3:0]    io_segment1_data,
+  input               io_segment0_enable,
+  input      [3:0]    io_segment0_data,
+  output     [7:0]    io_segments,
+  output     [3:0]    io_anode,
+  input               bus_clk,
+  input               bus_reset,
+  input               when_ClockDomain_l353_regNext
+);
+
+  wire       [7:0]    segment3_io_dataOut;
+  wire       [7:0]    segment2_io_dataOut;
+  wire       [7:0]    segment1_io_dataOut;
+  wire       [7:0]    segment0_io_dataOut;
+  reg                 currentEnable;
+  reg        [7:0]    currentMask;
+  reg        [3:0]    anodeMask;
+  wire                when_HexSegments_l71;
+  wire                when_HexSegments_l74;
+  wire                when_HexSegments_l77;
+  wire                when_HexSegments_l80;
+
+  HexToSegment segment3 (
+    .io_dataIn     (io_segment3_data[3:0]     ), //i
+    .io_dataOut    (segment3_io_dataOut[7:0]  )  //o
+  );
+  HexToSegment segment2 (
+    .io_dataIn     (io_segment2_data[3:0]     ), //i
+    .io_dataOut    (segment2_io_dataOut[7:0]  )  //o
+  );
+  HexToSegment segment1 (
+    .io_dataIn     (io_segment1_data[3:0]     ), //i
+    .io_dataOut    (segment1_io_dataOut[7:0]  )  //o
+  );
+  HexToSegment segment0 (
+    .io_dataIn     (io_segment0_data[3:0]     ), //i
+    .io_dataOut    (segment0_io_dataOut[7:0]  )  //o
+  );
+  assign when_HexSegments_l71 = (anodeMask[3] == 1'b0);
+  always @(*) begin
+    if(when_HexSegments_l71) begin
+      currentEnable = io_segment3_enable;
+    end else begin
+      if(when_HexSegments_l74) begin
+        currentEnable = io_segment2_enable;
+      end else begin
+        if(when_HexSegments_l77) begin
+          currentEnable = io_segment1_enable;
+        end else begin
+          if(when_HexSegments_l80) begin
+            currentEnable = io_segment0_enable;
+          end else begin
+            currentEnable = 1'b0;
+          end
+        end
+      end
+    end
+  end
+
+  always @(*) begin
+    if(when_HexSegments_l71) begin
+      currentMask = segment3_io_dataOut;
+    end else begin
+      if(when_HexSegments_l74) begin
+        currentMask = segment2_io_dataOut;
+      end else begin
+        if(when_HexSegments_l77) begin
+          currentMask = segment1_io_dataOut;
+        end else begin
+          if(when_HexSegments_l80) begin
+            currentMask = segment0_io_dataOut;
+          end else begin
+            currentMask = 8'h0;
+          end
+        end
+      end
+    end
+  end
+
+  assign when_HexSegments_l74 = (anodeMask[2] == 1'b0);
+  assign when_HexSegments_l77 = (anodeMask[1] == 1'b0);
+  assign when_HexSegments_l80 = (anodeMask[0] == 1'b0);
+  assign io_segments = (currentEnable ? currentMask : 8'hff);
+  assign io_anode = anodeMask;
+  always @(posedge bus_clk or posedge bus_reset) begin
+    if(bus_reset) begin
+      anodeMask <= 4'b1110;
+    end else begin
+      if(when_ClockDomain_l353_regNext) begin
+        anodeMask <= {anodeMask[2 : 0],anodeMask[3 : 3]};
       end
     end
   end
@@ -13390,6 +13681,76 @@ module OpcodeDecoder (
   assign when_OpcodeDecoder_l116 = ((io_opcode & 8'hf8) == 8'h50);
   assign when_OpcodeDecoder_l117 = ((io_opcode & 8'hf8) == 8'h70);
   assign when_OpcodeDecoder_l120 = ((io_opcode & 8'hf0) == 8'h90);
+
+endmodule
+
+//HexToSegment replaced by HexToSegment
+
+//HexToSegment replaced by HexToSegment
+
+//HexToSegment replaced by HexToSegment
+
+module HexToSegment (
+  input      [3:0]    io_dataIn,
+  output     [7:0]    io_dataOut
+);
+
+  reg        [7:0]    _zz_io_dataOut;
+
+  always @(*) begin
+    case(io_dataIn)
+      4'b0000 : begin
+        _zz_io_dataOut = (~ 8'h3f);
+      end
+      4'b0001 : begin
+        _zz_io_dataOut = (~ 8'h06);
+      end
+      4'b0010 : begin
+        _zz_io_dataOut = (~ 8'h5b);
+      end
+      4'b0011 : begin
+        _zz_io_dataOut = (~ 8'h4f);
+      end
+      4'b0100 : begin
+        _zz_io_dataOut = (~ 8'h66);
+      end
+      4'b0101 : begin
+        _zz_io_dataOut = (~ 8'h6d);
+      end
+      4'b0110 : begin
+        _zz_io_dataOut = (~ 8'h7d);
+      end
+      4'b0111 : begin
+        _zz_io_dataOut = (~ 8'h07);
+      end
+      4'b1000 : begin
+        _zz_io_dataOut = (~ 8'h7f);
+      end
+      4'b1001 : begin
+        _zz_io_dataOut = (~ 8'h67);
+      end
+      4'b1010 : begin
+        _zz_io_dataOut = (~ 8'h77);
+      end
+      4'b1011 : begin
+        _zz_io_dataOut = (~ 8'h7c);
+      end
+      4'b1100 : begin
+        _zz_io_dataOut = (~ 8'h39);
+      end
+      4'b1101 : begin
+        _zz_io_dataOut = (~ 8'h5e);
+      end
+      4'b1110 : begin
+        _zz_io_dataOut = (~ 8'h79);
+      end
+      default : begin
+        _zz_io_dataOut = (~ 8'h71);
+      end
+    endcase
+  end
+
+  assign io_dataOut = _zz_io_dataOut;
 
 endmodule
 

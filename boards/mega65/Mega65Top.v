@@ -470,23 +470,12 @@ HC800 hc800(
     .io_ramBus_write(mem_we),
     .io_ramBus_dataFromMaster(mem_din),
     .io_ramBus_dataToMaster(mem_to_master),
-    .io_ramBus_address(mem_addr)
+    .io_ramBus_address(mem_addr),
+    .io_kio8_o(kb_io0_o),
+    .io_kio9_o(kb_io1_o),
+    .io_kio10_i(kb_io2_i)
 );
 
-/*
-m2m_keyb m2m_keyb_inst(
-    .clk_main_i(sys_clk_i),
-    .clk_main_speed_i(100000000),
-    .kio8_o(kb_io0_o),
-    .kio9_o(kb_io1_o),
-    .kio10_i(kb_io2_i),
-    .enable_core_i(1'b1),
-//    .key_num_o(key_num),
-//    .key_pressed_n_o(key_pressed_n),
-    .drive_led_i(1'b0)
-//    .qnice_keys_n_o(open)
-);
-*/
 
 endmodule
  

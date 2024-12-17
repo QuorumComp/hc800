@@ -13,6 +13,7 @@ class BoardId(board: Int) extends Component {
 			case Board.nexys3 => "Digilent Nexys 3"
 			case Board.mist => "MiST"
 			case Board.mister => "MiSTer"
+			case Board.mega65 => "MEGA65"
 			case _ => "Unknown"
 		}
 
