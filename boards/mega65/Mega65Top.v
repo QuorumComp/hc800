@@ -1,3 +1,5 @@
+`define HDMI
+
 `default_nettype none
 `timescale 1ns / 1ps
 
@@ -49,7 +51,6 @@ module Mega65Top (
 
     // HDMI. U10 = PTN3363BSMP
     // I2C address 0x40
-    /*
     output wire [2:0]   tmds_data_p_o,
     output wire [2:0]   tmds_data_n_o,
     output wire         tmds_clk_p_o,            
@@ -59,7 +60,6 @@ module Mega65Top (
     input  wire         hdmi_hpd_i,             // Connect to U10.HPD_SOURCE
     inout  wire         hdmi_scl_io,            // Connect to U10.SCL_SOURCE
     inout  wire         hdmi_sda_io,            // Connect to U10.SDA_SOURCE
-    */
 
     // MEGA65 smart keyboard controller
     output wire         kb_io0_o,               // clock to keyboard
@@ -310,7 +310,13 @@ wire doublescan = 1;
 wire clk_13_5M;
 wire clk_27M;
 wire clk_100M;
+wire clk_135M;
+wire clk_135M_n;
 wire clk_locked;
+
+wire hdmiclk_pix = clk_27M;
+wire hdmiclk_pix_5x = clk_135M;
+wire hdmiclk_pix_5x_n = clk_135M_n;
 
 wire [4:0] red, green, blue;
 wire hsync, vsync, blank;
@@ -351,6 +357,8 @@ Clocks pll (
     .clk_out_13_5M(clk_13_5M),
     .clk_out_27M(clk_27M),
     .clk_out_100M(clk_100M),
+    .clk_out_135M(clk_135M),
+    .clk_out_135M_n(clk_135M_n),
     .locked(clk_locked)
 );
 
@@ -447,6 +455,58 @@ MainMemory main_memory(
 );
 
 
+`ifdef HDMI
+
+wire [9:0] hdmiRed, hdmiGreen, hdmiBlue;
+
+hdmi hdmi_encoder(
+    .I_CLK_PIXEL(hdmiclk_pix),
+    
+    .I_R({dblRed, 3'b0}),
+    .I_G({dblGreen, 3'b0}),
+    .I_B({dblBlue, 3'b0}),
+    .I_HSYNC(dblHSync),
+    .I_VSYNC(dblVSync),
+    .I_BLANK(dblBlank),
+    
+    .I_AUDIO_ENABLE(1),
+    .I_AUDIO_PCM_L(0),
+    .I_AUDIO_PCM_R(0),
+    
+    .O_RED(hdmiRed),
+    .O_GREEN(hdmiGreen),
+    .O_BLUE(hdmiBlue)
+);
+    
+hdmi_out_xilinx hdmi_out(
+	.clock_pixel_i(hdmiclk_pix),
+	.clock_tdms_i(hdmiclk_pix_5x),
+	.clock_tdms_n_i(hdmiclk_pix_5x_n),
+	
+	.red_i(hdmiRed),
+	.green_i(hdmiGreen),
+	.blue_i(hdmiBlue),
+	
+	.tmds_out_p({tmds_clk_p_o, tmds_data_p_o}),
+	.tmds_out_n({tmds_clk_n_o, tmds_data_n_o})
+);
+
+assign hdmi_hiz_en_o = 1'b0;    // enable/disable 50 Ohm internal termination (0 = disable)
+assign hdmi_ls_oe_n_o = 1'b0;   // enable output (0 = enable)
+
+`else
+
+OBUFDS OBUFDS_clock(.I(0), .O(tmds_clk_p_o[3]),  .OB(tmds_clk_n_o[3]));
+OBUFDS OBUFDS_red  (.I(0), .O(tmds_data_p_o[2]), .OB(tmds_data_n_o[2]));
+OBUFDS OBUFDS_green(.I(0), .O(tmds_data_p_o[1]), .OB(tmds_data_n_o[1]));
+OBUFDS OBUFDS_blue (.I(0), .O(tmds_data_p_o[0]), .OB(tmds_data_n_o[0]));
+
+assign hdmi_hiz_en_o = 1'b0;    // enable/disable 50 Ohm internal termination (0 = disable)
+assign hdmi_ls_oe_n_o = 1'b1;   // enable output (0 = enable)
+
+`endif
+
+
 HC800 hc800(
     .io_red(red),
     .io_green(green),
@@ -478,4 +538,3 @@ HC800 hc800(
 
 
 endmodule
- 
