@@ -1,6 +1,6 @@
 // Generator : SpinalHDL v1.6.4    git head : 598c18959149eb18e5eee5b0aa3eef01ecaa41a1
 // Component : HC800
-// Git hash  : 2b7faeda4ae25bc558a0dfad671bb57a38140cd9
+// Git hash  : bb7b9c901d3852ea95dd41ee81283f9e939d8039
 
 `timescale 1ns/1ps 
 
@@ -1990,22 +1990,28 @@ module Mega65Keyboard (
   localparam Register_2_data = 1'd0;
   localparam Register_2_status = 1'd1;
 
+  wire                fifo_io_push_valid;
+  reg        [2:0]    slowArea_scanCode_io_row;
+  wire       [3:0]    slowArea_scanCode_io_column;
   wire                fifo_io_push_ready;
   wire                fifo_io_pop_valid;
   wire       [7:0]    fifo_io_pop_payload;
   wire       [2:0]    fifo_io_occupancy;
   wire       [2:0]    fifo_io_availability;
-  wire                matrix_kio8_o;
-  wire                matrix_kio9_o;
-  wire       [7:0]    matrix_matrix_col_o;
-  wire                matrix_delete_out_o;
-  wire                matrix_return_out_o;
-  wire                matrix_fastkey_out_o;
-  wire                matrix_restore_o;
-  wire                matrix_capslock_out_o;
-  wire                matrix_leftkey_o;
-  wire                matrix_upkey_o;
+  wire                decoder_1_kio8_o;
+  wire                decoder_1_kio9_o;
+  wire       [7:0]    decoder_1_matrix_col_o;
+  wire                decoder_1_delete_out_o;
+  wire                decoder_1_return_out_o;
+  wire                decoder_1_fastkey_out_o;
+  wire                decoder_1_restore_o;
+  wire                decoder_1_capslock_out_o;
+  wire                decoder_1_leftkey_o;
+  wire                decoder_1_upkey_o;
+  wire       [6:0]    slowArea_scanCode_io_scanCode;
   wire       [0:0]    _zz__zz_busDataOut;
+  reg        [7:0]    _zz_slowArea_debouncedRows;
+  reg        [7:0]    _zz_slowArea_rowsChanged;
   wire       [0:0]    busRegister;
   wire       [0:0]    _zz_busRegister;
   wire                readingData;
@@ -2018,6 +2024,57 @@ module Mega65Keyboard (
   wire                getNextValue;
   reg        [7:0]    busDataOut;
   reg        [7:0]    _zz_busDataOut;
+  reg        [5:0]    _zz_when_ClockDomain_l353;
+  wire                when_ClockDomain_l353;
+  reg                 when_ClockDomain_l353_regNext;
+  reg        [3:0]    slowArea_column_index;
+  reg        [3:0]    _zz_slowArea_column_index;
+  reg        [7:0]    slowArea_rowsIn;
+  reg        [7:0]    slowArea_matrix_0;
+  reg        [7:0]    slowArea_matrix_1;
+  reg        [7:0]    slowArea_matrix_2;
+  reg        [7:0]    slowArea_matrix_3;
+  reg        [7:0]    slowArea_matrix_4;
+  reg        [7:0]    slowArea_matrix_5;
+  reg        [7:0]    slowArea_matrix_6;
+  reg        [7:0]    slowArea_matrix_7;
+  reg        [7:0]    slowArea_matrix_8;
+  reg        [7:0]    slowArea_matrix_9;
+  wire       [15:0]   _zz_1;
+  wire       [7:0]    slowArea_debouncedRows;
+  reg        [7:0]    slowArea_debouncedMatrix_0;
+  reg        [7:0]    slowArea_debouncedMatrix_1;
+  reg        [7:0]    slowArea_debouncedMatrix_2;
+  reg        [7:0]    slowArea_debouncedMatrix_3;
+  reg        [7:0]    slowArea_debouncedMatrix_4;
+  reg        [7:0]    slowArea_debouncedMatrix_5;
+  reg        [7:0]    slowArea_debouncedMatrix_6;
+  reg        [7:0]    slowArea_debouncedMatrix_7;
+  reg        [7:0]    slowArea_debouncedMatrix_8;
+  reg        [7:0]    slowArea_debouncedMatrix_9;
+  wire       [15:0]   _zz_2;
+  wire       [7:0]    slowArea_rowsChanged;
+  wire       [7:0]    slowArea_rowsPressed;
+  reg                 slowArea_capsLockState;
+  reg        [7:0]    slowArea_fifoPayload;
+  reg                 slowArea_fifoPush;
+  wire                when_Mega65Keyboard_l120;
+  wire                when_Mega65Keyboard_l122;
+  wire                when_Mega65Keyboard_l120_1;
+  wire                when_Mega65Keyboard_l122_1;
+  wire                when_Mega65Keyboard_l120_2;
+  wire                when_Mega65Keyboard_l122_2;
+  wire                when_Mega65Keyboard_l120_3;
+  wire                when_Mega65Keyboard_l122_3;
+  wire                when_Mega65Keyboard_l120_4;
+  wire                when_Mega65Keyboard_l122_4;
+  wire                when_Mega65Keyboard_l120_5;
+  wire                when_Mega65Keyboard_l122_5;
+  wire                when_Mega65Keyboard_l120_6;
+  wire                when_Mega65Keyboard_l122_6;
+  wire                when_Mega65Keyboard_l120_7;
+  wire                when_Mega65Keyboard_l122_7;
+  reg                 slowArea_fifoPush_regNext;
   `ifndef SYNTHESIS
   reg [47:0] busRegister_string;
   reg [47:0] _zz_busRegister_string;
@@ -2026,9 +2083,9 @@ module Mega65Keyboard (
 
   assign _zz__zz_busDataOut = keyCodeReady;
   StreamFifo fifo (
-    .io_push_valid      (1'b0                       ), //i
+    .io_push_valid      (fifo_io_push_valid         ), //i
     .io_push_ready      (fifo_io_push_ready         ), //o
-    .io_push_payload    (8'h0                       ), //i
+    .io_push_payload    (slowArea_fifoPayload[7:0]  ), //i
     .io_pop_valid       (fifo_io_pop_valid          ), //o
     .io_pop_ready       (getNextValue               ), //i
     .io_pop_payload     (fifo_io_pop_payload[7:0]   ), //o
@@ -2038,24 +2095,74 @@ module Mega65Keyboard (
     .bus_clk            (bus_clk                    ), //i
     .bus_reset          (bus_reset                  )  //i
   );
-  mega65kbd_to_matrix matrix (
-    .ioclock_i           (bus_clk                   ), //i
-    .flopmotor_i         (1'b0                      ), //i
-    .flopled_i           (1'b0                      ), //i
-    .powerled_i          (1'b1                      ), //i
-    .kio8_o              (matrix_kio8_o             ), //o
-    .kio9_o              (matrix_kio9_o             ), //o
-    .kio10_i             (io_kio10_i                ), //i
-    .matrix_col_o        (matrix_matrix_col_o[7:0]  ), //o
-    .matrix_col_idx_i    (4'b0000                   ), //i
-    .delete_out_o        (matrix_delete_out_o       ), //o
-    .return_out_o        (matrix_return_out_o       ), //o
-    .fastkey_out_o       (matrix_fastkey_out_o      ), //o
-    .restore_o           (matrix_restore_o          ), //o
-    .capslock_out_o      (matrix_capslock_out_o     ), //o
-    .leftkey_o           (matrix_leftkey_o          ), //o
-    .upkey_o             (matrix_upkey_o            )  //o
+  mega65kbd_to_matrix decoder_1 (
+    .ioclock_i           (bus_clk                      ), //i
+    .flopmotor_i         (1'b0                         ), //i
+    .flopled_i           (1'b0                         ), //i
+    .powerled_i          (1'b1                         ), //i
+    .kio8_o              (decoder_1_kio8_o             ), //o
+    .kio9_o              (decoder_1_kio9_o             ), //o
+    .kio10_i             (io_kio10_i                   ), //i
+    .matrix_col_o        (decoder_1_matrix_col_o[7:0]  ), //o
+    .matrix_col_idx_i    (slowArea_column_index[3:0]   ), //i
+    .delete_out_o        (decoder_1_delete_out_o       ), //o
+    .return_out_o        (decoder_1_return_out_o       ), //o
+    .fastkey_out_o       (decoder_1_fastkey_out_o      ), //o
+    .restore_o           (decoder_1_restore_o          ), //o
+    .capslock_out_o      (decoder_1_capslock_out_o     ), //o
+    .leftkey_o           (decoder_1_leftkey_o          ), //o
+    .upkey_o             (decoder_1_upkey_o            )  //o
   );
+  Mega65MatrixToScanCode slowArea_scanCode (
+    .io_row         (slowArea_scanCode_io_row[2:0]       ), //i
+    .io_column      (slowArea_scanCode_io_column[3:0]    ), //i
+    .io_scanCode    (slowArea_scanCode_io_scanCode[6:0]  )  //o
+  );
+  always @(*) begin
+    case(slowArea_column_index)
+      4'b0000 : begin
+        _zz_slowArea_debouncedRows = slowArea_matrix_0;
+        _zz_slowArea_rowsChanged = slowArea_debouncedMatrix_0;
+      end
+      4'b0001 : begin
+        _zz_slowArea_debouncedRows = slowArea_matrix_1;
+        _zz_slowArea_rowsChanged = slowArea_debouncedMatrix_1;
+      end
+      4'b0010 : begin
+        _zz_slowArea_debouncedRows = slowArea_matrix_2;
+        _zz_slowArea_rowsChanged = slowArea_debouncedMatrix_2;
+      end
+      4'b0011 : begin
+        _zz_slowArea_debouncedRows = slowArea_matrix_3;
+        _zz_slowArea_rowsChanged = slowArea_debouncedMatrix_3;
+      end
+      4'b0100 : begin
+        _zz_slowArea_debouncedRows = slowArea_matrix_4;
+        _zz_slowArea_rowsChanged = slowArea_debouncedMatrix_4;
+      end
+      4'b0101 : begin
+        _zz_slowArea_debouncedRows = slowArea_matrix_5;
+        _zz_slowArea_rowsChanged = slowArea_debouncedMatrix_5;
+      end
+      4'b0110 : begin
+        _zz_slowArea_debouncedRows = slowArea_matrix_6;
+        _zz_slowArea_rowsChanged = slowArea_debouncedMatrix_6;
+      end
+      4'b0111 : begin
+        _zz_slowArea_debouncedRows = slowArea_matrix_7;
+        _zz_slowArea_rowsChanged = slowArea_debouncedMatrix_7;
+      end
+      4'b1000 : begin
+        _zz_slowArea_debouncedRows = slowArea_matrix_8;
+        _zz_slowArea_rowsChanged = slowArea_debouncedMatrix_8;
+      end
+      default : begin
+        _zz_slowArea_debouncedRows = slowArea_matrix_9;
+        _zz_slowArea_rowsChanged = slowArea_debouncedMatrix_9;
+      end
+    endcase
+  end
+
   `ifndef SYNTHESIS
   always @(*) begin
     case(busRegister)
@@ -2091,11 +2198,240 @@ module Mega65Keyboard (
     endcase
   end
 
-  assign io_kio8_o = matrix_kio8_o;
-  assign io_kio9_o = matrix_kio9_o;
+  assign io_kio8_o = decoder_1_kio8_o;
+  assign io_kio9_o = decoder_1_kio9_o;
+  assign when_ClockDomain_l353 = (_zz_when_ClockDomain_l353 == 6'h3f);
+  always @(*) begin
+    case(slowArea_column_index)
+      4'b1001 : begin
+        _zz_slowArea_column_index = 4'b0000;
+      end
+      default : begin
+        _zz_slowArea_column_index = (slowArea_column_index + 4'b0001);
+      end
+    endcase
+  end
+
+  assign _zz_1 = ({15'd0,1'b1} <<< slowArea_column_index);
+  assign slowArea_debouncedRows = (_zz_slowArea_debouncedRows & slowArea_rowsIn);
+  assign _zz_2 = ({15'd0,1'b1} <<< slowArea_column_index);
+  assign slowArea_rowsChanged = (slowArea_debouncedRows ^ _zz_slowArea_rowsChanged);
+  assign slowArea_rowsPressed = (slowArea_debouncedRows & slowArea_rowsChanged);
+  always @(*) begin
+    slowArea_scanCode_io_row = 3'b000;
+    casez(slowArea_rowsChanged)
+      8'b???????1 : begin
+        slowArea_scanCode_io_row = 3'b000;
+      end
+      8'b??????1? : begin
+        slowArea_scanCode_io_row = 3'b001;
+      end
+      8'b?????1?? : begin
+        slowArea_scanCode_io_row = 3'b010;
+      end
+      8'b????1??? : begin
+        slowArea_scanCode_io_row = 3'b011;
+      end
+      8'b???1???? : begin
+        slowArea_scanCode_io_row = 3'b100;
+      end
+      8'b??1????? : begin
+        slowArea_scanCode_io_row = 3'b101;
+      end
+      8'b?1?????? : begin
+        slowArea_scanCode_io_row = 3'b110;
+      end
+      8'b1??????? : begin
+        slowArea_scanCode_io_row = 3'b111;
+      end
+      default : begin
+      end
+    endcase
+  end
+
+  assign slowArea_scanCode_io_column = slowArea_column_index;
+  always @(*) begin
+    slowArea_fifoPayload = 8'h0;
+    casez(slowArea_rowsChanged)
+      8'b???????1 : begin
+        if(when_Mega65Keyboard_l120) begin
+          if(when_Mega65Keyboard_l122) begin
+            slowArea_fifoPayload = {(! slowArea_capsLockState),slowArea_scanCode_io_scanCode};
+          end
+        end else begin
+          slowArea_fifoPayload = {slowArea_rowsPressed[0],slowArea_scanCode_io_scanCode};
+        end
+      end
+      8'b??????1? : begin
+        if(when_Mega65Keyboard_l120_1) begin
+          if(when_Mega65Keyboard_l122_1) begin
+            slowArea_fifoPayload = {(! slowArea_capsLockState),slowArea_scanCode_io_scanCode};
+          end
+        end else begin
+          slowArea_fifoPayload = {slowArea_rowsPressed[1],slowArea_scanCode_io_scanCode};
+        end
+      end
+      8'b?????1?? : begin
+        if(when_Mega65Keyboard_l120_2) begin
+          if(when_Mega65Keyboard_l122_2) begin
+            slowArea_fifoPayload = {(! slowArea_capsLockState),slowArea_scanCode_io_scanCode};
+          end
+        end else begin
+          slowArea_fifoPayload = {slowArea_rowsPressed[2],slowArea_scanCode_io_scanCode};
+        end
+      end
+      8'b????1??? : begin
+        if(when_Mega65Keyboard_l120_3) begin
+          if(when_Mega65Keyboard_l122_3) begin
+            slowArea_fifoPayload = {(! slowArea_capsLockState),slowArea_scanCode_io_scanCode};
+          end
+        end else begin
+          slowArea_fifoPayload = {slowArea_rowsPressed[3],slowArea_scanCode_io_scanCode};
+        end
+      end
+      8'b???1???? : begin
+        if(when_Mega65Keyboard_l120_4) begin
+          if(when_Mega65Keyboard_l122_4) begin
+            slowArea_fifoPayload = {(! slowArea_capsLockState),slowArea_scanCode_io_scanCode};
+          end
+        end else begin
+          slowArea_fifoPayload = {slowArea_rowsPressed[4],slowArea_scanCode_io_scanCode};
+        end
+      end
+      8'b??1????? : begin
+        if(when_Mega65Keyboard_l120_5) begin
+          if(when_Mega65Keyboard_l122_5) begin
+            slowArea_fifoPayload = {(! slowArea_capsLockState),slowArea_scanCode_io_scanCode};
+          end
+        end else begin
+          slowArea_fifoPayload = {slowArea_rowsPressed[5],slowArea_scanCode_io_scanCode};
+        end
+      end
+      8'b?1?????? : begin
+        if(when_Mega65Keyboard_l120_6) begin
+          if(when_Mega65Keyboard_l122_6) begin
+            slowArea_fifoPayload = {(! slowArea_capsLockState),slowArea_scanCode_io_scanCode};
+          end
+        end else begin
+          slowArea_fifoPayload = {slowArea_rowsPressed[6],slowArea_scanCode_io_scanCode};
+        end
+      end
+      8'b1??????? : begin
+        if(when_Mega65Keyboard_l120_7) begin
+          if(when_Mega65Keyboard_l122_7) begin
+            slowArea_fifoPayload = {(! slowArea_capsLockState),slowArea_scanCode_io_scanCode};
+          end
+        end else begin
+          slowArea_fifoPayload = {slowArea_rowsPressed[7],slowArea_scanCode_io_scanCode};
+        end
+      end
+      default : begin
+      end
+    endcase
+  end
+
+  always @(*) begin
+    slowArea_fifoPush = 1'b0;
+    casez(slowArea_rowsChanged)
+      8'b???????1 : begin
+        if(when_Mega65Keyboard_l120) begin
+          if(when_Mega65Keyboard_l122) begin
+            slowArea_fifoPush = 1'b1;
+          end
+        end else begin
+          slowArea_fifoPush = 1'b1;
+        end
+      end
+      8'b??????1? : begin
+        if(when_Mega65Keyboard_l120_1) begin
+          if(when_Mega65Keyboard_l122_1) begin
+            slowArea_fifoPush = 1'b1;
+          end
+        end else begin
+          slowArea_fifoPush = 1'b1;
+        end
+      end
+      8'b?????1?? : begin
+        if(when_Mega65Keyboard_l120_2) begin
+          if(when_Mega65Keyboard_l122_2) begin
+            slowArea_fifoPush = 1'b1;
+          end
+        end else begin
+          slowArea_fifoPush = 1'b1;
+        end
+      end
+      8'b????1??? : begin
+        if(when_Mega65Keyboard_l120_3) begin
+          if(when_Mega65Keyboard_l122_3) begin
+            slowArea_fifoPush = 1'b1;
+          end
+        end else begin
+          slowArea_fifoPush = 1'b1;
+        end
+      end
+      8'b???1???? : begin
+        if(when_Mega65Keyboard_l120_4) begin
+          if(when_Mega65Keyboard_l122_4) begin
+            slowArea_fifoPush = 1'b1;
+          end
+        end else begin
+          slowArea_fifoPush = 1'b1;
+        end
+      end
+      8'b??1????? : begin
+        if(when_Mega65Keyboard_l120_5) begin
+          if(when_Mega65Keyboard_l122_5) begin
+            slowArea_fifoPush = 1'b1;
+          end
+        end else begin
+          slowArea_fifoPush = 1'b1;
+        end
+      end
+      8'b?1?????? : begin
+        if(when_Mega65Keyboard_l120_6) begin
+          if(when_Mega65Keyboard_l122_6) begin
+            slowArea_fifoPush = 1'b1;
+          end
+        end else begin
+          slowArea_fifoPush = 1'b1;
+        end
+      end
+      8'b1??????? : begin
+        if(when_Mega65Keyboard_l120_7) begin
+          if(when_Mega65Keyboard_l122_7) begin
+            slowArea_fifoPush = 1'b1;
+          end
+        end else begin
+          slowArea_fifoPush = 1'b1;
+        end
+      end
+      default : begin
+      end
+    endcase
+  end
+
+  assign when_Mega65Keyboard_l120 = (slowArea_scanCode_io_scanCode == 7'h61);
+  assign when_Mega65Keyboard_l122 = slowArea_rowsPressed[0];
+  assign when_Mega65Keyboard_l120_1 = (slowArea_scanCode_io_scanCode == 7'h61);
+  assign when_Mega65Keyboard_l122_1 = slowArea_rowsPressed[1];
+  assign when_Mega65Keyboard_l120_2 = (slowArea_scanCode_io_scanCode == 7'h61);
+  assign when_Mega65Keyboard_l122_2 = slowArea_rowsPressed[2];
+  assign when_Mega65Keyboard_l120_3 = (slowArea_scanCode_io_scanCode == 7'h61);
+  assign when_Mega65Keyboard_l122_3 = slowArea_rowsPressed[3];
+  assign when_Mega65Keyboard_l120_4 = (slowArea_scanCode_io_scanCode == 7'h61);
+  assign when_Mega65Keyboard_l122_4 = slowArea_rowsPressed[4];
+  assign when_Mega65Keyboard_l120_5 = (slowArea_scanCode_io_scanCode == 7'h61);
+  assign when_Mega65Keyboard_l122_5 = slowArea_rowsPressed[5];
+  assign when_Mega65Keyboard_l120_6 = (slowArea_scanCode_io_scanCode == 7'h61);
+  assign when_Mega65Keyboard_l122_6 = slowArea_rowsPressed[6];
+  assign when_Mega65Keyboard_l120_7 = (slowArea_scanCode_io_scanCode == 7'h61);
+  assign when_Mega65Keyboard_l122_7 = slowArea_rowsPressed[7];
+  assign fifo_io_push_valid = (slowArea_fifoPush && (! slowArea_fifoPush_regNext));
   always @(posedge bus_clk or posedge bus_reset) begin
     if(bus_reset) begin
       keyCodeReady <= 1'b0;
+      _zz_when_ClockDomain_l353 <= 6'h0;
+      when_ClockDomain_l353_regNext <= 1'b0;
     end else begin
       if(when_Keyboard_l26) begin
         keyCodeReady <= 1'b0;
@@ -2103,6 +2439,11 @@ module Mega65Keyboard (
       if(getNextValue) begin
         keyCodeReady <= 1'b1;
       end
+      _zz_when_ClockDomain_l353 <= (_zz_when_ClockDomain_l353 + 6'h01);
+      if(when_ClockDomain_l353) begin
+        _zz_when_ClockDomain_l353 <= 6'h0;
+      end
+      when_ClockDomain_l353_regNext <= when_ClockDomain_l353;
     end
   end
 
@@ -2116,6 +2457,164 @@ module Mega65Keyboard (
       busDataOut <= _zz_busDataOut;
     end else begin
       busDataOut <= 8'h0;
+    end
+    slowArea_fifoPush_regNext <= slowArea_fifoPush;
+  end
+
+  always @(posedge bus_clk or posedge bus_reset) begin
+    if(bus_reset) begin
+      slowArea_column_index <= 4'b0000;
+      slowArea_matrix_0 <= 8'h0;
+      slowArea_matrix_1 <= 8'h0;
+      slowArea_matrix_2 <= 8'h0;
+      slowArea_matrix_3 <= 8'h0;
+      slowArea_matrix_4 <= 8'h0;
+      slowArea_matrix_5 <= 8'h0;
+      slowArea_matrix_6 <= 8'h0;
+      slowArea_matrix_7 <= 8'h0;
+      slowArea_matrix_8 <= 8'h0;
+      slowArea_matrix_9 <= 8'h0;
+      slowArea_debouncedMatrix_0 <= 8'h0;
+      slowArea_debouncedMatrix_1 <= 8'h0;
+      slowArea_debouncedMatrix_2 <= 8'h0;
+      slowArea_debouncedMatrix_3 <= 8'h0;
+      slowArea_debouncedMatrix_4 <= 8'h0;
+      slowArea_debouncedMatrix_5 <= 8'h0;
+      slowArea_debouncedMatrix_6 <= 8'h0;
+      slowArea_debouncedMatrix_7 <= 8'h0;
+      slowArea_debouncedMatrix_8 <= 8'h0;
+      slowArea_debouncedMatrix_9 <= 8'h0;
+      slowArea_capsLockState <= 1'b0;
+    end else begin
+      if(when_ClockDomain_l353_regNext) begin
+        slowArea_column_index <= _zz_slowArea_column_index;
+        if(_zz_1[0]) begin
+          slowArea_matrix_0 <= slowArea_rowsIn;
+        end
+        if(_zz_1[1]) begin
+          slowArea_matrix_1 <= slowArea_rowsIn;
+        end
+        if(_zz_1[2]) begin
+          slowArea_matrix_2 <= slowArea_rowsIn;
+        end
+        if(_zz_1[3]) begin
+          slowArea_matrix_3 <= slowArea_rowsIn;
+        end
+        if(_zz_1[4]) begin
+          slowArea_matrix_4 <= slowArea_rowsIn;
+        end
+        if(_zz_1[5]) begin
+          slowArea_matrix_5 <= slowArea_rowsIn;
+        end
+        if(_zz_1[6]) begin
+          slowArea_matrix_6 <= slowArea_rowsIn;
+        end
+        if(_zz_1[7]) begin
+          slowArea_matrix_7 <= slowArea_rowsIn;
+        end
+        if(_zz_1[8]) begin
+          slowArea_matrix_8 <= slowArea_rowsIn;
+        end
+        if(_zz_1[9]) begin
+          slowArea_matrix_9 <= slowArea_rowsIn;
+        end
+        if(_zz_2[0]) begin
+          slowArea_debouncedMatrix_0 <= slowArea_debouncedRows;
+        end
+        if(_zz_2[1]) begin
+          slowArea_debouncedMatrix_1 <= slowArea_debouncedRows;
+        end
+        if(_zz_2[2]) begin
+          slowArea_debouncedMatrix_2 <= slowArea_debouncedRows;
+        end
+        if(_zz_2[3]) begin
+          slowArea_debouncedMatrix_3 <= slowArea_debouncedRows;
+        end
+        if(_zz_2[4]) begin
+          slowArea_debouncedMatrix_4 <= slowArea_debouncedRows;
+        end
+        if(_zz_2[5]) begin
+          slowArea_debouncedMatrix_5 <= slowArea_debouncedRows;
+        end
+        if(_zz_2[6]) begin
+          slowArea_debouncedMatrix_6 <= slowArea_debouncedRows;
+        end
+        if(_zz_2[7]) begin
+          slowArea_debouncedMatrix_7 <= slowArea_debouncedRows;
+        end
+        if(_zz_2[8]) begin
+          slowArea_debouncedMatrix_8 <= slowArea_debouncedRows;
+        end
+        if(_zz_2[9]) begin
+          slowArea_debouncedMatrix_9 <= slowArea_debouncedRows;
+        end
+        casez(slowArea_rowsChanged)
+          8'b???????1 : begin
+            if(when_Mega65Keyboard_l120) begin
+              if(when_Mega65Keyboard_l122) begin
+                slowArea_capsLockState <= (! slowArea_capsLockState);
+              end
+            end
+          end
+          8'b??????1? : begin
+            if(when_Mega65Keyboard_l120_1) begin
+              if(when_Mega65Keyboard_l122_1) begin
+                slowArea_capsLockState <= (! slowArea_capsLockState);
+              end
+            end
+          end
+          8'b?????1?? : begin
+            if(when_Mega65Keyboard_l120_2) begin
+              if(when_Mega65Keyboard_l122_2) begin
+                slowArea_capsLockState <= (! slowArea_capsLockState);
+              end
+            end
+          end
+          8'b????1??? : begin
+            if(when_Mega65Keyboard_l120_3) begin
+              if(when_Mega65Keyboard_l122_3) begin
+                slowArea_capsLockState <= (! slowArea_capsLockState);
+              end
+            end
+          end
+          8'b???1???? : begin
+            if(when_Mega65Keyboard_l120_4) begin
+              if(when_Mega65Keyboard_l122_4) begin
+                slowArea_capsLockState <= (! slowArea_capsLockState);
+              end
+            end
+          end
+          8'b??1????? : begin
+            if(when_Mega65Keyboard_l120_5) begin
+              if(when_Mega65Keyboard_l122_5) begin
+                slowArea_capsLockState <= (! slowArea_capsLockState);
+              end
+            end
+          end
+          8'b?1?????? : begin
+            if(when_Mega65Keyboard_l120_6) begin
+              if(when_Mega65Keyboard_l122_6) begin
+                slowArea_capsLockState <= (! slowArea_capsLockState);
+              end
+            end
+          end
+          8'b1??????? : begin
+            if(when_Mega65Keyboard_l120_7) begin
+              if(when_Mega65Keyboard_l122_7) begin
+                slowArea_capsLockState <= (! slowArea_capsLockState);
+              end
+            end
+          end
+          default : begin
+          end
+        endcase
+      end
+    end
+  end
+
+  always @(posedge bus_clk) begin
+    if(when_ClockDomain_l353_regNext) begin
+      slowArea_rowsIn <= (~ decoder_1_matrix_col_o);
     end
   end
 
@@ -4449,6 +4948,347 @@ module MultiplierUnit32x32 (
   assign negateResult = (io_signed && (io_operand1[31] ^ io_operand2[31]));
   assign io_result = _zz_io_result;
   assign io_ready = multiplier_io_ready;
+
+endmodule
+
+module Mega65MatrixToScanCode (
+  input      [2:0]    io_row,
+  input      [3:0]    io_column,
+  output     [6:0]    io_scanCode
+);
+
+  wire       [7:0]    _zz_io_scanCode;
+  reg        [7:0]    _zz_io_scanCode_1;
+  wire       [2:0]    _zz_io_scanCode_2;
+  reg        [7:0]    codes_0;
+  reg        [7:0]    codes_1;
+  reg        [7:0]    codes_2;
+  reg        [7:0]    codes_3;
+  reg        [7:0]    codes_4;
+  reg        [7:0]    codes_5;
+  reg        [7:0]    codes_6;
+  reg        [7:0]    codes_7;
+
+  assign _zz_io_scanCode = _zz_io_scanCode_1;
+  assign _zz_io_scanCode_2 = io_row;
+  always @(*) begin
+    case(_zz_io_scanCode_2)
+      3'b000 : _zz_io_scanCode_1 = codes_0;
+      3'b001 : _zz_io_scanCode_1 = codes_1;
+      3'b010 : _zz_io_scanCode_1 = codes_2;
+      3'b011 : _zz_io_scanCode_1 = codes_3;
+      3'b100 : _zz_io_scanCode_1 = codes_4;
+      3'b101 : _zz_io_scanCode_1 = codes_5;
+      3'b110 : _zz_io_scanCode_1 = codes_6;
+      default : _zz_io_scanCode_1 = codes_7;
+    endcase
+  end
+
+  always @(*) begin
+    case(io_column)
+      4'b0000 : begin
+        codes_0 = 8'hff;
+      end
+      4'b0001 : begin
+        codes_0 = 8'h08;
+      end
+      4'b0010 : begin
+        codes_0 = 8'h33;
+      end
+      4'b0011 : begin
+        codes_0 = 8'h35;
+      end
+      4'b0100 : begin
+        codes_0 = 8'h37;
+      end
+      4'b0101 : begin
+        codes_0 = 8'h39;
+      end
+      4'b0110 : begin
+        codes_0 = 8'hff;
+      end
+      4'b0111 : begin
+        codes_0 = 8'hff;
+      end
+      4'b1000 : begin
+        codes_0 = 8'h31;
+      end
+      4'b1001 : begin
+        codes_0 = 8'hff;
+      end
+      default : begin
+        codes_0 = 8'hff;
+      end
+    endcase
+  end
+
+  always @(*) begin
+    case(io_column)
+      4'b0000 : begin
+        codes_1 = 8'h10;
+      end
+      4'b0001 : begin
+        codes_1 = 8'hff;
+      end
+      4'b0010 : begin
+        codes_1 = 8'h57;
+      end
+      4'b0011 : begin
+        codes_1 = 8'h52;
+      end
+      4'b0100 : begin
+        codes_1 = 8'h59;
+      end
+      4'b0101 : begin
+        codes_1 = 8'h49;
+      end
+      4'b0110 : begin
+        codes_1 = 8'h50;
+      end
+      4'b0111 : begin
+        codes_1 = 8'hff;
+      end
+      4'b1000 : begin
+        codes_1 = 8'hff;
+      end
+      4'b1001 : begin
+        codes_1 = 8'h09;
+      end
+      default : begin
+        codes_1 = 8'hff;
+      end
+    endcase
+  end
+
+  always @(*) begin
+    case(io_column)
+      4'b0000 : begin
+        codes_2 = 8'h02;
+      end
+      4'b0001 : begin
+        codes_2 = 8'h06;
+      end
+      4'b0010 : begin
+        codes_2 = 8'h41;
+      end
+      4'b0011 : begin
+        codes_2 = 8'h44;
+      end
+      4'b0100 : begin
+        codes_2 = 8'h47;
+      end
+      4'b0101 : begin
+        codes_2 = 8'h4a;
+      end
+      4'b0110 : begin
+        codes_2 = 8'h3b;
+      end
+      4'b0111 : begin
+        codes_2 = 8'h4c;
+      end
+      4'b1000 : begin
+        codes_2 = 8'h65;
+      end
+      4'b1001 : begin
+        codes_2 = 8'h64;
+      end
+      default : begin
+        codes_2 = 8'hff;
+      end
+    endcase
+  end
+
+  always @(*) begin
+    case(io_column)
+      4'b0000 : begin
+        codes_3 = 8'hff;
+      end
+      4'b0001 : begin
+        codes_3 = 8'h18;
+      end
+      4'b0010 : begin
+        codes_3 = 8'h34;
+      end
+      4'b0011 : begin
+        codes_3 = 8'h36;
+      end
+      4'b0100 : begin
+        codes_3 = 8'h38;
+      end
+      4'b0101 : begin
+        codes_3 = 8'h30;
+      end
+      4'b0110 : begin
+        codes_3 = 8'h2d;
+      end
+      4'b0111 : begin
+        codes_3 = 8'h01;
+      end
+      4'b1000 : begin
+        codes_3 = 8'h32;
+      end
+      4'b1001 : begin
+        codes_3 = 8'hff;
+      end
+      default : begin
+        codes_3 = 8'hff;
+      end
+    endcase
+  end
+
+  always @(*) begin
+    case(io_column)
+      4'b0000 : begin
+        codes_4 = 8'hff;
+      end
+      4'b0001 : begin
+        codes_4 = 8'h12;
+      end
+      4'b0010 : begin
+        codes_4 = 8'h5a;
+      end
+      4'b0011 : begin
+        codes_4 = 8'h43;
+      end
+      4'b0100 : begin
+        codes_4 = 8'h42;
+      end
+      4'b0101 : begin
+        codes_4 = 8'h4d;
+      end
+      4'b0110 : begin
+        codes_4 = 8'h2e;
+      end
+      4'b0111 : begin
+        codes_4 = 8'h63;
+      end
+      4'b1000 : begin
+        codes_4 = 8'h20;
+      end
+      4'b1001 : begin
+        codes_4 = 8'h1c;
+      end
+      default : begin
+        codes_4 = 8'hff;
+      end
+    endcase
+  end
+
+  always @(*) begin
+    case(io_column)
+      4'b0000 : begin
+        codes_5 = 8'hff;
+      end
+      4'b0001 : begin
+        codes_5 = 8'h14;
+      end
+      4'b0010 : begin
+        codes_5 = 8'h53;
+      end
+      4'b0011 : begin
+        codes_5 = 8'h46;
+      end
+      4'b0100 : begin
+        codes_5 = 8'h48;
+      end
+      4'b0101 : begin
+        codes_5 = 8'h4b;
+      end
+      4'b0110 : begin
+        codes_5 = 8'hff;
+      end
+      4'b0111 : begin
+        codes_5 = 8'h3d;
+      end
+      4'b1000 : begin
+        codes_5 = 8'hff;
+      end
+      4'b1001 : begin
+        codes_5 = 8'hff;
+      end
+      default : begin
+        codes_5 = 8'hff;
+      end
+    endcase
+  end
+
+  always @(*) begin
+    case(io_column)
+      4'b0000 : begin
+        codes_6 = 8'hff;
+      end
+      4'b0001 : begin
+        codes_6 = 8'h16;
+      end
+      4'b0010 : begin
+        codes_6 = 8'h45;
+      end
+      4'b0011 : begin
+        codes_6 = 8'h54;
+      end
+      4'b0100 : begin
+        codes_6 = 8'h55;
+      end
+      4'b0101 : begin
+        codes_6 = 8'h4f;
+      end
+      4'b0110 : begin
+        codes_6 = 8'hff;
+      end
+      4'b0111 : begin
+        codes_6 = 8'hff;
+      end
+      4'b1000 : begin
+        codes_6 = 8'h51;
+      end
+      4'b1001 : begin
+        codes_6 = 8'hff;
+      end
+      default : begin
+        codes_6 = 8'hff;
+      end
+    endcase
+  end
+
+  always @(*) begin
+    case(io_column)
+      4'b0000 : begin
+        codes_7 = 8'hff;
+      end
+      4'b0001 : begin
+        codes_7 = 8'h0e;
+      end
+      4'b0010 : begin
+        codes_7 = 8'h62;
+      end
+      4'b0011 : begin
+        codes_7 = 8'h58;
+      end
+      4'b0100 : begin
+        codes_7 = 8'h56;
+      end
+      4'b0101 : begin
+        codes_7 = 8'h4e;
+      end
+      4'b0110 : begin
+        codes_7 = 8'h2c;
+      end
+      4'b0111 : begin
+        codes_7 = 8'h2f;
+      end
+      4'b1000 : begin
+        codes_7 = 8'hff;
+      end
+      4'b1001 : begin
+        codes_7 = 8'h1b;
+      end
+      default : begin
+        codes_7 = 8'hff;
+      end
+    endcase
+  end
+
+  assign io_scanCode = _zz_io_scanCode[6:0];
 
 endmodule
 
