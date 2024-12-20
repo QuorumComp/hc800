@@ -66,16 +66,30 @@ Main:
 		MNewline
 		MNewline
 
+		; empty key fifo
 		ld	b,IO_KEYBOARD_BASE
-		ld	c,IO_KEYBOARD_STATUS
+.empty_loop	ld	c,IO_KEYBOARD_STATUS
+		lio	t,(bc)
+		cmp	t,0
+		j/eq	.empty_done
+
+		ld	c,IO_KEYBOARD_DATA
+		lio	t,(bc)
+		j	.empty_loop
+.empty_done
+
+		; read keys
+		ld	b,IO_KEYBOARD_BASE
+.next_key	ld	c,IO_KEYBOARD_STATUS
 .wait_key	lio	t,(bc)
 		cmp	t,0
 		j/eq	.wait_key
 
 		ld	c,IO_KEYBOARD_DATA
 		lio	t,(bc)
+
 		cmp	t,0
-		j/ge	.wait_key
+		j/ge	.next_key	; branch if bit 7 not set
 
 		and	t,$7F
 		cmp	t,'U'

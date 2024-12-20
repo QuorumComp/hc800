@@ -42,9 +42,9 @@ TextHexWordOut:
 		pusha
 
 		exg	f,t
-		jal	textHexByteOut
+		jal	TextHexByteOut
 		exg	f,t
-		jal	textHexByteOut
+		jal	TextHexByteOut
 
 		popa
 		j	(hl)
@@ -234,8 +234,8 @@ textSetWideChar:
 ; -- Inputs:
 ; --    t - value to print
 ; --
-		SECTION	"textHexByteOut",CODE
-textHexByteOut:
+		SECTION	"TextHexByteOut",CODE
+TextHexByteOut:
 		pusha
 
 		ld	d,t

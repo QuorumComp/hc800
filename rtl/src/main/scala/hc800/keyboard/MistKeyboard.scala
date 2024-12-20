@@ -11,8 +11,8 @@ case class Ps2ToScanCode() extends Component {
 	}
 
 	private val codes = Mem(UInt(7 bits), Array(
-		U"x00", U"x1C", U"x00", U"x16", U"x13", U"x12", U"x13", U"x00",	// 00-07
-		U"x00", U"x1D", U"x19", U"x00", U"x15", U"x09", U"x60", U"x00",	// 08-0F
+		U"x00", U"x1A", U"x00", U"x16", U"x13", U"x12", U"x13", U"x00",	// 00-07
+		U"x00", U"x1C", U"x19", U"x00", U"x15", U"x09", U"x60", U"x00",	// 08-0F
 		U"x00", U"x64", U"x62", U"x00", U"x65", U"x51", U"x31", U"x00",	// 10-17
 		U"x00", U"x00", U"x5A", U"x53", U"x41", U"x57", U"x32", U"x00",	// 18-1F
 		U"x00", U"x43", U"x58", U"x44", U"x45", U"x34", U"x33", U"x00",	// 20-27

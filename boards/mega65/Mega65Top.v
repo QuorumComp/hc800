@@ -331,6 +331,9 @@ wire dblHSync, dblVSync, dblBlank;
 
 reg reset = 1;
 reg count_in = 0;
+reg [3:0] clk_count = 4'd8;
+
+// Hold reset for a number of cycles when starting
 
 always @(posedge sys_clk_i) begin
     if (clk_locked) begin
@@ -338,19 +341,22 @@ always @(posedge sys_clk_i) begin
     end
 end
 
-reg [3:0] clk_count = 4'd8;
-
-// Hold reset for a number of cycles when starting
-
+reg [2:0] reset_i_13_5M = 0;
 always @(posedge clk_13_5M) begin
-    if (clk_locked && count_in) begin
-        if (clk_count != 4'd0) begin
-            clk_count <= clk_count - 4'd1;
-        end else begin
-            reset <= 0;
+    if (clk_locked) begin
+        reset_i_13_5M <= {sys_rst_i, reset_i_13_5M[2:1]};
+        if (count_in) begin
+            if (clk_count != 4'd0) begin
+                clk_count <= clk_count - 4'd1;
+            end else if (reset_i_13_5M[0]) begin
+                reset <= 1;
+            end else begin
+                reset <= 0;
+            end
         end
     end
 end
+
 
 Clocks pll (
     .clk_in_100M(sys_clk_i),

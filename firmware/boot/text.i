@@ -9,6 +9,7 @@ ATTRIBUTES_BASE	EQU	$C000
 
 	GLOBAL	TextInitialize
 	GLOBAL	TextHexWordOut
+	GLOBAL	TextHexByteOut
 	GLOBAL	TextNewline
 	GLOBAL	TextCodeStringOut
 	GLOBAL	TextMoveCursorBack

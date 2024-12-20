@@ -34,3 +34,8 @@ cd firmware && make && cd ..
 cd spinal && sbt "runMain hc800.HC800TopLevel" && cd ..
 ```
 
+# Tools
+
+HDL is built using SpinalHDL
+
+Font is created with [SG Bitmap Font Editor](https://corosan.ru/sgfed/)

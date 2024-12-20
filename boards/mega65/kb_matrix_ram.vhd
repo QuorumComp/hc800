@@ -1,49 +1,41 @@
--- Original MEGA65 keyboard driver file by Paul Gardner-Stephen
--- see AUTHORS details and license
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use ieee.numeric_std.all;
+
 --
--- Modified for gbc4mega65 by sy2002 in January 2021
--- Added to MiSTer2MEGA65 based on the modified gbc4mega65 form by sy2002 in July 2021
-
-library ieee;
-   use ieee.std_logic_1164.all;
-   use ieee.numeric_std.all;
-
 entity kb_matrix_ram is
-   port (
-      clka_i     : in    std_logic;
-      addressa_i : in    integer range 0 to 15;
-      dia_i      : in    std_logic_vector(7 downto 0);
-      wea_i      : in    std_logic_vector(7 downto 0);
-      addressb_i : in    integer range 0 to 15;
-      dob_o      : out   std_logic_vector(7 downto 0)
-   );
-end entity kb_matrix_ram;
+  port (ClkA : in std_logic;
+        addressa : in integer range 0 to 15;
+        dia : in std_logic_vector(7 downto 0);
+        wea : in std_logic_vector(7 downto 0);
+        addressb : in integer range 0 to 15;
+        dob : out std_logic_vector(7 downto 0)
+        );
+end kb_matrix_ram;
 
-architecture synthesis of kb_matrix_ram is
-
-   type            ram_type is array (0 to 15) of std_logic_vector(7 downto 0);
-   shared variable ram_v : ram_type := (others => x"FF");
+architecture Behavioral of kb_matrix_ram is
+  
+  type ram_t is array (0 to 15) of std_logic_vector(7 downto 0);
+  shared variable ram : ram_t := (others => x"FF");
 
 begin
 
-   -- process for read and write operation.
-   write_proc : process (clka_i)
-   begin
-      if rising_edge(clka_i) then
+--process for read and write operation.
+  PROCESS(ClkA)
+  BEGIN
+    if(rising_edge(ClkA)) then
+      for i in 0 to 7 loop
+        if wea(i) = '1' then
+          ram(addressa)(i) := dia(i);
+          report "Writing bit " & integer'image(i) & " of byte " & integer'image(addressa) & " with " & std_logic'image(dia(i));
+        end if;
+      end loop;
+    end if;
+  END PROCESS;
+PROCESS(addressb)
+BEGIN
+  dob <= ram(addressb);
+--  report "Reading byte " & integer'image(addressb) & " with value $" & to_hstring(ram(addressb));
+END PROCESS;
 
-         for i in 0 to 7 loop
-            if wea_i(i) = '1' then
-               ram_v(addressa_i)(i) := dia_i(i);
-            end if;
-         end loop;
-
-      end if;
-   end process write_proc;
-
-   read_proc : process (addressb_i)
-   begin
-      dob_o <= ram_v(addressb_i);
-   end process read_proc;
-
-end architecture synthesis;
-
+end Behavioral;

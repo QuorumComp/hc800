@@ -154,7 +154,7 @@ initializeMemory:
 
 		add	h,1
 		cmp	h,0
-		j/nz	.clear_loop
+		j/ne	.clear_loop
 
 		; Step 2
 
@@ -173,21 +173,19 @@ initializeMemory:
 		; Step 2.1
 		ld	t,(de)
 		cmp	t,0
-		j/nz	.found_end
+		j/ne	.found_end
 
 		; Step 2.2
-		ld	t,(bc)
-		add	bc,1
+		ld	t,(bc+)
 		ld	(de),t
 
 		; Step 2.3
 		ld	f,t
-		ld	t,(de)
+		ld	t,(de+)
 		cmp	f
 		j/ne	.found_end
 
 		; next byte
-		add	de,1
 		dj	l,.step_loop
 
 		; next bank
