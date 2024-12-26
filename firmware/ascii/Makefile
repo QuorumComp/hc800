@@ -25,14 +25,16 @@ ASSEMBLE = $(ASM) $(DEPFLAGS) $(ASMFLAGS)
 
 %.obj : %.asm
 %.obj : %.asm $(DEPDIR)/%.d
-	$(ASSEMBLE) -o$@ $<
-	$(POSTCOMPILE)
+	@echo "\033[1;33m    Link\033[0m $(@F)"
+	@$(ASSEMBLE) -o$@ $<
+#	$(POSTCOMPILE)
 
 $(DEPDIR)/%.d: ;
 .PRECIOUS: $(DEPDIR)/%.d
 
 $(TARGET) : $(notdir $(SRCS:asm=obj)) $(LIBS)
-	$(LINK) -sEntry -m$@.sym -o$@ -chc8s -fhc800 $+
+	@echo "\033[1;33m    Link\033[0m $(@F)"
+	@$(LINK) -sEntry -m$@.sym -o$@ -chc8s -fhc800 $+
 
 clean :
 	$(REMOVEALL)

@@ -43,8 +43,8 @@ all: $(TARGETS)
 	@$(MAKE) -C $* clean
 
 $(LIBS):
-	@$(MAKE) -C $(@D)
+	@$(MAKE) --no-print-directory -C $(@D)
 
 $(TARGETS): $(LIBS)
-	@$(MAKE) -C $(@D)
+	@$(MAKE) --no-print-directory -C $(@D)
 

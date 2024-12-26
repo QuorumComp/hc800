@@ -24,12 +24,14 @@ endif
 ASSEMBLE = $(ASM) $(DEPFLAGS) $(ASMFLAGS)
 
 $(TARGET) : $(notdir $(SRCS:asm=obj)) $(LOWLEVEL)lowlevel.lib
-	$(LINK) -sEntry -m$(@:bin=map) -l$(@:bin=list) -o$@ -chc800b -fbin $+
+	@echo "\033[1;33m    Link\033[0m $(@F)"
+	@$(LINK) -sEntry -m$(@:bin=map) -l$(@:bin=list) -o$@ -chc800b -fbin $+
 
 %.obj : %.asm
 %.obj : %.asm $(DEPDIR)/%.d
-	$(ASSEMBLE) -o$@ $<
-	$(POSTCOMPILE)
+	@echo "\033[0;32mAssemble\033[0m $(@F)"
+	@$(ASSEMBLE) -o$@ $<
+#	$(POSTCOMPILE)
 
 $(DEPDIR)/%.d: ;
 .PRECIOUS: $(DEPDIR)/%.d

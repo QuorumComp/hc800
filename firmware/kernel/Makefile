@@ -45,12 +45,14 @@ endif
 ASSEMBLE = $(ASM) $(DEPFLAGS) $(ASMFLAGS)
 
 $(TARGET) : $(notdir $(SRCS:asm=obj)) $(LIBS)
-	$(LINK) -sInit -m$(@:bin=sym) -o$@ -chc800b -fhc800k $+
+	@echo "\033[1;33m    Link\033[0m $(@F)"
+	@$(LINK) -sInit -m$(@:bin=sym) -l$(@:bin=lst) -o$@ -chc800b -fhc800k $+
 
 %.obj : %.asm
 %.obj : %.asm $(DEPDIR)/%.d
-	$(ASSEMBLE) -o$@ $<
-	$(POSTCOMPILE)
+	@echo "\033[0;32mAssemble\033[0m $(@F)"
+	@$(ASSEMBLE) -o$@ $<
+#	@$(POSTCOMPILE)
 
 $(DEPDIR)/%.d: ;
 .PRECIOUS: $(DEPDIR)/%.d
