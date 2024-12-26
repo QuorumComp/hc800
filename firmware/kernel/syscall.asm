@@ -22,11 +22,11 @@
 		IMPORT	SysGetBlockDevice
 		IMPORT	SysGetVolume
 
-SET_MMU_KERNAL	MACRO
+SET_MMU_KERNEL	MACRO
 		ld	b,IO_MMU_BASE
 		ld	c,IO_MMU_ACTIVE_INDEX
 
-		ld	t,MMU_INDEX_PUSH|MMU_CFG_KERNAL
+		ld	t,MMU_INDEX_PUSH|MMU_CFG_KERNEL
 		lio	(bc),t
 		ENDM
 
@@ -74,7 +74,7 @@ KVector:	MACRO
 printError:
 		push	ft-de
 
-		SET_MMU_KERNAL
+		SET_MMU_KERNEL
 
 		pop	ft
 		jal	ErrorPrintDescription
@@ -154,7 +154,7 @@ charOut:
 		push	ft-de
 
 		push	ft
-		SET_MMU_KERNAL
+		SET_MMU_KERNEL
 		pop	ft
 
 		jal	ScreenCharacterOut
@@ -180,7 +180,7 @@ textSetAttributes:
 		SECTION "ClearScreen",CODE
 clearScreen:
 		push	ft-de
-		SET_MMU_KERNAL
+		SET_MMU_KERNEL
 
 		jal	ScreenInitialize
 
@@ -194,7 +194,7 @@ reset:
 		di
 		ld	b,IO_MMU_BASE
 		ld	c,IO_MMU_UPDATE_INDEX
-		ld	t,MMU_CFG_KERNAL
+		ld	t,MMU_CFG_KERNEL
 		lio	(bc),t
 
 		ld	t,$00
@@ -206,7 +206,7 @@ reset:
 		lio	(bc),t
 
 		ld	c,IO_MMU_ACTIVE_INDEX
-		ld	t,MMU_CFG_KERNAL
+		ld	t,MMU_CFG_KERNEL
 		lio	(bc),t
 
 		pop	hl

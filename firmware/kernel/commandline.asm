@@ -120,7 +120,7 @@ SysExit::
 		ld	c,IO_VID_PLANE0_VSCROLLH
 		lio	(bc),t
 
-		ld	t,MMU_CFG_KERNAL
+		ld	t,MMU_CFG_KERNEL
 		jal	MmuActivateConfig
 		jal	MmuInitialize
 

@@ -119,12 +119,10 @@ initializeMemory:
 
 		ld	b,IO_MMU_BASE
 		ld	c,IO_MMU_UPDATE_INDEX
-		ld	t,MMU_CFG_KERNAL
+		ld	t,MMU_CFG_KERNEL
 		lio	(bc),t
 		ld	c,IO_MMU_ACTIVE_INDEX
 		lio	(bc),t
-
-		ld	c,IO_MMU_DATA_BANK1
 
 		; To determine the amount of free RAM:
 		; 1. Write zeroes to four bytes of each possible 16 KiB bank
@@ -135,6 +133,7 @@ initializeMemory:
 		; 2.4. If 2.1 or 2.3 fails, this bank is invalid, the previous bank is the last one
 
 		ld	de,$5000
+		ld	c,IO_MMU_DATA_BANK1
 
 		; Step 1
 
@@ -143,12 +142,9 @@ initializeMemory:
 		lio	(bc),t
 
 		ld	t,0
-		ld	(de),t
-		add	de,1
-		ld	(de),t
-		add	de,1
-		ld	(de),t
-		add	de,1
+		ld	(de+),t
+		ld	(de+),t
+		ld	(de+),t
 		ld	(de),t
 		ld	e,$00
 
@@ -170,16 +166,17 @@ initializeMemory:
 		ld	de,$5000
 		ld	l,4
 .step_loop
-		; Step 2.1
+		; Step 2.1, is it zero?
 		ld	t,(de)
 		cmp	t,0
 		j/ne	.found_end
 
-		; Step 2.2
-		ld	t,(bc+)
+		; Step 2.2, store pattern byte
+		lco	t,(bc)
+		add	bc,1
 		ld	(de),t
 
-		; Step 2.3
+		; Step 2.3, read back pattern byte
 		ld	f,t
 		ld	t,(de+)
 		cmp	f
@@ -195,9 +192,8 @@ initializeMemory:
 
 .found_end	; h = last valid bank + 1
 
-		ld	t,$80
-		sub	t,h
-		neg	t
+		sub	h,$80
+		ld	t,h
 
 		; t = number of valid banks
 

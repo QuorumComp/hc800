@@ -8,7 +8,7 @@
 		INCLUDE	"sd.i"
 		INCLUDE	"uart_commands.i"
 
-		INCLUDE	"uart_commands_disabled.i"
+		;INCLUDE	"uart_commands_disabled.i"
 
 
 CMD0_CRC	EQU	$95
@@ -57,7 +57,7 @@ DESELECT:	MACRO
 		pop	ft
 		ENDM
 
-	IF 1 ; 1 = disable debug
+	IF 0 ; 1 = disable debug
 		PURGE	MNewLine
 MNewLine:	MACRO
 		ENDM
@@ -306,11 +306,12 @@ SdReadSingleBlock:
 ; -- Initialize SD card, determine type
 ; --
 ; -- Returns:
-; --    t - card type
 ; --    f - "eq" condition if initialized
 ; --
 		SECTION	"SdInit",CODE
 SdInit:		push	bc-hl
+
+		jal	resetCard
 
 		jal	sdGoIdleState
 		cmp	t,REPLY_IDLE
@@ -341,6 +342,36 @@ SdInit:		push	bc-hl
 ; ---------------------------------------------------------------------------
 ; -- PRIVATE FUNCTIONS
 ; ---------------------------------------------------------------------------
+
+; ---------------------------------------------------------------------------
+; -- Reset card
+; ---------------------------------------------------------------------------
+		SECTION	"resetCard",CODE
+resetCard:	pusha
+
+		ld	bc,SdSelect
+		ld	t,(bc)
+		or	t,IO_STAT_SLOW|IO_STAT_RESET|IO_STAT_OUT_ACTIVE
+		ld	b,IO_SDCARD_BASE
+		ld	c,IO_SD_STATUS
+		lio	(bc),t
+
+		ld	d,10	; 10 * 8 bits = 80 cycles. At least 74.
+
+.next_byte
+		ld	c,IO_SD_DATA
+		ld	t,$FF
+		lio	(bc),t
+
+		ld	c,IO_SD_STATUS
+.wait		lio	t,(bc)
+		and	t,IO_STAT_OUT_ACTIVE
+		cmp	t,IO_STAT_OUT_ACTIVE
+		j/eq	.wait
+
+		dj	d,.next_byte
+
+
 
 ; ---------------------------------------------------------------------------
 ; -- Send block number

@@ -22,10 +22,10 @@ MmuInitialize:
 		jal	internalMmuSetConfigCode
 		ld	t,MMU_CFG_SPARE
 		jal	internalMmuSetConfigCode
-		ld	t,MMU_CFG_KERNAL
+		ld	t,MMU_CFG_KERNEL
 		jal	internalMmuSetConfigCode
 
-		ld	t,MMU_CFG_KERNAL
+		ld	t,MMU_CFG_KERNEL
 		jal	MmuActivateConfig
 
 		ld	b,IO_MMU_BASE

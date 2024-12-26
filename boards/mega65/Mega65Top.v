@@ -64,31 +64,31 @@ module Mega65Top (
     // MEGA65 smart keyboard controller
     output wire         kb_io0_o,               // clock to keyboard
     output wire         kb_io1_o,               // data output wire to keyboard
-    input  wire         kb_io2_i                // data input  wire from keyboard
+    input  wire         kb_io2_i,                // data input  wire from keyboard
     //output wire         kb_tck_o,                
     //input  wire         kb_tdo_i,
     //output wire         kb_tms_o,
     //output wire         kb_tdi_o,
     //output wire         kb_jtagen_o             
 
-    // Micro SD Connector (external slot at back of the cover)
-    /*
-    output wire         sd_reset_o,              
-    output wire         sd_clk_o,                
+    // Micro SD Connector (external slot at b      
+    output wire         sd_clk_o,
     output wire         sd_mosi_o,               
     input  wire         sd_miso_i,
     input  wire         sd_cd_i,
+    output wire         sd_reset_o,
+    /*
     input  wire         sd_d1_i,
     input  wire         sd_d2_i,
     */
 
     // SD Connector (this is the slot at the bottom side of the case under the cover)
-    /*
-    output wire         sd2_reset_o,             
     output wire         sd2_clk_o,               
     output wire         sd2_mosi_o,              
-    input  wire         sd2_miso_i,              
-    input  wire         sd2_cd_i,                
+    input  wire         sd2_miso_i,
+    input  wire         sd2_cd_i,
+    output wire         sd2_reset_o
+    /*
     input  wire         sd2_wp_i,                
     input  wire         sd2_d1_i,                
     input  wire         sd2_d2_i,                
@@ -400,6 +400,36 @@ assign vdac_psave_n_o = 1'b1;
 
 
 //
+// SD signals
+//
+
+wire sd_select_1_n, sd_select_2_n;
+wire sd_reset_n;
+wire sd_clock;
+wire sd_di;
+wire sd_do;
+wire sd_detect_n;
+
+assign sd_clk_o   = sd_select_1_n ? 1'b0 : sd_clock;
+assign sd_mosi_o  = sd_di;
+assign sd_reset_o = !sd_select_1_n && !sd_reset_n; 
+
+assign sd2_clk_o   = sd_select_2_n ? 1'b0 : sd_clock;
+assign sd2_mosi_o  = sd_di;
+assign sd2_reset_o = !sd_select_2_n && !sd_reset_n;
+
+assign sd_do =
+    !sd_select_1_n ? sd_miso_i :
+    !sd_select_2_n ? sd2_miso_i :
+    1'b0;
+
+assign sd_detect_n =
+    !sd_select_1_n ? sd_cd_i :
+    !sd_select_2_n ? sd2_cd_i :
+    1'b0;
+
+
+//
 // HDMI
 //
 
@@ -539,7 +569,13 @@ HC800 hc800(
     .io_ramBus_address(mem_addr),
     .io_kio8_o(kb_io0_o),
     .io_kio9_o(kb_io1_o),
-    .io_kio10_i(kb_io2_i)
+    .io_kio10_i(kb_io2_i),
+    .io_sd_cs({sd_select_2_n, sd_select_1_n}),
+    .io_sd_detect(sd_detect_n),
+    .io_sd_clock(sd_clk_o),
+    .io_sd_di(sd_di),
+    .io_sd_do(sd_do),
+    .io_sd_reset(sd_reset_n)
 );
 
 

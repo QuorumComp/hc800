@@ -78,10 +78,39 @@ set_property -dict {PACKAGE_PIN A14 IOSTANDARD LVCMOS33} [get_ports kb_io0_o]
 set_property -dict {PACKAGE_PIN A13 IOSTANDARD LVCMOS33} [get_ports kb_io1_o]
 set_property -dict {PACKAGE_PIN C13 IOSTANDARD LVCMOS33} [get_ports kb_io2_i]
 
+# Micro SD Connector (external slot at back of the cover)
+set_property -dict {PACKAGE_PIN K1   IOSTANDARD LVCMOS33} [get_ports {sd_cd_i}];                # SD_CD
+set_property -dict {PACKAGE_PIN G2   IOSTANDARD LVCMOS33} [get_ports {sd_clk_o}];               # SD_CLK
+set_property -dict {PACKAGE_PIN H2   IOSTANDARD LVCMOS33} [get_ports {sd_miso_i}];              # SD_D0
+set_property -dict {PACKAGE_PIN J2   IOSTANDARD LVCMOS33} [get_ports {sd_mosi_o}];              # SD_CMD
+set_property -dict {PACKAGE_PIN K2   IOSTANDARD LVCMOS33} [get_ports {sd_reset_o}];             # SD_D3
+set_property -dict {PACKAGE_PIN H3   IOSTANDARD LVCMOS33} [get_ports {sd_d1_i}];                # SD_D1
+set_property -dict {PACKAGE_PIN J1   IOSTANDARD LVCMOS33} [get_ports {sd_d2_i}];                # SD_D2
+
+# SD Connector (this is the slot at the bottom side of the case under the cover)
+set_property -dict {PACKAGE_PIN D17  IOSTANDARD LVCMOS33} [get_ports {sd2_cd_i}];               # SD2_CD
+set_property -dict {PACKAGE_PIN B17  IOSTANDARD LVCMOS33} [get_ports {sd2_clk_o}];              # SD2_CLK
+set_property -dict {PACKAGE_PIN B18  IOSTANDARD LVCMOS33} [get_ports {sd2_miso_i}];             # SD2_D0
+set_property -dict {PACKAGE_PIN B16  IOSTANDARD LVCMOS33} [get_ports {sd2_mosi_o}];             # SD2_CMD
+set_property -dict {PACKAGE_PIN B15  IOSTANDARD LVCMOS33} [get_ports {sd2_reset_o}];            # SD2_D3
+set_property -dict {PACKAGE_PIN C17  IOSTANDARD LVCMOS33} [get_ports {sd2_wp_i}];               # SD2_WP
+set_property -dict {PACKAGE_PIN C18  IOSTANDARD LVCMOS33} [get_ports {sd2_d1_i}];               # SD2_D1
+set_property -dict {PACKAGE_PIN C19  IOSTANDARD LVCMOS33} [get_ports {sd2_d2_i}];               # SD2_D2
+
+
+################################
+## PLACEMENT CONSTRAINTS
+################################
+
 # Place KBD close to I/O pins
-#create_pblock pblock_i_kbd
-#resize_pblock [get_pblocks pblock_i_kbd] -add {SLICE_X0Y225:SLICE_X7Y237}
-#add_cells_to_pblock pblock_i_kbd [get_cells [list mega65_inst/m2m_keyb_inst/mega65kbd_to_matrix_inst]]
+create_pblock pblock_i_kbd
+resize_pblock [get_pblocks pblock_i_kbd] -add {SLICE_X0Y225:SLICE_X7Y237}
+add_cells_to_pblock pblock_i_kbd [get_cells [list hc800/memoryArea_keyboard]]
+
+# Place SD card controller in the middle between the left and right FPGA boundary because the output ports are at the opposide edges
+create_pblock pblock_sdcard
+add_cells_to_pblock pblock_sdcard [get_cells [list hc800/memoryArea_sd]]
+resize_pblock pblock_sdcard -add {SLICE_X66Y178:SLICE_X99Y193}
 
 
 ################################

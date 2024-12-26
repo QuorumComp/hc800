@@ -1,6 +1,6 @@
 // Generator : SpinalHDL v1.6.4    git head : 598c18959149eb18e5eee5b0aa3eef01ecaa41a1
 // Component : HC800
-// Git hash  : 3fa188daf1cc0e5a870a12cb08566c26ea35fbb4
+// Git hash  : 25d4fa8c41d01e5f1228648a45b3eff36316dd1a
 
 `timescale 1ns/1ps 
 
@@ -25,9 +25,11 @@ module HC800 (
   input      [7:0]    io_ramBus_dataToMaster,
   output     [20:0]   io_ramBus_address,
   output     [1:0]    io_sd_cs,
+  input               io_sd_detect,
   output              io_sd_clock,
   output              io_sd_di,
   input               io_sd_do,
+  output              io_sd_reset,
   output              io_kio8_o,
   output              io_kio9_o,
   input               io_kio10_i,
@@ -85,6 +87,7 @@ module HC800 (
   wire       [1:0]    memoryArea_sd_io_sd_cs;
   wire                memoryArea_sd_io_sd_clock;
   wire                memoryArea_sd_io_sd_di;
+  wire                memoryArea_sd_io_sd_reset;
   wire       [4:0]    graphicsArea_videoGenerator_io_red;
   wire       [4:0]    graphicsArea_videoGenerator_io_green;
   wire       [4:0]    graphicsArea_videoGenerator_io_blue;
@@ -280,9 +283,11 @@ module HC800 (
     .io_bus_dataToMaster      (memoryArea_sd_io_bus_dataToMaster[7:0]     ), //o
     .io_bus_address           (memoryArea_sd_io_bus_address               ), //i
     .io_sd_cs                 (memoryArea_sd_io_sd_cs[1:0]                ), //o
+    .io_sd_detect             (io_sd_detect                               ), //i
     .io_sd_clock              (memoryArea_sd_io_sd_clock                  ), //o
     .io_sd_di                 (memoryArea_sd_io_sd_di                     ), //o
     .io_sd_do                 (io_sd_do                                   ), //i
+    .io_sd_reset              (memoryArea_sd_io_sd_reset                  ), //o
     .bus_clk                  (bus_clk                                    ), //i
     .bus_reset                (bus_reset                                  )  //i
   );
@@ -400,6 +405,7 @@ module HC800 (
   assign io_sd_cs = memoryArea_sd_io_sd_cs;
   assign io_sd_clock = memoryArea_sd_io_sd_clock;
   assign io_sd_di = memoryArea_sd_io_sd_di;
+  assign io_sd_reset = memoryArea_sd_io_sd_reset;
   assign memoryArea_nexys3IoDataIn = 8'h0;
   assign memoryArea_graphicsRegBus_enable = (memoryArea_machineBus_enable && memoryArea_graphicsEnable);
   assign memoryArea_graphicsRegBus_write = memoryArea_machineBus_write;
@@ -1038,16 +1044,18 @@ module SD (
   output     [7:0]    io_bus_dataToMaster,
   input      [0:0]    io_bus_address,
   output     [1:0]    io_sd_cs,
+  input               io_sd_detect,
   output              io_sd_clock,
   output reg          io_sd_di,
   input               io_sd_do,
+  output              io_sd_reset,
   input               bus_clk,
   input               bus_reset
 );
   localparam Register_6_data = 1'd0;
   localparam Register_6_status = 1'd1;
 
-  wire       [4:0]    _zz__zz_ioDataOut;
+  wire       [6:0]    _zz__zz_ioDataOut;
   reg        [1:0]    cardSelect;
   reg                 inDataEnabled;
   reg                 inDataProcessing;
@@ -1057,29 +1065,30 @@ module SD (
   reg        [3:0]    count;
   wire                processing;
   reg                 slowClock;
+  reg                 resetting;
   reg        [5:0]    clockCount;
   reg                 sdClock;
   reg                 shiftDataOut;
   reg                 shiftDataIn;
-  wire                when_SD_l57;
-  wire                when_SD_l58;
-  wire                when_SD_l66;
+  wire                when_SD_l61;
+  wire                when_SD_l62;
+  wire                when_SD_l70;
   reg        [7:0]    ioDataOut;
   wire       [0:0]    busRegister;
   wire       [0:0]    _zz_busRegister;
-  wire                when_SD_l93;
+  wire                when_SD_l98;
   reg        [7:0]    _zz_ioDataOut;
-  wire                when_SD_l99;
-  wire                when_SD_l107;
+  wire                when_SD_l104;
+  wire                when_SD_l112;
   wire                _zz_inDataEnabled;
-  wire                when_SD_l120;
+  wire                when_SD_l126;
   `ifndef SYNTHESIS
   reg [47:0] busRegister_string;
   reg [47:0] _zz_busRegister_string;
   `endif
 
 
-  assign _zz__zz_ioDataOut = {{{slowClock,cardSelect},outDataProcessing},inDataEnabled};
+  assign _zz__zz_ioDataOut = {{{{{resetting,(! io_sd_detect)},slowClock},cardSelect},outDataProcessing},inDataEnabled};
   `ifndef SYNTHESIS
   always @(*) begin
     case(busRegister)
@@ -1100,9 +1109,10 @@ module SD (
   assign processing = (inDataProcessing || outDataProcessing);
   assign io_sd_cs = (~ cardSelect);
   assign io_sd_clock = sdClock;
-  assign when_SD_l57 = (processing && shiftDataOut);
-  assign when_SD_l58 = (count == 4'b1000);
-  assign when_SD_l66 = (inDataProcessing && shiftDataIn);
+  assign io_sd_reset = (! resetting);
+  assign when_SD_l61 = (processing && shiftDataOut);
+  assign when_SD_l62 = (count == 4'b1000);
+  assign when_SD_l70 = (inDataProcessing && shiftDataIn);
   always @(*) begin
     if(outDataProcessing) begin
       io_sd_di = spiDataOut[8];
@@ -1114,22 +1124,22 @@ module SD (
   assign io_bus_dataToMaster = ioDataOut;
   assign _zz_busRegister = io_bus_address;
   assign busRegister = _zz_busRegister;
-  assign when_SD_l93 = (io_bus_enable && (! io_bus_write));
+  assign when_SD_l98 = (io_bus_enable && (! io_bus_write));
   always @(*) begin
     case(busRegister)
       Register_6_data : begin
         _zz_ioDataOut = spiDataIn;
       end
       default : begin
-        _zz_ioDataOut = {3'd0, _zz__zz_ioDataOut};
+        _zz_ioDataOut = {1'd0, _zz__zz_ioDataOut};
       end
     endcase
   end
 
-  assign when_SD_l99 = (busRegister == Register_6_data);
-  assign when_SD_l107 = (io_bus_enable && io_bus_write);
+  assign when_SD_l104 = (busRegister == Register_6_data);
+  assign when_SD_l112 = (io_bus_enable && io_bus_write);
   assign _zz_inDataEnabled = io_bus_dataFromMaster[0];
-  assign when_SD_l120 = (_zz_inDataEnabled && (! inDataEnabled));
+  assign when_SD_l126 = (_zz_inDataEnabled && (! inDataEnabled));
   always @(posedge bus_clk or posedge bus_reset) begin
     if(bus_reset) begin
       cardSelect <= 2'b00;
@@ -1140,6 +1150,7 @@ module SD (
       spiDataOut <= 9'h0;
       count <= 4'b0000;
       slowClock <= 1'b1;
+      resetting <= 1'b0;
       clockCount <= 6'h0;
       sdClock <= 1'b0;
       shiftDataOut <= 1'b0;
@@ -1161,15 +1172,15 @@ module SD (
         shiftDataIn <= 1'b0;
         shiftDataOut <= 1'b0;
       end
-      if(when_SD_l57) begin
-        if(when_SD_l58) begin
+      if(when_SD_l61) begin
+        if(when_SD_l62) begin
           inDataProcessing <= 1'b0;
           outDataProcessing <= 1'b0;
         end else begin
           count <= (count + 4'b0001);
         end
       end
-      if(when_SD_l66) begin
+      if(when_SD_l70) begin
         spiDataIn <= {spiDataIn[6 : 0],io_sd_do};
       end
       if(outDataProcessing) begin
@@ -1177,8 +1188,8 @@ module SD (
           spiDataOut <= {spiDataOut[7 : 0],1'b0};
         end
       end
-      if(when_SD_l93) begin
-        if(when_SD_l99) begin
+      if(when_SD_l98) begin
+        if(when_SD_l104) begin
           inDataProcessing <= inDataEnabled;
           clockCount <= 6'h0;
           count <= 4'b0000;
@@ -1186,7 +1197,7 @@ module SD (
           shiftDataOut <= 1'b0;
         end
       end
-      if(when_SD_l107) begin
+      if(when_SD_l112) begin
         case(busRegister)
           Register_6_data : begin
             spiDataOut[7 : 0] <= io_bus_dataFromMaster;
@@ -1200,7 +1211,8 @@ module SD (
           default : begin
             slowClock <= io_bus_dataFromMaster[4];
             cardSelect <= io_bus_dataFromMaster[3 : 2];
-            if(when_SD_l120) begin
+            resetting <= io_bus_dataFromMaster[6];
+            if(when_SD_l126) begin
               inDataProcessing <= 1'b1;
               clockCount <= 6'h0;
               count <= 4'b0000;
@@ -1215,7 +1227,7 @@ module SD (
   end
 
   always @(posedge bus_clk) begin
-    if(when_SD_l93) begin
+    if(when_SD_l98) begin
       ioDataOut <= _zz_ioDataOut;
     end else begin
       ioDataOut <= 8'h0;

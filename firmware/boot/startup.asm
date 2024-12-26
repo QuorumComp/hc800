@@ -6,7 +6,7 @@
 		INCLUDE	"main.i"
 
 PALETTE_BASE	EQU	$8000
-MMU_CFG_KERNAL	EQU	0
+MMU_CFG_KERNEL	EQU	0
 
 		SECTION "Reset",CODE[0]
 Entry::		di
@@ -105,12 +105,12 @@ InitializeMMU:
 		j	(hl)
 
 .mmuData
-		DB	MMU_CFG_KERNAL		; update index
+		DB	MMU_CFG_KERNEL		; update index
 		DB	MMU_CFG_HARVARD		; config bits
 		DB	$00,$00,$80,$80		; code banks
 		DB	$80,$01,BANK_PALETTE,BANK_ATTRIBUTE	; data banks
 		DB	$01,$01			; system code/data
-		DB	MMU_CFG_KERNAL		; active index
+		DB	MMU_CFG_KERNEL		; active index
 		DB	$08			; chargen
 .mmuDataEnd
 
