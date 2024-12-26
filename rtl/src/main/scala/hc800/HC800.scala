@@ -69,10 +69,12 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 
 		val ramBus = master(Bus(addressWidth = 21))
 
-		val sd_cs = out Bits(2 bits)
-		val sd_clock = out Bool()
-		val sd_di = out Bool()
-		val sd_do = in Bool()
+		val sd_cs     = out Bits(2 bits)
+		val sd_detect = in Bool()
+		val sd_clock  = out Bool()
+		val sd_di     = out Bool()
+		val sd_do     = in Bool()
+		val sd_reset  = out Bool()
 
 		// ZX Spectrum Next
 		val keyboardColumns = boardIsZxNext generate (in  Bits(7 bits))
@@ -238,10 +240,14 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 		} 
 
 		val keyboard =
-			if (boardIsZxNext) mkZxNextKeyboard()
-			else if (boardIsMist || boardIsMister) mkMistKeyboard()
-			else if (boardIsMega65) mkMega65Keyboard()
-			else new hc800.keyboard.NullKeyboard()
+			if (boardIsZxNext) 
+				mkZxNextKeyboard()
+			else if (boardIsMist || boardIsMister)
+				mkMistKeyboard()
+			else if (boardIsMega65)
+				mkMega65Keyboard()
+			else 
+				new hc800.keyboard.NullKeyboard()
 
 		val interruptController = new InterruptController()
 		val math = new Math()
@@ -272,10 +278,12 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 		uart.io.uart.txd <> io.txd
 		uart.io.uart.rxd <> io.rxd
 
-		sd.io.sd_cs <> io.sd_cs
-		sd.io.sd_clock <> io.sd_clock
-		sd.io.sd_di <> io.sd_di
-		sd.io.sd_do <> io.sd_do
+		sd.io.sd_cs     <> io.sd_cs
+		sd.io.sd_detect <> io.sd_detect
+		sd.io.sd_clock  <> io.sd_clock
+		sd.io.sd_di     <> io.sd_di
+		sd.io.sd_do     <> io.sd_do
+		sd.io.sd_reset  <> io.sd_reset
 
 		val nexys3IoDataIn = 
 			if (boardIsNexys3) machineBus.wireClient(nexys3.io.bus, boardEnable)

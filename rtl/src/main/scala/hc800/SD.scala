@@ -9,10 +9,12 @@ class SD extends Component {
     val io = new Bundle {
 		val bus = slave(Bus(addressWidth = 1))
 
-		val sd_cs = out Bits(2 bits)
-		val sd_clock = out Bool()
-		val sd_di = out Bool()
-		val sd_do = in Bool()
+		val sd_cs		= out Bits(2 bits)	// card select, active low
+		val sd_detect	= in  Bool()		// card detect, active low
+		val sd_clock	= out Bool()
+		val sd_di		= out Bool()
+		val sd_do		= in  Bool()
+		val sd_reset	= out Bool()		// card reset, active low
     }
 
 	// State
@@ -26,6 +28,7 @@ class SD extends Component {
 	val count = RegInit(U(0, 4 bits))
 	val processing = inDataProcessing || outDataProcessing
 	val slowClock = RegInit(True)
+	val resetting = RegInit(False)
 
 	// External interface
 
@@ -53,6 +56,7 @@ class SD extends Component {
 
 	io.sd_cs := ~cardSelect
 	io.sd_clock := sdClock
+	io.sd_reset := !resetting
 
 	when (processing && shiftDataOut) {
 		when (count === 8) {
@@ -76,6 +80,7 @@ class SD extends Component {
 		io.sd_di := False
 	}
 
+
 	// Register interface
 
 	val ioDataOut = Reg(Bits(8 bits))
@@ -93,7 +98,7 @@ class SD extends Component {
 	when (io.bus.enable && !io.bus.write) {
 		ioDataOut := busRegister.mux (
 			Register.data -> spiDataIn,
-			Register.status -> B(slowClock ## cardSelect ## outDataProcessing ## inDataEnabled).resize(8 bits)
+			Register.status -> B(resetting ## (~io.sd_detect) ## slowClock ## cardSelect ## outDataProcessing ## inDataEnabled).resize(8 bits)
 		)
 
 		when (busRegister === Register.data) {
@@ -115,6 +120,7 @@ class SD extends Component {
 			is (Register.status) {
 				slowClock := io.bus.dataFromMaster(4)
 				cardSelect := io.bus.dataFromMaster(3 downto 2)
+				resetting := io.bus.dataFromMaster(6)
 
 				val newInEnabled = io.bus.dataFromMaster(0)
 				when (newInEnabled && !inDataEnabled) {
