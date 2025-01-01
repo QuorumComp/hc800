@@ -22,8 +22,8 @@ set_property -dict {PACKAGE_PIN V13 IOSTANDARD LVCMOS33} [get_ports sys_clk_i]
 set_property -dict {PACKAGE_PIN J19 IOSTANDARD LVCMOS33} [get_ports sys_rst_i]
 
 # USB-RS232 Interface
-set_property -dict {PACKAGE_PIN L14  IOSTANDARD LVCMOS33} [get_ports {uart_rxd_i}];             # DBG_UART_RX
-set_property -dict {PACKAGE_PIN L13  IOSTANDARD LVCMOS33} [get_ports {uart_txd_o}];             # DBG_UART_TX
+set_property -dict {PACKAGE_PIN L14 IOSTANDARD LVCMOS33} [get_ports uart_rxd_i]
+set_property -dict {PACKAGE_PIN L13 IOSTANDARD LVCMOS33} [get_ports uart_txd_o]
 
 # VGA via VDAC. U3 = ADV7125BCPZ170
 set_property -dict {PACKAGE_PIN W11 IOSTANDARD LVCMOS33} [get_ports vdac_blank_n_o]
@@ -59,19 +59,19 @@ set_property -dict {PACKAGE_PIN V14 IOSTANDARD LVCMOS33} [get_ports vga_vs_o]
 
 # HDMI output. U10 = PTN3363BSMP
 # I2C address 0x40.
-set_property -dict {PACKAGE_PIN Y1   IOSTANDARD TMDS_33}  [get_ports {tmds_clk_n_o}];           # TXC_N
-set_property -dict {PACKAGE_PIN W1   IOSTANDARD TMDS_33}  [get_ports {tmds_clk_p_o}];           # TXC_P
-set_property -dict {PACKAGE_PIN AB1  IOSTANDARD TMDS_33}  [get_ports {tmds_data_n_o[0]}];       # TX0_N
-set_property -dict {PACKAGE_PIN AB2  IOSTANDARD TMDS_33}  [get_ports {tmds_data_n_o[1]}];       # TX1_N
-set_property -dict {PACKAGE_PIN AB5  IOSTANDARD TMDS_33}  [get_ports {tmds_data_n_o[2]}];       # TX2_N
-set_property -dict {PACKAGE_PIN AA1  IOSTANDARD TMDS_33}  [get_ports {tmds_data_p_o[0]}];       # TX0_P
-set_property -dict {PACKAGE_PIN AB3  IOSTANDARD TMDS_33}  [get_ports {tmds_data_p_o[1]}];       # TX1_P
-set_property -dict {PACKAGE_PIN AA5  IOSTANDARD TMDS_33}  [get_ports {tmds_data_p_o[2]}];       # TX2_P
-set_property -dict {PACKAGE_PIN M15  IOSTANDARD LVCMOS33} [get_ports {hdmi_hiz_en_o}];          # HIZ_EN
-set_property -dict {PACKAGE_PIN Y8   IOSTANDARD LVCMOS33} [get_ports {hdmi_hpd_i}];             # HPD_A
-set_property -dict {PACKAGE_PIN AB7  IOSTANDARD LVCMOS33} [get_ports {hdmi_scl_io}];            # SCL_A
-set_property -dict {PACKAGE_PIN V9   IOSTANDARD LVCMOS33} [get_ports {hdmi_sda_io}];            # SDA_A
-set_property -dict {PACKAGE_PIN AB8  IOSTANDARD LVCMOS33} [get_ports {hdmi_ls_oe_n_o}];         # LS_OE
+set_property -dict {PACKAGE_PIN Y1 IOSTANDARD TMDS_33} [get_ports tmds_clk_n_o]
+set_property -dict {PACKAGE_PIN W1 IOSTANDARD TMDS_33} [get_ports tmds_clk_p_o]
+set_property -dict {PACKAGE_PIN AB1 IOSTANDARD TMDS_33} [get_ports {tmds_data_n_o[0]}]
+set_property -dict {PACKAGE_PIN AB2 IOSTANDARD TMDS_33} [get_ports {tmds_data_n_o[1]}]
+set_property -dict {PACKAGE_PIN AB5 IOSTANDARD TMDS_33} [get_ports {tmds_data_n_o[2]}]
+set_property -dict {PACKAGE_PIN AA1 IOSTANDARD TMDS_33} [get_ports {tmds_data_p_o[0]}]
+set_property -dict {PACKAGE_PIN AB3 IOSTANDARD TMDS_33} [get_ports {tmds_data_p_o[1]}]
+set_property -dict {PACKAGE_PIN AA5 IOSTANDARD TMDS_33} [get_ports {tmds_data_p_o[2]}]
+set_property -dict {PACKAGE_PIN M15 IOSTANDARD LVCMOS33} [get_ports hdmi_hiz_en_o]
+set_property -dict {PACKAGE_PIN Y8 IOSTANDARD LVCMOS33} [get_ports hdmi_hpd_i]
+set_property -dict {PACKAGE_PIN AB7 IOSTANDARD LVCMOS33} [get_ports hdmi_scl_io]
+set_property -dict {PACKAGE_PIN V9 IOSTANDARD LVCMOS33} [get_ports hdmi_sda_io]
+set_property -dict {PACKAGE_PIN AB8 IOSTANDARD LVCMOS33} [get_ports hdmi_ls_oe_n_o]
 
 # MEGA65 Keyboard
 set_property -dict {PACKAGE_PIN A14 IOSTANDARD LVCMOS33} [get_ports kb_io0_o]
@@ -79,20 +79,20 @@ set_property -dict {PACKAGE_PIN A13 IOSTANDARD LVCMOS33} [get_ports kb_io1_o]
 set_property -dict {PACKAGE_PIN C13 IOSTANDARD LVCMOS33} [get_ports kb_io2_i]
 
 # Micro SD Connector (external slot at back of the cover)
-set_property -dict {PACKAGE_PIN K1   IOSTANDARD LVCMOS33} [get_ports {sd_cd_i}];                # SD_CD
-set_property -dict {PACKAGE_PIN G2   IOSTANDARD LVCMOS33} [get_ports {sd_clk_o}];               # SD_CLK
-set_property -dict {PACKAGE_PIN H2   IOSTANDARD LVCMOS33} [get_ports {sd_miso_i}];              # SD_D0
-set_property -dict {PACKAGE_PIN J2   IOSTANDARD LVCMOS33} [get_ports {sd_mosi_o}];              # SD_CMD
-set_property -dict {PACKAGE_PIN K2   IOSTANDARD LVCMOS33} [get_ports {sd_reset_o}];             # SD_D3
+set_property -dict {PACKAGE_PIN K1 IOSTANDARD LVCMOS33} [get_ports sd_cd_i]
+set_property -dict {PACKAGE_PIN G2 IOSTANDARD LVCMOS33} [get_ports sd_clk_o]
+set_property -dict {PACKAGE_PIN H2 IOSTANDARD LVCMOS33} [get_ports sd_miso_i]
+set_property -dict {PACKAGE_PIN J2 IOSTANDARD LVCMOS33} [get_ports sd_mosi_o]
+set_property -dict {PACKAGE_PIN K2 IOSTANDARD LVCMOS33} [get_ports sd_reset_o]
 set_property -dict {PACKAGE_PIN H3   IOSTANDARD LVCMOS33} [get_ports {sd_d1_i}];                # SD_D1
 set_property -dict {PACKAGE_PIN J1   IOSTANDARD LVCMOS33} [get_ports {sd_d2_i}];                # SD_D2
 
 # SD Connector (this is the slot at the bottom side of the case under the cover)
-set_property -dict {PACKAGE_PIN D17  IOSTANDARD LVCMOS33} [get_ports {sd2_cd_i}];               # SD2_CD
-set_property -dict {PACKAGE_PIN B17  IOSTANDARD LVCMOS33} [get_ports {sd2_clk_o}];              # SD2_CLK
-set_property -dict {PACKAGE_PIN B18  IOSTANDARD LVCMOS33} [get_ports {sd2_miso_i}];             # SD2_D0
-set_property -dict {PACKAGE_PIN B16  IOSTANDARD LVCMOS33} [get_ports {sd2_mosi_o}];             # SD2_CMD
-set_property -dict {PACKAGE_PIN B15  IOSTANDARD LVCMOS33} [get_ports {sd2_reset_o}];            # SD2_D3
+set_property -dict {PACKAGE_PIN D17 IOSTANDARD LVCMOS33} [get_ports sd2_cd_i]
+set_property -dict {PACKAGE_PIN B17 IOSTANDARD LVCMOS33} [get_ports sd2_clk_o]
+set_property -dict {PACKAGE_PIN B18 IOSTANDARD LVCMOS33} [get_ports sd2_miso_i]
+set_property -dict {PACKAGE_PIN B16 IOSTANDARD LVCMOS33} [get_ports sd2_mosi_o]
+set_property -dict {PACKAGE_PIN B15 IOSTANDARD LVCMOS33} [get_ports sd2_reset_o]
 set_property -dict {PACKAGE_PIN C17  IOSTANDARD LVCMOS33} [get_ports {sd2_wp_i}];               # SD2_WP
 set_property -dict {PACKAGE_PIN C18  IOSTANDARD LVCMOS33} [get_ports {sd2_d1_i}];               # SD2_D1
 set_property -dict {PACKAGE_PIN C19  IOSTANDARD LVCMOS33} [get_ports {sd2_d2_i}];               # SD2_D2
@@ -104,13 +104,13 @@ set_property -dict {PACKAGE_PIN C19  IOSTANDARD LVCMOS33} [get_ports {sd2_d2_i}]
 
 # Place KBD close to I/O pins
 create_pblock pblock_i_kbd
+add_cells_to_pblock [get_pblocks pblock_i_kbd] [get_cells -quiet [list hc800/memoryArea_keyboard]]
 resize_pblock [get_pblocks pblock_i_kbd] -add {SLICE_X0Y225:SLICE_X7Y237}
-add_cells_to_pblock pblock_i_kbd [get_cells [list hc800/memoryArea_keyboard]]
 
 # Place SD card controller in the middle between the left and right FPGA boundary because the output ports are at the opposide edges
 create_pblock pblock_sdcard
-add_cells_to_pblock pblock_sdcard [get_cells [list hc800/memoryArea_sd]]
-resize_pblock pblock_sdcard -add {SLICE_X66Y178:SLICE_X99Y193}
+add_cells_to_pblock [get_pblocks pblock_sdcard] [get_cells -quiet [list hc800/memoryArea_sd]]
+resize_pblock [get_pblocks pblock_sdcard] -add {SLICE_X66Y178:SLICE_X99Y193}
 
 
 ################################
@@ -124,5 +124,6 @@ set_property BITSTREAM.CONFIG.CONFIGRATE 66 [current_design]
 set_property CONFIG_MODE SPIx4 [current_design]
 set_property BITSTREAM.CONFIG.SPI_32BIT_ADDR YES [current_design]
 set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]
+
 
 

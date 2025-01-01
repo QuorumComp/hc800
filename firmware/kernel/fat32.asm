@@ -74,7 +74,7 @@ ufile_SIZEOF		RB	0
 ; --
 		SECTION	"Fat32FsMake",CODE
 Fat32FsMake:
-		;MDebugPrint <"Fat32FsMake enter\n">
+		MDebugPrint <"Fat32FsMake enter\n">
 		push	bc-hl
 
 		MStackAlloc BYTES_PER_SECTOR
@@ -86,7 +86,7 @@ Fat32FsMake:
 		jal	checkFat32
 		j/ne	.exit
 
-		;MDebugPrint <"FAT32 found\n">
+		MDebugPrint <"FAT32 found\n">
 
 		ld	ft,de
 		ld	bc,ft	; bc = volume boot record

@@ -404,24 +404,23 @@ assign vdac_psave_n_o = 1'b1;
 //
 
 wire sd_select_1_n, sd_select_2_n;
-wire sd_reset_n;
 wire sd_clock;
-wire sd_di;
-wire sd_do;
+wire sd_mosi;
+wire sd_miso;
 wire sd_detect_n;
 
 assign sd_clk_o   = sd_select_1_n ? 1'b0 : sd_clock;
-assign sd_mosi_o  = sd_di;
-assign sd_reset_o = !sd_select_1_n && !sd_reset_n; 
+assign sd_mosi_o  = sd_select_1_n ? 1'b1 : sd_mosi;
+assign sd_reset_o = sd_select_1_n;
 
 assign sd2_clk_o   = sd_select_2_n ? 1'b0 : sd_clock;
-assign sd2_mosi_o  = sd_di;
-assign sd2_reset_o = !sd_select_2_n && !sd_reset_n;
+assign sd2_mosi_o  = sd_select_2_n ? 1'b1 : sd_mosi;
+assign sd2_reset_o = sd_select_2_n;
 
-assign sd_do =
+assign sd_miso =
     !sd_select_1_n ? sd_miso_i :
     !sd_select_2_n ? sd2_miso_i :
-    1'b0;
+    1'b1;
 
 assign sd_detect_n =
     !sd_select_1_n ? sd_cd_i :
@@ -572,10 +571,9 @@ HC800 hc800(
     .io_kio10_i(kb_io2_i),
     .io_sd_cs({sd_select_2_n, sd_select_1_n}),
     .io_sd_detect(sd_detect_n),
-    .io_sd_clock(sd_clk_o),
-    .io_sd_di(sd_di),
-    .io_sd_do(sd_do),
-    .io_sd_reset(sd_reset_n)
+    .io_sd_clock(sd_clock),
+    .io_sd_mosi(sd_mosi),
+    .io_sd_miso(sd_miso)
 );
 
 

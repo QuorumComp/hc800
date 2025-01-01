@@ -28,7 +28,7 @@ SdDeviceMake:
 		MDebugNewLine
 
 		ld	d,t
-		ld	t,IO_STAT_SELECT0
+		ld	t,IO_SEL_CARD0
 		ls	ft,d
 		ld	de,SdSelect
 		ld	(de),t
@@ -36,13 +36,14 @@ SdDeviceMake:
 		add	bc,sddev_Select
 		ld	(bc),t
 
-		MDebugPrint <"sddev_Select address ">		
-		MDebugHexWord bc
-		MDebugNewLine
+		;MDebugPrint <"sddev_Select address ">		
+		;MDebugHexWord bc
+		;MDebugNewLine
 
 		jal	SdInit
-		MDebugPrint <"SdInit done\n">
 		j/ne	.exit
+
+		MDebugPrint <"Card present\n">
 
 		add	de,SdType-SdSelect
 		ld	t,(de)
@@ -61,7 +62,10 @@ SdDeviceMake:
 
 		ld	f,FLAGS_EQ
 
-.exit		pop	bc-hl
+.exit
+		MDebugPrint <"SdInit done\n">
+
+		pop	bc-hl
 		j	(hl)
 
 
@@ -98,6 +102,8 @@ readBlock:
 		MDebugHexLong ft
 		MDebugPrint <" ">
 		MDebugHexWord bc
+		MDebugPrint <" ">
+		MDebugHexWord de
 		MDebugNewLine
 
 		jal	setSdVariables

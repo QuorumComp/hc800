@@ -73,12 +73,15 @@ MakeMbrPartitionDevice:
 		MDebugPrint <"  - load MBR\n">
 		;MDebugStacks
 		jal	BlockDeviceRead
-		j/ne	.fail_popa_ft
+		j/eq	.read_mbr_ok
+		ld	hl,.fail_popa_ft
+		j	(hl)
+.read_mbr_ok
 		;MDebugStacks
 
 		pop	ft  ; restore block device
 
-		;MDebugPrint <"  - loaded MBR\n">
+		MDebugPrint <"  - loaded MBR\n">
 
 		exg	ft,bc
 		; bc = block device to fill in

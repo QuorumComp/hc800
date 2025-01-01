@@ -136,6 +136,7 @@ rtl/simWorkspace/
 rtl/target/
 rtl/tmp/
 rtl/verbose.log
+simWorkspace/
 specnext/hc800_zxnext.v*
 specnext/ISE/ip/SystemClocks/coregen.log
 specnext/ISE/ip/SystemClocks/edit_SystemClocks.tcl
@@ -147,3 +148,4 @@ specnext/ISE/xst/work/work.sdbl
 specnext/ISE/xst/work/work.sdbx
 specnext/ISE/xst/work/work.vdbl
 specnext/ISE/xst/work/work.vdbx
+tmp/

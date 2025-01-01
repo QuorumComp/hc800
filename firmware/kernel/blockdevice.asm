@@ -222,6 +222,9 @@ BlockDeviceInit:
 ; --
 		SECTION	"BlockDeviceRead",CODE
 BlockDeviceRead:
+		MDebugPrint <"BlockDeviceRead call ">
+		MDebugRegisters
+		
 		push	bc/hl
 
 		exg	ft,bc
@@ -230,8 +233,9 @@ BlockDeviceRead:
 		sub	ft,bdev_Read+1
 		exg	ft,bc
 
-		MDebugPrint <"BlockDeviceRead call ">
 		MDebugStacks
+		MDebugMemory bc,8
+
 		jal	(hl)
 
 		pop	bc/hl
@@ -239,7 +243,7 @@ BlockDeviceRead:
 		MDebugPrint <"BlockDeviceRead exit ">
 		MDebugStacks
 
-		jal	(hl)
+		j	(hl)
 
 
 ; ---------------------------------------------------------------------------
@@ -267,7 +271,7 @@ BlockDeviceSize:
 		jal	(hl)
 
 		pop	hl
-		jal	(hl)
+		j	(hl)
 
 
 ; ---------------------------------------------------------------------------

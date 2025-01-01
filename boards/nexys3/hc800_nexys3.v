@@ -1,6 +1,6 @@
 // Generator : SpinalHDL v1.6.4    git head : 598c18959149eb18e5eee5b0aa3eef01ecaa41a1
 // Component : HC800
-// Git hash  : 25d4fa8c41d01e5f1228648a45b3eff36316dd1a
+// Git hash  : ed3f797672c3b0f083638eafc26a2edd86cf1ad3
 
 `timescale 1ns/1ps 
 
@@ -30,9 +30,8 @@ module HC800 (
   output     [1:0]    io_sd_cs,
   input               io_sd_detect,
   output              io_sd_clock,
-  output              io_sd_di,
-  input               io_sd_do,
-  output              io_sd_reset,
+  output              io_sd_mosi,
+  input               io_sd_miso,
   input               bus_clk,
   input               dbl_clk,
   input               bus_reset,
@@ -61,7 +60,7 @@ module HC800 (
   wire                memoryArea_uart_io_bus_enable;
   wire       [0:0]    memoryArea_uart_io_bus_address;
   wire                memoryArea_sd_io_bus_enable;
-  wire       [0:0]    memoryArea_sd_io_bus_address;
+  wire       [1:0]    memoryArea_sd_io_bus_address;
   wire                memoryArea_nexys3_io_bus_enable;
   wire       [4:0]    memoryArea_nexys3_io_bus_address;
   wire                cpuArea_cpu_io_bus_enable;
@@ -86,8 +85,7 @@ module HC800 (
   wire       [7:0]    memoryArea_sd_io_bus_dataToMaster;
   wire       [1:0]    memoryArea_sd_io_sd_cs;
   wire                memoryArea_sd_io_sd_clock;
-  wire                memoryArea_sd_io_sd_di;
-  wire                memoryArea_sd_io_sd_reset;
+  wire                memoryArea_sd_io_sd_mosi;
   wire       [7:0]    memoryArea_nexys3_io_bus_dataToMaster;
   wire       [7:0]    memoryArea_nexys3_io_segments;
   wire       [3:0]    memoryArea_nexys3_io_anode;
@@ -280,13 +278,12 @@ module HC800 (
     .io_bus_write             (memoryArea_machineBus_write                ), //i
     .io_bus_dataFromMaster    (memoryArea_machineBus_dataFromMaster[7:0]  ), //i
     .io_bus_dataToMaster      (memoryArea_sd_io_bus_dataToMaster[7:0]     ), //o
-    .io_bus_address           (memoryArea_sd_io_bus_address               ), //i
+    .io_bus_address           (memoryArea_sd_io_bus_address[1:0]          ), //i
     .io_sd_cs                 (memoryArea_sd_io_sd_cs[1:0]                ), //o
     .io_sd_detect             (io_sd_detect                               ), //i
     .io_sd_clock              (memoryArea_sd_io_sd_clock                  ), //o
-    .io_sd_di                 (memoryArea_sd_io_sd_di                     ), //o
-    .io_sd_do                 (io_sd_do                                   ), //i
-    .io_sd_reset              (memoryArea_sd_io_sd_reset                  ), //o
+    .io_sd_mosi               (memoryArea_sd_io_sd_mosi                   ), //o
+    .io_sd_miso               (io_sd_miso                                 ), //i
     .bus_clk                  (bus_clk                                    ), //i
     .bus_reset                (bus_reset                                  )  //i
   );
@@ -415,8 +412,7 @@ module HC800 (
   assign io_txd = memoryArea_uart_io_uart_txd;
   assign io_sd_cs = memoryArea_sd_io_sd_cs;
   assign io_sd_clock = memoryArea_sd_io_sd_clock;
-  assign io_sd_di = memoryArea_sd_io_sd_di;
-  assign io_sd_reset = memoryArea_sd_io_sd_reset;
+  assign io_sd_mosi = memoryArea_sd_io_sd_mosi;
   assign memoryArea_nexys3_io_bus_enable = (memoryArea_machineBus_enable && memoryArea_boardEnable);
   assign memoryArea_nexys3_io_bus_address = memoryArea_machineBus_address[4:0];
   assign memoryArea_graphicsRegBus_enable = (memoryArea_machineBus_enable && memoryArea_graphicsEnable);
@@ -434,7 +430,7 @@ module HC800 (
   assign memoryArea_uart_io_bus_enable = (memoryArea_machineBus_enable && memoryArea_uartEnable);
   assign memoryArea_uart_io_bus_address = memoryArea_machineBus_address[0:0];
   assign memoryArea_sd_io_bus_enable = (memoryArea_machineBus_enable && memoryArea_sdEnable);
-  assign memoryArea_sd_io_bus_address = memoryArea_machineBus_address[0:0];
+  assign memoryArea_sd_io_bus_address = memoryArea_machineBus_address[1:0];
   assign memoryArea_interruptController_io_regBus_enable = (memoryArea_machineBus_enable && memoryArea_intCtrlEnable);
   assign memoryArea_interruptController_io_regBus_address = memoryArea_machineBus_address[1:0];
   assign memoryArea_bootROM_io_enable = (memoryArea_machineBus_enable && memoryArea_bootEnable);
@@ -1103,184 +1099,180 @@ module SD (
   input               io_bus_write,
   input      [7:0]    io_bus_dataFromMaster,
   output     [7:0]    io_bus_dataToMaster,
-  input      [0:0]    io_bus_address,
+  input      [1:0]    io_bus_address,
   output     [1:0]    io_sd_cs,
   input               io_sd_detect,
   output              io_sd_clock,
-  output reg          io_sd_di,
-  input               io_sd_do,
-  output              io_sd_reset,
+  output              io_sd_mosi,
+  input               io_sd_miso,
   input               bus_clk,
   input               bus_reset
 );
-  localparam Register_6_data = 1'd0;
-  localparam Register_6_status = 1'd1;
+  localparam Register_6_data = 2'd0;
+  localparam Register_6_status = 2'd1;
+  localparam Register_6_select_1 = 2'd2;
 
-  wire       [6:0]    _zz__zz_ioDataOut;
+  wire       [1:0]    _zz__zz_ioDataOut;
+  wire       [3:0]    _zz__zz_ioDataOut_1;
   reg        [1:0]    cardSelect;
-  reg                 inDataEnabled;
-  reg                 inDataProcessing;
-  reg                 outDataProcessing;
-  reg        [7:0]    spiDataIn;
-  reg        [8:0]    spiDataOut;
-  reg        [3:0]    count;
-  wire                processing;
+  wire                inDataEnabled;
+  reg                 shiftActive;
   reg                 slowClock;
-  reg                 resetting;
+  reg                 fastClock;
   reg        [5:0]    clockCount;
   reg                 sdClock;
   reg                 shiftDataOut;
   reg                 shiftDataIn;
-  wire                when_SD_l61;
-  wire                when_SD_l62;
-  wire                when_SD_l70;
+  reg        [3:0]    bitCount;
+  reg                 sdClock_regNext;
+  wire                when_SD_l52;
+  wire                when_SD_l53;
+  reg        [7:0]    spiDataIn;
+  reg        [8:0]    spiDataOut;
   reg        [7:0]    ioDataOut;
-  wire       [0:0]    busRegister;
-  wire       [0:0]    _zz_busRegister;
-  wire                when_SD_l98;
+  wire       [1:0]    busRegister;
+  wire       [1:0]    _zz_busRegister;
+  wire                when_SD_l99;
+  wire                when_SD_l109;
   reg        [7:0]    _zz_ioDataOut;
-  wire                when_SD_l104;
-  wire                when_SD_l112;
-  wire                _zz_inDataEnabled;
-  wire                when_SD_l126;
+  wire                when_SD_l121;
   `ifndef SYNTHESIS
-  reg [47:0] busRegister_string;
-  reg [47:0] _zz_busRegister_string;
+  reg [63:0] busRegister_string;
+  reg [63:0] _zz_busRegister_string;
   `endif
 
 
-  assign _zz__zz_ioDataOut = {{{{{resetting,(! io_sd_detect)},slowClock},cardSelect},outDataProcessing},inDataEnabled};
+  assign _zz__zz_ioDataOut = {(! io_sd_detect),shiftActive};
+  assign _zz__zz_ioDataOut_1 = {{fastClock,slowClock},cardSelect};
   `ifndef SYNTHESIS
   always @(*) begin
     case(busRegister)
-      Register_6_data : busRegister_string = "data  ";
-      Register_6_status : busRegister_string = "status";
-      default : busRegister_string = "??????";
+      Register_6_data : busRegister_string = "data    ";
+      Register_6_status : busRegister_string = "status  ";
+      Register_6_select_1 : busRegister_string = "select_1";
+      default : busRegister_string = "????????";
     endcase
   end
   always @(*) begin
     case(_zz_busRegister)
-      Register_6_data : _zz_busRegister_string = "data  ";
-      Register_6_status : _zz_busRegister_string = "status";
-      default : _zz_busRegister_string = "??????";
+      Register_6_data : _zz_busRegister_string = "data    ";
+      Register_6_status : _zz_busRegister_string = "status  ";
+      Register_6_select_1 : _zz_busRegister_string = "select_1";
+      default : _zz_busRegister_string = "????????";
     endcase
   end
   `endif
 
-  assign processing = (inDataProcessing || outDataProcessing);
-  assign io_sd_cs = (~ cardSelect);
-  assign io_sd_clock = sdClock;
-  assign io_sd_reset = (! resetting);
-  assign when_SD_l61 = (processing && shiftDataOut);
-  assign when_SD_l62 = (count == 4'b1000);
-  assign when_SD_l70 = (inDataProcessing && shiftDataIn);
+  assign inDataEnabled = 1'b0;
   always @(*) begin
-    if(outDataProcessing) begin
-      io_sd_di = spiDataOut[8];
-    end else begin
-      io_sd_di = 1'b0;
+    sdClock = 1'b0;
+    if(shiftActive) begin
+      if(slowClock) begin
+        sdClock = clockCount[5];
+      end else begin
+        if(fastClock) begin
+          sdClock = clockCount[1];
+        end
+      end
     end
   end
 
+  always @(*) begin
+    shiftDataIn = 1'b0;
+    if(shiftActive) begin
+      if(slowClock) begin
+        shiftDataIn = (clockCount[5 : 0] == 6'h2f);
+      end else begin
+        if(fastClock) begin
+          shiftDataIn = (clockCount[1 : 0] == 2'b10);
+        end
+      end
+    end
+  end
+
+  always @(*) begin
+    shiftDataOut = 1'b0;
+    if(shiftActive) begin
+      if(slowClock) begin
+        shiftDataOut = (clockCount[5 : 0] == 6'h0f);
+      end else begin
+        if(fastClock) begin
+          shiftDataOut = (clockCount[1 : 0] == 2'b00);
+        end
+      end
+    end
+  end
+
+  assign when_SD_l52 = ((! sdClock) && sdClock_regNext);
+  assign when_SD_l53 = (bitCount == 4'b0111);
+  assign io_sd_cs = (~ cardSelect);
+  assign io_sd_clock = sdClock;
+  assign io_sd_mosi = spiDataOut[8];
   assign io_bus_dataToMaster = ioDataOut;
   assign _zz_busRegister = io_bus_address;
   assign busRegister = _zz_busRegister;
-  assign when_SD_l98 = (io_bus_enable && (! io_bus_write));
+  assign when_SD_l99 = ((io_bus_enable && (busRegister == Register_6_data)) && (! shiftActive));
+  assign when_SD_l109 = (io_bus_enable && (! io_bus_write));
   always @(*) begin
     case(busRegister)
       Register_6_data : begin
         _zz_ioDataOut = spiDataIn;
       end
+      Register_6_status : begin
+        _zz_ioDataOut = {6'd0, _zz__zz_ioDataOut};
+      end
       default : begin
-        _zz_ioDataOut = {1'd0, _zz__zz_ioDataOut};
+        _zz_ioDataOut = {4'd0, _zz__zz_ioDataOut_1};
       end
     endcase
   end
 
-  assign when_SD_l104 = (busRegister == Register_6_data);
-  assign when_SD_l112 = (io_bus_enable && io_bus_write);
-  assign _zz_inDataEnabled = io_bus_dataFromMaster[0];
-  assign when_SD_l126 = (_zz_inDataEnabled && (! inDataEnabled));
+  assign when_SD_l121 = (io_bus_enable && io_bus_write);
   always @(posedge bus_clk or posedge bus_reset) begin
     if(bus_reset) begin
       cardSelect <= 2'b00;
-      inDataEnabled <= 1'b0;
-      inDataProcessing <= 1'b0;
-      outDataProcessing <= 1'b0;
-      spiDataIn <= 8'h0;
-      spiDataOut <= 9'h0;
-      count <= 4'b0000;
+      shiftActive <= 1'b0;
       slowClock <= 1'b1;
-      resetting <= 1'b0;
+      fastClock <= 1'b0;
       clockCount <= 6'h0;
-      sdClock <= 1'b0;
-      shiftDataOut <= 1'b0;
-      shiftDataIn <= 1'b0;
+      bitCount <= 4'b0000;
+      spiDataIn <= 8'hff;
+      spiDataOut <= 9'h1ff;
     end else begin
       clockCount <= (clockCount + 6'h01);
-      if(processing) begin
-        if(slowClock) begin
-          sdClock <= clockCount[5];
-          shiftDataOut <= (clockCount[5 : 0] == 6'h0f);
-          shiftDataIn <= (clockCount[5 : 0] == 6'h2f);
-        end else begin
-          sdClock <= clockCount[1];
-          shiftDataOut <= (clockCount[1 : 0] == 2'b00);
-          shiftDataIn <= (clockCount[1 : 0] == 2'b10);
-        end
-      end else begin
-        sdClock <= 1'b0;
-        shiftDataIn <= 1'b0;
-        shiftDataOut <= 1'b0;
-      end
-      if(when_SD_l61) begin
-        if(when_SD_l62) begin
-          inDataProcessing <= 1'b0;
-          outDataProcessing <= 1'b0;
-        end else begin
-          count <= (count + 4'b0001);
+      if(shiftActive) begin
+        if(when_SD_l52) begin
+          if(when_SD_l53) begin
+            shiftActive <= 1'b0;
+          end else begin
+            bitCount <= (bitCount + 4'b0001);
+          end
         end
       end
-      if(when_SD_l70) begin
-        spiDataIn <= {spiDataIn[6 : 0],io_sd_do};
+      if(shiftDataOut) begin
+        spiDataOut <= {spiDataOut[7 : 0],1'b1};
       end
-      if(outDataProcessing) begin
-        if(shiftDataOut) begin
-          spiDataOut <= {spiDataOut[7 : 0],1'b0};
-        end
+      if(shiftDataIn) begin
+        spiDataIn <= {spiDataIn[6 : 0],io_sd_miso};
       end
-      if(when_SD_l98) begin
-        if(when_SD_l104) begin
-          inDataProcessing <= inDataEnabled;
-          clockCount <= 6'h0;
-          count <= 4'b0000;
-          shiftDataIn <= 1'b0;
-          shiftDataOut <= 1'b0;
-        end
+      if(when_SD_l99) begin
+        clockCount <= 6'h0;
+        bitCount <= 4'b0000;
+        shiftActive <= 1'b1;
+        spiDataOut <= 9'h1ff;
       end
-      if(when_SD_l112) begin
+      if(when_SD_l121) begin
         case(busRegister)
           Register_6_data : begin
             spiDataOut[7 : 0] <= io_bus_dataFromMaster;
             spiDataOut[8] <= io_bus_dataFromMaster[7];
-            outDataProcessing <= 1'b1;
-            clockCount <= 6'h0;
-            count <= 4'b0000;
-            shiftDataIn <= 1'b0;
-            shiftDataOut <= 1'b0;
+          end
+          Register_6_select_1 : begin
+            fastClock <= io_bus_dataFromMaster[3];
+            slowClock <= io_bus_dataFromMaster[2];
+            cardSelect <= io_bus_dataFromMaster[1 : 0];
           end
           default : begin
-            slowClock <= io_bus_dataFromMaster[4];
-            cardSelect <= io_bus_dataFromMaster[3 : 2];
-            resetting <= io_bus_dataFromMaster[6];
-            if(when_SD_l126) begin
-              inDataProcessing <= 1'b1;
-              clockCount <= 6'h0;
-              count <= 4'b0000;
-              shiftDataIn <= 1'b0;
-              shiftDataOut <= 1'b0;
-            end
-            inDataEnabled <= _zz_inDataEnabled;
           end
         endcase
       end
@@ -1288,7 +1280,11 @@ module SD (
   end
 
   always @(posedge bus_clk) begin
-    if(when_SD_l98) begin
+    sdClock_regNext <= sdClock;
+  end
+
+  always @(posedge bus_clk) begin
+    if(when_SD_l109) begin
       ioDataOut <= _zz_ioDataOut;
     end else begin
       ioDataOut <= 8'h0;

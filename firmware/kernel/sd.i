@@ -7,6 +7,7 @@ SDTYPE_V1	EQU	1
 SDTYPE_V2	EQU	2
 SDTYPE_V2_HC	EQU	3
 
+		GLOBAL	SdResetController
 		GLOBAL	SdInit
 		GLOBAL	SdGetTotalBlocks
 		GLOBAL	SdReadSingleBlock

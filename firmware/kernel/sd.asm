@@ -8,7 +8,7 @@
 		INCLUDE	"sd.i"
 		INCLUDE	"uart_commands.i"
 
-		;INCLUDE	"uart_commands_disabled.i"
+		INCLUDE	"uart_commands_disabled.i"
 
 
 CMD0_CRC	EQU	$95
@@ -34,17 +34,18 @@ REPLY_ERRORS		EQU	REPLY_ILLEGAL_COMMAND|REPLY_CRC_ERROR|REPLY_ERASE_SEQ_ERROR|RE
 SELECT:		MACRO
 		ld	bc,SdSelect
 		ld	t,(bc)
+		or	t,IO_SEL_FAST_CLOCK
 		ld	b,IO_SDCARD_BASE
-		ld	c,IO_SD_STATUS
+		ld	c,IO_SD_SELECT
 		lio	(bc),t
 		ENDM
 
 SELECT_SLOW:	MACRO
 		ld	bc,SdSelect
 		ld	t,(bc)
+		or	t,IO_SEL_SLOW_CLOCK
 		ld	b,IO_SDCARD_BASE
-		ld	c,IO_SD_STATUS
-		or	t,IO_STAT_SLOW
+		ld	c,IO_SD_SELECT
 		lio	(bc),t
 		ENDM
 
@@ -52,12 +53,12 @@ SELECT_SLOW:	MACRO
 DESELECT:	MACRO
 		push	ft
 		ld	t,0
-		ld	c,IO_SD_STATUS
+		ld	c,IO_SD_SELECT
 		lio	(bc),t
 		pop	ft
 		ENDM
 
-	IF 0 ; 1 = disable debug
+	IF 1 ; 1 = disable debug
 		PURGE	MNewLine
 MNewLine:	MACRO
 		ENDM
@@ -71,6 +72,17 @@ MHexByteOut:	MACRO
 		pop	hl
 		ENDM
 	ENDC
+
+
+; ---------------------------------------------------------------------------
+; -- Reset SD card controller
+; ---------------------------------------------------------------------------
+		SECTION	"SdResetController",CODE
+SdResetController:
+		pusha
+		jal	sdResetCard
+		popa
+		j	(hl)
 
 
 ; ---------------------------------------------------------------------------
@@ -311,7 +323,7 @@ SdReadSingleBlock:
 		SECTION	"SdInit",CODE
 SdInit:		push	bc-hl
 
-		jal	resetCard
+		ld	b,IO_SDCARD_BASE
 
 		jal	sdGoIdleState
 		cmp	t,REPLY_IDLE
@@ -345,15 +357,17 @@ SdInit:		push	bc-hl
 
 ; ---------------------------------------------------------------------------
 ; -- Reset card
+; --
+; -- Inputs:
+; --       b  - IO_SDCARD_BASE
 ; ---------------------------------------------------------------------------
-		SECTION	"resetCard",CODE
-resetCard:	pusha
+		SECTION	"sdResetCard",CODE
+sdResetCard:	
+		MDebugPrint <"sdResetCard\n">
+		pusha
 
-		ld	bc,SdSelect
-		ld	t,(bc)
-		or	t,IO_STAT_SLOW|IO_STAT_RESET|IO_STAT_OUT_ACTIVE
-		ld	b,IO_SDCARD_BASE
-		ld	c,IO_SD_STATUS
+		ld	t,IO_SEL_SLOW_CLOCK
+		ld	c,IO_SD_SELECT
 		lio	(bc),t
 
 		ld	d,10	; 10 * 8 bits = 80 cycles. At least 74.
@@ -365,12 +379,14 @@ resetCard:	pusha
 
 		ld	c,IO_SD_STATUS
 .wait		lio	t,(bc)
-		and	t,IO_STAT_OUT_ACTIVE
-		cmp	t,IO_STAT_OUT_ACTIVE
+		and	t,IO_STAT_ACTIVE
+		cmp	t,IO_STAT_ACTIVE
 		j/eq	.wait
 
 		dj	d,.next_byte
 
+		popa
+		j	(hl)
 
 
 ; ---------------------------------------------------------------------------
@@ -497,6 +513,7 @@ sdSendInt32:
 ; --
 		SECTION	"sdSendBytes",CODE
 sdSendBytes6:
+		MDebugPrint <"sdSendBytes6\n">
 		pusha
 
 		ld	c,IO_SD_DATA
@@ -519,18 +536,21 @@ sdSendBytes6:
 ; --
 		SECTION	"sdSendBytes",CODE
 sdSendBytes6_Slow:
+		MDebugPrint <"sdSendBytes6_Slow\n">
 		pusha
 
-		ld	c,IO_SD_DATA
-		ld	f,6
-.loop		lco	t,(de)
-		add	de,1
+		ld	l,6
+.loop		ld	c,IO_SD_DATA
+		lco	t,(de+)
 		lio	(bc),t
 
-		ld	l,61
-.wait		dj	l,.wait
+		ld	c,IO_SD_STATUS
+.wait		lio	t,(bc)
+		and	t,IO_STAT_ACTIVE
+		cmp	t,IO_STAT_ACTIVE
+		j/eq	.wait
 
-		dj	f,.loop
+		dj	l,.loop
 
 		popa
 		j	(hl)
@@ -882,14 +902,6 @@ sdInFirst:
 		MDebugPrint <"sdInFirst\n">
 		push	de/hl
 
-		ld	ft,SdSelect
-		ld	t,(ft)
-		or	t,IO_STAT_IN_ACTIVE
-		ld	c,IO_SD_STATUS
-		lio	(bc),t
-		nop
-		nop
-
 		ld	e,100
 .loop		ld	c,IO_SD_DATA
 		lio	t,(bc)
@@ -929,8 +941,8 @@ sdInFirst_GoIdle:
 
 		ld	ft,SdSelect
 		ld	t,(ft)
-		or	t,IO_STAT_IN_ACTIVE|IO_STAT_SLOW
-		ld	c,IO_SD_STATUS
+		or	t,IO_SEL_SLOW_CLOCK
+		ld	c,IO_SD_SELECT
 		lio	(bc),t
 
 		ld	e,100
@@ -970,14 +982,6 @@ sdInFirst_GoIdle:
 ; --
 		SECTION	"sdInLast",CODE
 sdInLast:
-		ld	c,IO_SD_STATUS
-		lio	t,(bc)
-		and	t,IO_STAT_SELECT0|IO_STAT_SELECT1
-		lio	(bc),t
-
-		nop
-		nop
-		nop
 		ld	c,IO_SD_DATA
 		lio	t,(bc)
 		MHexByteOut

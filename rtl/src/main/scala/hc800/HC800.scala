@@ -72,9 +72,8 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 		val sd_cs     = out Bits(2 bits)
 		val sd_detect = in Bool()
 		val sd_clock  = out Bool()
-		val sd_di     = out Bool()
-		val sd_do     = in Bool()
-		val sd_reset  = out Bool()
+		val sd_mosi   = out Bool()
+		val sd_miso   = in Bool()
 
 		// ZX Spectrum Next
 		val keyboardColumns = boardIsZxNext generate (in  Bits(7 bits))
@@ -281,9 +280,8 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 		sd.io.sd_cs     <> io.sd_cs
 		sd.io.sd_detect <> io.sd_detect
 		sd.io.sd_clock  <> io.sd_clock
-		sd.io.sd_di     <> io.sd_di
-		sd.io.sd_do     <> io.sd_do
-		sd.io.sd_reset  <> io.sd_reset
+		sd.io.sd_mosi   <> io.sd_mosi
+		sd.io.sd_miso   <> io.sd_miso
 
 		val nexys3IoDataIn = 
 			if (boardIsNexys3) machineBus.wireClient(nexys3.io.bus, boardEnable)

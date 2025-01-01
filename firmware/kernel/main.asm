@@ -16,6 +16,7 @@
 		INCLUDE	"keyboard.i"
 		INCLUDE	"main.i"
 		INCLUDE	"mmu.i"
+		INCLUDE "sd.i"
 		INCLUDE "text.i"
 		INCLUDE "video.i"
 
@@ -45,6 +46,8 @@ Main:
 		jal	KeyboardInitialize
 		MDebugPrint <"Initialize text\n">
 		jal	TextInitialize
+		;MDebugPrint <"Initialize SD controller\n">
+		;jal	SdResetController
 		MDebugPrint <"Initialize block devices\n">
 		jal	BlockDeviceInit
 		MDebugPrint <"Initialize file systems\n">
