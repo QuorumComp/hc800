@@ -8,6 +8,7 @@
 		INCLUDE	"stdlib/syscall.i"
 
 		INCLUDE	"blockdevice.i"
+		INCLUDE	"commandline.i"
 		INCLUDE	"error.i"
 		INCLUDE	"fat32.i"
 		INCLUDE	"filesystems.i"
@@ -85,7 +86,10 @@ FileInitialize:
 
 		MDebugPrint <"FileInitialize\n">
 
-		jal	UartInitialize
+		; default search path is :v0/
+		ld	de,{ DC_STR ":v0/" }
+		ld	bc,SearchPath
+		jal	StringCopyData
 
 		ld	t,0	; t - device identifier
 
@@ -109,19 +113,29 @@ FileInitialize:
 		cmp	t,TOTAL_BLOCKDEVICES
 		j/ne	.next_blockdevice
 
+		jal	UartInitialize
+		j/ne	.no_uart
+
 		ld	de,UartVolume
 		jal	.storeFsPointer
 
-		; de - UART volume, set as current
+		; if UART filesystem is present, make it the default search path
+
+		ld	de,{ DC_STR ":uart/" }
+		ld	bc,SearchPath
+		jal	StringCopyData
+
+.no_uart
+		; set first volume as current
 
 		ld	ft,volumes
 		ld	de,(ft+)
-		ld	ft,currentFs
+		ld	ft,PathCurrentFs
 		ld	(ft+),de
 
 		; initialize current path
 
-		ld	ft,currentPath
+		ld	ft,PathCurrentPath
 		ld	b,1
 		ld	(ft),b
 		add	ft,1
@@ -164,6 +178,7 @@ FileInitialize:
 		pop	ft/de/hl
 		j	(hl)
 
+		
 
 ; t  - device identifier
 ; de - file system structure
@@ -359,8 +374,8 @@ FileSkip:
 		SECTION	"FileRead",CODE
 FileRead:
 		MDebugPrint <"FileRead entry ">
-		MDebugMemory bc,file_SIZEOF
-		MDebugStacks
+		MDebugRegisters
+		;MDebugMemory bc,file_SIZEOF
 
 		push	bc-hl
 
@@ -400,7 +415,7 @@ FileRead:
 		popa
 
 		MDebugPrint <"FileRead fail ">
-		MDebugStacks
+		MDebugRegisters
 
 		j	(hl)
 
@@ -421,7 +436,7 @@ FileRead:
 		pop	bc-hl
 
 		MDebugPrint <"FileRead success ">
-		MDebugStacks
+		MDebugRegisters
 
 		j	(hl)
 
@@ -1032,7 +1047,7 @@ getComponentsFromPath:
 		MDebugPrint <"path of the form '...'\n">
 
 		push	de/hl
-		ld	de,currentPath
+		ld	de,PathCurrentPath
 		;MDebugMemory bc,16
 		;MDebugMemory de,16
 		jal	StringCopy
@@ -1182,7 +1197,7 @@ getVolumeFromPath:
 		ld	t,ERROR_NOT_AVAILABLE
 		j	(hl)
 
-.current_fs	ld	bc,currentFs+1
+.current_fs	ld	bc,PathCurrentFs+1
 		ld	t,(bc)
 		exg	f,t
 		sub	bc,1
@@ -1247,7 +1262,6 @@ fat32volumes:	DS	fat32_SIZEOF*MAX_FAT_VOLUMES
 volumes:	DS	MAX_VOLUMES*2
 totalvolumes:	DS	1
 readBuffer:	DS	2
-currentFs:	DS	2
-currentPath:	DS_STR
-filePath:	DS_STR
 
+PathCurrentFs:		DS	2
+PathCurrentPath:	DS_STR

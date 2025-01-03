@@ -4,6 +4,9 @@ FILESYSTEMS_I_INCLUDED_ = 1
 
 		INCLUDE	"stdlib/syscall.i"
 
+; ---------------------------------------------------------------------------
+; -- Functions
+; ---------------------------------------------------------------------------
 
 		GLOBAL	FileInitialize
 		GLOBAL	FileOpen
@@ -17,6 +20,18 @@ FILESYSTEMS_I_INCLUDED_ = 1
 		GLOBAL	PathRemoveComponent
 		GLOBAL	PathAppend
 
+
+; ---------------------------------------------------------------------------
+; -- Variables
+; ---------------------------------------------------------------------------
+
+		GLOBAL	PathCurrentFs
+		GLOBAL	PathCurrentPath
+
+
+; ---------------------------------------------------------------------------
+; -- Filesystem structure
+; ---------------------------------------------------------------------------
 		RSRESET
 fs_Label	RB	MAX_LABEL_LENGTH
 fs_Volume	RB	MAX_VOLUME_NAME_LENGTH

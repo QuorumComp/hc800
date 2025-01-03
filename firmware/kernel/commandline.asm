@@ -5,6 +5,7 @@
 		INCLUDE	"stdlib/string.i"
 		INCLUDE	"stdlib/stream.i"
 
+		INCLUDE	"commandline.i"
 		INCLUDE	"error.i"
 		INCLUDE	"filesystems.i"
 		INCLUDE	"mmu.i"
@@ -19,7 +20,7 @@ HUNK_DATA	EQU	2
 
 
 		SECTION "SysGetCommandLine",CODE
-SysGetCommandLine::
+SysGetCommandLine:
 		push	ft-de
 
 		ld	bc,ft
@@ -46,7 +47,7 @@ SysGetCommandLine::
 
 
 		SECTION "ExecuteCommandLine",CODE
-SysExecuteCommandLine::
+SysExecuteCommandLine:
 		push	bc-de
 
 		ld	ft,bc
@@ -90,7 +91,7 @@ SysExecuteCommandLine::
 
 
 		SECTION "Exit",CODE
-SysExit::
+SysExit:
 		di
 
 		ld	b,IO_ICTRL_BASE
@@ -148,8 +149,32 @@ readExecutable:
 		ld	ft,de
 		ld	bc,exeFileHandle
 		jal	FileOpen
+		j/eq	.opened_file
+
+		; try the search path
+		exg	ft,de
+		exg	ft,bc	; bc = commandline
+		ld	ft,SearchPath
+		ld	e,(ft)
+		push	de	; save search path length
+		ld	de,ft
+
+		jal	StringAppendString
+
+		ld	ft,de
+		ld	bc,exeFileHandle
+		jal	FileOpen
+
+		; save return result and restore search path length
+		push	ft
+		ld	ft,de
+		pop	de
+		ld	(ft),e
+		pop	ft
+
 		j/ne	.error
 
+.opened_file
 		jal	readFile
 		j/ne	.error
 
@@ -291,12 +316,15 @@ readHeader:
 		push	de/hl
 
 		jal	FileReadByte
+		MDebugRegisters
 		j/ne	.exit
 		ld	d,t
 		jal	FileReadByte
+		MDebugRegisters
 		j/ne	.exit
 		ld	e,t
 
+		MDebugRegisters
 		sub	de,'UC'
 		tst	de
 		ld	t,ERROR_FORMAT
@@ -363,3 +391,5 @@ tokenizeCommandLine:
 exeFileHandle	DS	file_SIZEOF
 mmuConfig	DS	MMU_CONFIG_SIZE
 lastCommandLine	DS	STRING_SIZE
+
+SearchPath	DS	STRING_SIZE

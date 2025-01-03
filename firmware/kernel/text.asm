@@ -163,7 +163,7 @@ TextSetAttributes:
 ; -- Inputs:
 ; --   ft - Character
 ; --
-		SECTION	"TextWideChar",CODE
+		SECTION	"TextSetWideChar",CODE
 TextSetWideChar:
 		pusha
 
@@ -212,7 +212,7 @@ TextDeleteCharacterAtCursor:
 		pusha
 
 		jal	TextGetCursor
-		j	deleteCharEntry
+		j	TextDeleteCharacter.deleteCharEntry
 
 ; --
 ; -- Delete character at position
@@ -224,7 +224,7 @@ TextDeleteCharacterAtCursor:
 TextDeleteCharacter:
 		pusha
 
-deleteCharEntry:
+.deleteCharEntry:
 		push	ft
 		jal	TextGetAttributePointer
 		ld	bc,ft

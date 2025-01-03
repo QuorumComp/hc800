@@ -471,8 +471,8 @@ dirRead:
 		SECTION	"Fat32FileOpen",CODE
 fileOpen:
 		;MDelay	10000
-		;MDebugPrint <"Fat32FileOpen\n">
-		;MDebugMemory ft,32
+		MDebugPrint <"Fat32FileOpen\n">
+		MDebugMemory ft,32
 		push	bc-hl
 
 		MDebugMemory ft,16
@@ -521,7 +521,7 @@ fileOpen:
 		j	(hl)
 
 .found
-		;MDebugPrint <"Found file\n">
+		MDebugPrint <"Found file\n">
 
 		pop	ft	; dir structure
 		push	ft
@@ -604,6 +604,7 @@ fileClose:
 ; --
 		SECTION	"Fat32FileRead",CODE
 fileRead:
+		;MDebugPrint <"Fat32FileRead\n">
 		pusha
 		push	ft
 

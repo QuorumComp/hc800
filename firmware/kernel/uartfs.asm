@@ -26,7 +26,10 @@ udir_SIZEOF	RB	0
 ; --
 		SECTION	"UartInitialize",CODE
 UartInitialize:
-		pusha
+		push	bc-hl
+
+		jal	ComIdentify
+		j/ne	.exit
 
 		ld	bc,UartVolume
 		ld	de,.fs
@@ -37,7 +40,9 @@ UartInitialize:
 		add	bc,1
 		dj	f,.copy
 
-		popa
+		ld	f,FLAGS_EQ
+.exit
+		pop	bc-hl
 		j	(hl)
 
 .fs		DB	4,"uart",0,0,0,0,0,0,0,0,0,0,0

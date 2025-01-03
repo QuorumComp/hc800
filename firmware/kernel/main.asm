@@ -109,10 +109,30 @@ Main:
 		j	(hl)
 
 printReadyPrompt:
-		MSetAttribute VATTR_BOLD
-		MPrintString "\nReady.\n"
-		MClearAttribute VATTR_BOLD
+		pusha
 
+		MSetAttribute VATTR_BOLD
+		MPrintString "\nReady. "
+
+		ld	b,$F0|VATTR_BOLD
+		ld	c,2<<4
+		jal	TextSetAttributes
+		
+		MPrintString "[:"
+
+		; print current volume
+		ld	ft,PathCurrentFs
+		ld	bc,(ft)
+		add	bc,fs_Volume
+		jal	StreamBssStringOut
+
+		; print current path
+		ld	bc,PathCurrentPath
+		jal	StreamBssStringOut
+
+		MPrintString "]\n"
+
+		popa
 		j	(hl)
 
 
