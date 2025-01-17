@@ -148,4 +148,7 @@ specnext/ISE/xst/work/work.sdbl
 specnext/ISE/xst/work/work.sdbx
 specnext/ISE/xst/work/work.vdbl
 specnext/ISE/xst/work/work.vdbx
+spinal/.bloop/
+spinal/project/
+spinal/target/
 tmp/
