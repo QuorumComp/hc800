@@ -152,3 +152,4 @@ spinal/.bloop/
 spinal/project/
 spinal/target/
 tmp/
+firmware/.disk_HC800/

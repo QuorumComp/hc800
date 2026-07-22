@@ -1,8 +1,11 @@
 #!/bin/bash
+
+# macOS: sfdisk is in brew's util-linux package ('brew list util-linux' and add to path)
+# macOS: dosfstools is in brew
+# macOS: mtools is in brew
+
 IMAGE=`pwd`/hd.img
 LABEL=HC800
-MOUNTDIR=.disk_$LABEL
-LOOPDEV=/dev/loop87 # an unused loop device that shouldn't already exist
 
 # Create empty disk image
 dd if=/dev/zero of=$IMAGE bs=512 count=100000
@@ -14,19 +17,9 @@ label: dos
 write
 EOF
 
-rm -rf $MOUNTDIR
-mkdir $MOUNTDIR
-
-# Mount partition and format as FAT32
-sudo losetup -P $LOOPDEV $IMAGE
-sudo mkdosfs -F 32 -n $LABEL "${LOOPDEV}p1"
-sudo mount "${LOOPDEV}p1" $MOUNTDIR -o umask=000
+mkdosfs -F 32 -n $LABEL "$IMAGE"
 
 # Write data to partition
-cp _image_/* $MOUNTDIR
-cp addons/* $MOUNTDIR
+mcopy -i $IMAGE -D o _image_/* ::/
+mcopy -i $IMAGE -D o addons/* ::/
 
-# Unmount and clean up
-sudo umount $MOUNTDIR
-sudo losetup -d $LOOPDEV
-rmdir $MOUNTDIR

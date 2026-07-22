@@ -28,7 +28,7 @@ else
 endif
 
 disk: install
-	sudo ./mkdisk.sh
+	./mkdisk.sh
 
 clean: $(CLEAN)
 ifeq ($(MAKE_HOST),Windows32)
