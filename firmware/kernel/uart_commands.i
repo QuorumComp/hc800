@@ -1,6 +1,4 @@
-	IFND	COMMANDS_I_INCLUDED_
-
-COMMANDS_I_INCLUDED_ = 1
+		INCLUDE	ONCE
 
 COMMAND_IDENTIFY	EQU	0
 COMMAND_LOAD_FILE	EQU	1
@@ -116,7 +114,3 @@ MDebugMemory:	MACRO	;memory,size
 	GLOBAL	ComReadDataString
 	GLOBAL	ComSyncResponse
 	GLOBAL	ComPrintRegisters
-
-
-
-	ENDC

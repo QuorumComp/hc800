@@ -127,18 +127,20 @@ fillFsStruct:
 		dj	f,.copy_template
 
 		; copy volume label
-		add	de,fs_Label+BS_LABEL_SIZEOF+1-fs_PRIVATE
+		add	de,fs_Label+BS_LABEL_SIZEOF-fs_PRIVATE
 		add	bc,BS_LABEL+BS_LABEL_SIZEOF
 		ld	l,BS_LABEL_SIZEOF
 .find_label_end	sub	bc,1
 		sub	de,1
 		ld	t,(bc)
 		cmp	t,' '
+		j/eq	.label_pad
+		cmp	t,0
 		j/ne	.label_end_found
+.label_pad
 		dj	l,.find_label_end
 		j	.no_label
 .label_end_found
-		push	hl
 		ld	(de),t
 		j	.label_copy_entry
 .label_copy	sub	bc,1
@@ -147,10 +149,6 @@ fillFsStruct:
 		ld	(de),t
 .label_copy_entry
 		dj	l,.label_copy
-		pop	hl
-		sub	de,1
-		ld	t,l
-		ld	(de),t
 .no_label
 		;MDebugMemory de,16
 		; determine how much to shift a cluster number to get sector
@@ -368,6 +366,11 @@ dirRead:
 		j/ne	.not_end
 
 		; we have reached the end
+.end_of_sector
+		MStackFree 32
+		popa
+		ld	f,FLAGS_NE
+		j	(hl)
 .read_fail
 		popa
 		ld	f,FLAGS_NE
@@ -405,8 +408,8 @@ dirRead:
 		ld	de,ft
 		pop	bc
 		push	bc
-		ld	hl,.next_file_entry
-		j	(hl)
+		ld	ft,.next_file_entry
+		j	(ft)
 .attr_ok
 		;MDebugPrint <".attr_ok\n">
 		add	bc,dir_Filename+1
@@ -679,7 +682,7 @@ fileRead:
 		; --   bc - pointer to filesystem structure
 
 		jal	readNextFileSector
-
+		j/ne	.done
 .dont_read_next
 		pop	ft
 		push	ft
@@ -1082,8 +1085,10 @@ readNextFileSector:
 		popa
 		j	readNextFileSector
 
-.file_end	; TODO
-		j	@+2
+.file_end
+		popa
+		ld	f,FLAGS_NE
+		j	(hl)
 
 .not_next_cluster
 		pop	ft
@@ -1131,6 +1136,7 @@ readNextFileSector:
 		ld	(ft+),bc
 
 		popa
+		ld	f,FLAGS_EQ
 		j	(hl)
 
 

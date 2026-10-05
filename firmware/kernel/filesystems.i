@@ -1,6 +1,4 @@
-	IFND	FILESYSTEMS_I_INCLUDED_
-
-FILESYSTEMS_I_INCLUDED_ = 1
+		INCLUDE	ONCE
 
 		INCLUDE	"stdlib/syscall.i"
 
@@ -125,6 +123,4 @@ fs_PRIVATE	RB	0
 
 	IF	fs_CommonSize~=volinf_CommonSize
 		FAIL	"First three members of filesystem and volume info structures must have the same size"
-	ENDC
-
 	ENDC

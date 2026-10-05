@@ -1,6 +1,4 @@
-	IFND	COMMANDS_I_INCLUDED_
-
-COMMANDS_I_INCLUDED_ = 1
+		INCLUDE	ONCE
 
 			RSRESET
 ERROR_PROTOCOL		RB	1
@@ -32,7 +30,3 @@ MDebugPrint:	MACRO
 	GLOBAL	ComPrintCodeChars
 	GLOBAL	ComPrintChar
 	GLOBAL	ComSyncResponse
-
-
-
-	ENDC

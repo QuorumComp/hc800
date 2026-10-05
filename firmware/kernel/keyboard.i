@@ -1,9 +1,5 @@
-	IFND	KEYBOARD_I_INCLUDED_
-
-KEYBOARD_I_INCLUDED_ = 1
+	INCLUDE	ONCE
 
 	GLOBAL	KeyboardInitialize
 	GLOBAL	KeyboardRead
 	GLOBAL	KeyboardVBlank
-
-	ENDC

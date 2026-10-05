@@ -1,6 +1,4 @@
-	IFND	BLOCKDEVICE_SD_I_INCLUDED__
-
-BLOCKDEVICE_SD_I_INCLUDED__ = 1
+		INCLUDE	ONCE
 
 		RSRESET
 bdev_Read	RW	1
@@ -15,5 +13,3 @@ bdev_PRIVATE	RB	0
 
 		GLOBAL	BlockAllocSector
 		GLOBAL	BlockFreeSector
-
-	ENDC

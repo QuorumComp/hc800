@@ -1,6 +1,4 @@
-	IFND	TEXT_I_INCLUDED_
-
-TEXT_I_INCLUDED_ = 1
+		INCLUDE	ONCE
 
 FLASH:		MACRO
 		pusha
@@ -48,7 +46,3 @@ csr_SIZEOF:	RB	0
 	GLOBAL	TextGetAttributePointer
 
 	GLOBAL	VideoCursor
-
-
-
-	ENDC

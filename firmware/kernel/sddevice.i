@@ -1,6 +1,4 @@
-		IFND	LOWLEVEL_SDDEVICE_I_INCLUDED__
-LOWLEVEL_SDDEVICE_I_INCLUDED__ = 1
-
+		INCLUDE	ONCE
 
 		INCLUDE	"blockdevice.i"
 
@@ -11,5 +9,3 @@ sddev_SIZEOF	RB	0
 
 
 		GLOBAL	SdDeviceMake
-
-		ENDC

@@ -1,8 +1,6 @@
-	IFND	COMMANDS_DISABLED_I_INCLUDED_
+		INCLUDE	ONCE
 
-COMMANDS_DISABLED_I_INCLUDED_ = 1
-
-	INCLUDE	"uart_commands.i"
+		INCLUDE	"uart_commands.i"
 
 		PURGE	MDebugPrint
 MDebugPrint:	MACRO
@@ -39,5 +37,3 @@ MDebugMemory:	MACRO	;memory,size
 		PURGE	MDebugStacks
 MDebugStacks:	MACRO
 		ENDM
-
-	ENDC

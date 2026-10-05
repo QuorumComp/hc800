@@ -1,6 +1,4 @@
-	IFND	EDITOR_I_INCLUDED_
-
-EDITOR_I_INCLUDED_ = 1
+		INCLUDE	ONCE
 
 		GLOBAL	ScreenInitialize
 		GLOBAL	ScreenEditLine
@@ -10,5 +8,4 @@ EDITOR_I_INCLUDED_ = 1
 		GLOBAL	ScreenHexWordOut
 		GLOBAL	ScreenHexByteOut
 		GLOBAL	ScreenDigitOut
-		
-	ENDC
+	

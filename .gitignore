@@ -153,3 +153,5 @@ spinal/project/
 spinal/target/
 tmp/
 firmware/.disk_HC800/
+firmware/addons/bigfile.txt
+firmware/addons/test.txt

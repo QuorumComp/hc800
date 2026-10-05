@@ -46,6 +46,14 @@ Main:
 		jal	KeyboardInitialize
 		MDebugPrint <"Initialize text\n">
 		jal	TextInitialize
+
+		; enable vblank interrupts before device/filesystem initialization:
+		; the UART file-server probe uses a vblank-edge timeout, so with no
+		; UART host responding it would otherwise spin forever
+
+		jal	EnableVBlank
+		ei
+
 		;MDebugPrint <"Initialize SD controller\n">
 		;jal	SdResetController
 		MDebugPrint <"Initialize block devices\n">
@@ -69,10 +77,6 @@ Main:
 		ls	ft,4
 		jal	StreamDecimalWordOut
 		MPrintString " KiB\n"
-
-		jal	EnableVBlank
-
-		ei
 
 .read_line
 		jal	printReadyPrompt
