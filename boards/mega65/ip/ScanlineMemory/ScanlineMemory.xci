@@ -3,7 +3,7 @@
   "ip_inst": {
     "xci_name": "ScanlineMemory",
     "component_reference": "xilinx.com:ip:blk_mem_gen:8.4",
-    "ip_revision": "8",
+    "ip_revision": "12",
     "gen_directory": ".",
     "parameters": {
       "component_parameters": {
@@ -14,7 +14,7 @@
         "Use_AXI_ID": [ { "value": "false", "resolve_type": "user", "format": "bool", "enabled": false, "usage": "all" } ],
         "AXI_ID_Width": [ { "value": "4", "resolve_type": "user", "format": "long", "enabled": false, "usage": "all" } ],
         "Memory_Type": [ { "value": "Simple_Dual_Port_RAM", "value_src": "user", "resolve_type": "user", "usage": "all" } ],
-        "PRIM_type_to_Implement": [ { "value": "BRAM", "resolve_type": "user", "enabled": false, "usage": "all" } ],
+        "PRIM_type_to_Implement": [ { "value": "BRAM", "resolve_type": "user", "usage": "all" } ],
         "Enable_32bit_Address": [ { "value": "false", "resolve_type": "user", "format": "bool", "usage": "all" } ],
         "ecctype": [ { "value": "No_ECC", "resolve_type": "user", "usage": "all" } ],
         "ECC": [ { "value": "false", "resolve_type": "user", "format": "bool", "usage": "all" } ],
@@ -35,12 +35,12 @@
         "Write_Width_A": [ { "value": "15", "value_src": "user", "resolve_type": "user", "format": "long", "usage": "all" } ],
         "Write_Depth_A": [ { "value": "1024", "value_src": "user", "resolve_type": "user", "format": "long", "usage": "all" } ],
         "Read_Width_A": [ { "value": "15", "resolve_type": "user", "enabled": false, "usage": "all" } ],
-        "Operating_Mode_A": [ { "value": "NO_CHANGE", "resolve_type": "user", "usage": "all" } ],
+        "Operating_Mode_A": [ { "value": "NO_CHANGE", "value_src": "user", "resolve_type": "user", "usage": "all" } ],
         "Enable_A": [ { "value": "Use_ENA_Pin", "resolve_type": "user", "usage": "all" } ],
-        "Write_Width_B": [ { "value": "15", "resolve_type": "user", "usage": "all" } ],
-        "Read_Width_B": [ { "value": "15", "resolve_type": "user", "usage": "all" } ],
+        "Write_Width_B": [ { "value": "15", "value_src": "user", "resolve_type": "user", "usage": "all" } ],
+        "Read_Width_B": [ { "value": "15", "value_src": "user", "resolve_type": "user", "usage": "all" } ],
         "Operating_Mode_B": [ { "value": "WRITE_FIRST", "resolve_type": "user", "enabled": false, "usage": "all" } ],
-        "Enable_B": [ { "value": "Use_ENB_Pin", "resolve_type": "user", "usage": "all" } ],
+        "Enable_B": [ { "value": "Use_ENB_Pin", "value_src": "user", "resolve_type": "user", "usage": "all" } ],
         "Register_PortA_Output_of_Memory_Primitives": [ { "value": "false", "resolve_type": "user", "format": "bool", "enabled": false, "usage": "all" } ],
         "Register_PortA_Output_of_Memory_Core": [ { "value": "false", "resolve_type": "user", "format": "bool", "enabled": false, "usage": "all" } ],
         "Use_REGCEA_Pin": [ { "value": "false", "resolve_type": "user", "format": "bool", "enabled": false, "usage": "all" } ],
@@ -66,10 +66,10 @@
         "Additional_Inputs_for_Power_Estimation": [ { "value": "false", "resolve_type": "user", "format": "bool", "usage": "all" } ],
         "Port_A_Clock": [ { "value": "100", "resolve_type": "user", "format": "long", "usage": "all" } ],
         "Port_A_Write_Rate": [ { "value": "50", "resolve_type": "user", "format": "long", "usage": "all" } ],
-        "Port_B_Clock": [ { "value": "100", "resolve_type": "user", "format": "long", "usage": "all" } ],
+        "Port_B_Clock": [ { "value": "100", "value_src": "user", "resolve_type": "user", "format": "long", "usage": "all" } ],
         "Port_B_Write_Rate": [ { "value": "0", "resolve_type": "user", "format": "long", "enabled": false, "usage": "all" } ],
         "Port_A_Enable_Rate": [ { "value": "100", "resolve_type": "user", "format": "long", "usage": "all" } ],
-        "Port_B_Enable_Rate": [ { "value": "100", "resolve_type": "user", "format": "long", "usage": "all" } ],
+        "Port_B_Enable_Rate": [ { "value": "100", "value_src": "user", "resolve_type": "user", "format": "long", "usage": "all" } ],
         "Collision_Warnings": [ { "value": "ALL", "resolve_type": "user", "usage": "all" } ],
         "Disable_Collision_Warnings": [ { "value": "false", "resolve_type": "user", "format": "bool", "usage": "all" } ],
         "Disable_Out_of_Range_Warnings": [ { "value": "false", "resolve_type": "user", "format": "bool", "usage": "all" } ],
@@ -158,27 +158,27 @@
         "C_EST_POWER_SUMMARY": [ { "value": "Estimated Power for IP     :     2.684499 mW", "resolve_type": "generated", "usage": "all" } ]
       },
       "project_parameters": {
-        "ARCHITECTURE": [ { "value": "artix7" } ],
-        "BASE_BOARD_PART": [ { "value": "" } ],
-        "BOARD_CONNECTIONS": [ { "value": "" } ],
-        "DEVICE": [ { "value": "xc7a200t" } ],
-        "NEXTGEN_VERSAL": [ { "value": "0" } ],
-        "PACKAGE": [ { "value": "fbg484" } ],
-        "PREFHDL": [ { "value": "VERILOG" } ],
-        "SILICON_REVISION": [ { "value": "" } ],
-        "SIMULATOR_LANGUAGE": [ { "value": "MIXED" } ],
-        "SPEEDGRADE": [ { "value": "-2" } ],
-        "STATIC_POWER": [ { "value": "" } ],
-        "TEMPERATURE_GRADE": [ { "value": "" } ]
+        "ARCHITECTURE": [ { "value": "artix7", "resolve_type": "generated", "usage": "all" } ],
+        "BASE_BOARD_PART": [ { "value": "", "resolve_type": "generated", "usage": "all" } ],
+        "BOARD_CONNECTIONS": [ { "value": "", "resolve_type": "generated", "usage": "all" } ],
+        "DEVICE": [ { "value": "xc7a200t", "resolve_type": "generated", "usage": "all" } ],
+        "NEXTGEN_VERSAL": [ { "value": "0", "resolve_type": "generated", "usage": "all" } ],
+        "PACKAGE": [ { "value": "fbg484", "resolve_type": "generated", "usage": "all" } ],
+        "PREFHDL": [ { "value": "VERILOG", "resolve_type": "generated", "usage": "all" } ],
+        "SILICON_REVISION": [ { "value": "", "resolve_type": "generated", "usage": "all" } ],
+        "SIMULATOR_LANGUAGE": [ { "value": "MIXED", "resolve_type": "generated", "usage": "all" } ],
+        "SPEEDGRADE": [ { "value": "-2", "resolve_type": "generated", "usage": "all" } ],
+        "STATIC_POWER": [ { "value": "", "resolve_type": "generated", "usage": "all" } ],
+        "TEMPERATURE_GRADE": [ { "value": "", "resolve_type": "generated", "usage": "all" } ]
       },
       "runtime_parameters": {
         "IPCONTEXT": [ { "value": "IP_Flow" } ],
-        "IPREVISION": [ { "value": "8" } ],
+        "IPREVISION": [ { "value": "12" } ],
         "MANAGED": [ { "value": "TRUE" } ],
         "OUTPUTDIR": [ { "value": "." } ],
         "SELECTEDSIMMODEL": [ { "value": "" } ],
         "SHAREDDIR": [ { "value": "." } ],
-        "SWVERSION": [ { "value": "2024.1" } ],
+        "SWVERSION": [ { "value": "2025.2" } ],
         "SYNTHESISFLOW": [ { "value": "OUT_OF_CONTEXT" } ]
       }
     },
@@ -278,5 +278,6 @@
         }
       }
     }
-  }
+  },
+  "checksum": "80b7b60f"
 }

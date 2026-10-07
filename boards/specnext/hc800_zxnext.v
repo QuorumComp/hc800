@@ -1,6 +1,6 @@
 // Generator : SpinalHDL v1.6.4    git head : 598c18959149eb18e5eee5b0aa3eef01ecaa41a1
 // Component : HC800
-// Git hash  : ed3f797672c3b0f083638eafc26a2edd86cf1ad3
+// Git hash  : daaabb9e38ebf1749dd77a30b54c2da9cef88b38
 
 `timescale 1ns/1ps 
 
@@ -9033,14 +9033,16 @@ module OpcodeDecoder (
 
   wire                _zz_when_OpcodeDecoder_l52;
   wire                _zz_when_OpcodeDecoder_l52_1;
-  wire                _zz_when_OpcodeDecoder_l52_2;
+  wire       [7:0]    _zz_when_OpcodeDecoder_l52_2;
   wire       [7:0]    _zz_when_OpcodeDecoder_l52_3;
-  wire       [7:0]    _zz_when_OpcodeDecoder_l52_4;
+  wire                _zz_when_OpcodeDecoder_l52_4;
   wire       [7:0]    _zz_when_OpcodeDecoder_l52_5;
-  wire                _zz_when_OpcodeDecoder_l52_6;
+  wire       [7:0]    _zz_when_OpcodeDecoder_l52_6;
   wire       [7:0]    _zz_when_OpcodeDecoder_l52_7;
-  wire       [7:0]    _zz_when_OpcodeDecoder_l52_8;
+  wire                _zz_when_OpcodeDecoder_l52_8;
   wire       [7:0]    _zz_when_OpcodeDecoder_l52_9;
+  wire       [7:0]    _zz_when_OpcodeDecoder_l52_10;
+  wire       [7:0]    _zz_when_OpcodeDecoder_l52_11;
   wire       [3:0]    _zz__zz_1;
   wire       [3:0]    _zz__zz_2;
   wire       [3:0]    _zz__zz_3;
@@ -9149,16 +9151,18 @@ module OpcodeDecoder (
   assign _zz__zz_5 = registerPair;
   assign _zz__zz_6 = registerPair;
   assign _zz__zz_7 = registerPair;
-  assign _zz_when_OpcodeDecoder_l52 = (((((((_zz_when_OpcodeDecoder_l52_1 || _zz_when_OpcodeDecoder_l52_2) || (_zz_when_OpcodeDecoder_l52_3 == _zz_when_OpcodeDecoder_l52_4)) || ((io_opcode & _zz_when_OpcodeDecoder_l52_5) == 8'h69)) || ((io_opcode & 8'hff) == 8'h71)) || ((io_opcode & 8'hff) == 8'h79)) || ((io_opcode & 8'hfc) == 8'h9c)) || ((io_opcode & 8'hff) == 8'hb3));
-  assign _zz_when_OpcodeDecoder_l52_6 = ((io_opcode & 8'hfc) == 8'hb4);
-  assign _zz_when_OpcodeDecoder_l52_7 = (io_opcode & 8'hff);
-  assign _zz_when_OpcodeDecoder_l52_8 = 8'hba;
-  assign _zz_when_OpcodeDecoder_l52_9 = 8'hff;
-  assign _zz_when_OpcodeDecoder_l52_1 = ((((((io_opcode & 8'hfe) == 8'h08) || ((io_opcode & 8'hff) == 8'h11)) || ((io_opcode & 8'hff) == 8'h19)) || ((io_opcode & 8'hfe) == 8'h20)) || ((io_opcode & 8'hff) == 8'h29));
-  assign _zz_when_OpcodeDecoder_l52_2 = ((io_opcode & 8'hff) == 8'h30);
-  assign _zz_when_OpcodeDecoder_l52_3 = (io_opcode & 8'hff);
-  assign _zz_when_OpcodeDecoder_l52_4 = 8'h61;
-  assign _zz_when_OpcodeDecoder_l52_5 = 8'hff;
+  assign _zz_when_OpcodeDecoder_l52 = (((((((_zz_when_OpcodeDecoder_l52_1 || _zz_when_OpcodeDecoder_l52_4) || (_zz_when_OpcodeDecoder_l52_5 == _zz_when_OpcodeDecoder_l52_6)) || ((io_opcode & _zz_when_OpcodeDecoder_l52_7) == 8'h71)) || ((io_opcode & 8'hff) == 8'h79)) || ((io_opcode & 8'hfc) == 8'h9c)) || ((io_opcode & 8'hff) == 8'hb3)) || ((io_opcode & 8'hfc) == 8'hb4));
+  assign _zz_when_OpcodeDecoder_l52_8 = ((io_opcode & 8'hff) == 8'hba);
+  assign _zz_when_OpcodeDecoder_l52_9 = (io_opcode & 8'hff);
+  assign _zz_when_OpcodeDecoder_l52_10 = 8'hc8;
+  assign _zz_when_OpcodeDecoder_l52_11 = 8'hff;
+  assign _zz_when_OpcodeDecoder_l52_1 = (((((((io_opcode & _zz_when_OpcodeDecoder_l52_2) == 8'h08) || ((io_opcode & _zz_when_OpcodeDecoder_l52_3) == 8'h11)) || ((io_opcode & 8'hff) == 8'h19)) || ((io_opcode & 8'hfe) == 8'h20)) || ((io_opcode & 8'hff) == 8'h29)) || ((io_opcode & 8'hff) == 8'h30));
+  assign _zz_when_OpcodeDecoder_l52_4 = ((io_opcode & 8'hff) == 8'h61);
+  assign _zz_when_OpcodeDecoder_l52_5 = (io_opcode & 8'hff);
+  assign _zz_when_OpcodeDecoder_l52_6 = 8'h69;
+  assign _zz_when_OpcodeDecoder_l52_7 = 8'hff;
+  assign _zz_when_OpcodeDecoder_l52_2 = 8'hfe;
+  assign _zz_when_OpcodeDecoder_l52_3 = 8'hff;
   `ifndef SYNTHESIS
   always @(*) begin
     case(io_output_stageControl_readStageControl_registers_0)
@@ -14026,7 +14030,7 @@ module OpcodeDecoder (
     end
   end
 
-  assign when_OpcodeDecoder_l52 = (((((((_zz_when_OpcodeDecoder_l52 || _zz_when_OpcodeDecoder_l52_6) || (_zz_when_OpcodeDecoder_l52_7 == _zz_when_OpcodeDecoder_l52_8)) || ((io_opcode & _zz_when_OpcodeDecoder_l52_9) == 8'hc8)) || ((io_opcode & 8'hff) == 8'hd0)) || ((io_opcode & 8'hff) == 8'hd8)) || ((io_opcode & 8'hfe) == 8'he0)) || ((io_opcode & 8'hfe) == 8'he8));
+  assign when_OpcodeDecoder_l52 = (((((((_zz_when_OpcodeDecoder_l52 || _zz_when_OpcodeDecoder_l52_8) || (_zz_when_OpcodeDecoder_l52_9 == _zz_when_OpcodeDecoder_l52_10)) || ((io_opcode & _zz_when_OpcodeDecoder_l52_11) == 8'hd0)) || ((io_opcode & 8'hff) == 8'hd8)) || ((io_opcode & 8'hfe) == 8'he0)) || ((io_opcode & 8'hfe) == 8'he8)) || ((io_opcode & 8'hff) == 8'hf4));
   assign _zz_1 = ({3'd0,1'b1} <<< _zz__zz_1[1 : 0]);
   assign when_OpcodeDecoder_l57 = ((io_opcode & 8'hff) == 8'hb1);
   assign _zz_2 = ({3'd0,1'b1} <<< _zz__zz_2[1 : 0]);
