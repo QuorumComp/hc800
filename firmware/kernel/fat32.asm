@@ -179,7 +179,7 @@ fillFsStruct:
 		swap	de	; get fs structure
 		add	de,fat32_DataBase
 
-		; this pops one FT too many, the popa at the end of this function is therefore on bc-hl
+		; this pops one FT too many, the popa at the end of this function is therefore on bc/de/hl
 		MPop32	(de),ft
 
 		sub	de,fat32_DataBase

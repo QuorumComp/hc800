@@ -342,7 +342,7 @@ TestShift:
 		MPush32	ft,$46B579A0
 		ld	b,17
 		jal	MathShiftLeft_32
-		MPrintString "0x46B579A0 << 17 = (expect 0ABC0000) "
+		MPrintString "0x46B579A0 << 17 = (expect F3400000) "
 		jal	StreamHexLongOut
 		MNewLine
 
