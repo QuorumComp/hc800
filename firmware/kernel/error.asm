@@ -53,7 +53,7 @@ ErrorPrintDescription:
 		ld	t,10
 		jal	ScreenCharacterOut
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 

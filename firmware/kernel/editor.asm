@@ -930,7 +930,7 @@ deleteCharacterAtVirtualCursorPos:
 ; --   t - line index, adjusted for line pairs
 ; --
 decreaseLineLength:
-		push	bc-hl
+		push	bc/de/hl
 
 		ld	de,ft
 
@@ -956,7 +956,7 @@ decreaseLineLength:
 		ld	t,e
 		jal	scrollLinesLengthsUp
 
-.done		pop	bc-hl
+.done		pop	bc/de/hl
 		j	(hl)
 
 
@@ -969,7 +969,7 @@ decreaseLineLength:
 ; --   t - line index, adjusted for line pairs
 ; --
 setLineLength:
-		push	bc-hl
+		push	bc/de/hl
 
 		ld	de,ft
 
@@ -983,7 +983,7 @@ setLineLength:
 		ld	t,d
 		ld	(bc),t
 
-.no_insert	pop	bc-hl
+.no_insert	pop	bc/de/hl
 		j	(hl)
 
 
@@ -999,7 +999,7 @@ setLineLength:
 ; --   z - "eq" condition if insert allowed
 ; --
 increaseLineLength:
-		push	bc-hl
+		push	bc/de/hl
 
 		ld	de,ft
 
@@ -1036,7 +1036,7 @@ increaseLineLength:
 .allow_insert
 		ld	f,FLAGS_EQ
 
-.no_insert	pop	bc-hl
+.no_insert	pop	bc/de/hl
 		j	(hl)
 
 
@@ -1114,7 +1114,7 @@ scrollLinesLengthsUp:
 ;   f - virtual X pos, adjusted for line pairs
 ;   t - line index, adjusted for line pairs
 getVirtualCursorPos:
-		push	bc-hl
+		push	bc/de/hl
 
 		jal	TextGetCursor
 		ld	de,ft
@@ -1134,7 +1134,7 @@ getVirtualCursorPos:
 		add	f,CHARS_PER_LINE
 		sub	t,1
 
-.exit		pop	bc-hl
+.exit		pop	bc/de/hl
 		j	(hl)
 
 

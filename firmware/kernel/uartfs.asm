@@ -26,7 +26,7 @@ udir_SIZEOF	RB	0
 ; --
 		SECTION	"UartInitialize",CODE
 UartInitialize:
-		push	bc-hl
+		push	bc/de/hl
 
 		jal	ComIdentify
 		j/ne	.exit
@@ -42,7 +42,7 @@ UartInitialize:
 
 		ld	f,FLAGS_EQ
 .exit
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 .fs		DB	4,"uart",0,0,0,0,0,0,0,0,0,0,0
@@ -77,7 +77,7 @@ UartInitialize:
 ; --
 		SECTION	"UartOpen",CODE
 uartOpen:	
-		push	bc-hl
+		push	bc/de/hl
 
 		MDebugPrint <"uartOpen entry\n">
 		MDebugMemory bc,file_SIZEOF
@@ -113,7 +113,7 @@ uartOpen:
 		ld	(bc),t
 		cmp	t,ERROR_SUCCESS
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 
@@ -156,7 +156,7 @@ uartCloseDir:
 uartRead:
 		MDebugPrint <"uartRead entry\n">
 
-		push	bc-hl
+		push	bc/de/hl
 
 		; send command
 
@@ -224,7 +224,7 @@ uartRead:
 		ld	(bc),t
 		ld	ft,0
 
-.exit		pop	bc-hl
+.exit		pop	bc/de/hl
 		j	(hl)
 
 
@@ -380,7 +380,7 @@ uartReadDir:
 		ld	de,4
 		jal	UartMemoryInSync
 
-.exit		pop	bc-hl
+.exit		pop	bc/de/hl
 		MDebugPrint <"uartReadDir exit\n">
 		j	(hl)
 
@@ -411,7 +411,7 @@ sendReadDirCommand:
 		MDebugNewLine
 		MDebugMemory bc,16
 
-		push	bc-hl
+		push	bc/de/hl
 
 		ld	de,ft
 
@@ -435,7 +435,7 @@ sendReadDirCommand:
 		ld	t,ERROR_SUCCESS
 		ld	f,FLAGS_EQ
 
-.exit		pop	bc-hl
+.exit		pop	bc/de/hl
 		;MDebugPrint <"sendReadDirCommand exit\n">
 		;MDebugRegisters
 		j	(hl)	

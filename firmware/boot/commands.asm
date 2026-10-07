@@ -65,7 +65,7 @@ ComPrintChar:
 
 		jal	ComSyncResponse
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 ; --
@@ -77,7 +77,7 @@ ComPrintChar:
 ; --
 		SECTION "ComRequestChar",CODE
 ComRequestChar:
-		push	bc-hl
+		push	bc/de/hl
 
 		ld	t,COMMAND_REQUEST_CHAR
 		jal	comSendCommand
@@ -87,7 +87,7 @@ ComRequestChar:
 
 		jal	UartByteInSync
 
-.done		pop	bc-hl
+.done		pop	bc/de/hl
 		j	(hl)
 
 ; --
@@ -126,12 +126,12 @@ ComLoadFile:
 ; --
 		SECTION "ComIdentify",CODE
 ComIdentify:
-		push	bc-hl
+		push	bc/de/hl
 
 		jal	comSendIdentify
 		jal	comReadIdentify
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 
@@ -176,7 +176,7 @@ ComSendLoadFileString:
 ; --
 		SECTION "ComSyncResponse",CODE
 ComSyncResponse:
-		push	bc-hl
+		push	bc/de/hl
 
 		jal	UartByteInSync
 		j/ne	.timeout
@@ -193,7 +193,7 @@ ComSyncResponse:
 .timeout	ld	t,ERROR_TIMEOUT
 
 .done		cmp	t,ERROR_SUCCESS
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 ; --
@@ -213,7 +213,7 @@ ComSyncResponse:
 ; --
 		SECTION "ComReadFile",CODE
 comReadFile:
-		push	de-hl
+		push	de/hl
 
 		jal	ComSyncResponse
 		j/ne	.done
@@ -244,7 +244,7 @@ comReadFile:
 .timeout	ld	t,ERROR_TIMEOUT
 
 .done		cmp	t,ERROR_SUCCESS
-		pop	de-hl
+		pop	de/hl
 		j	(hl)
 
 
@@ -288,7 +288,7 @@ comSendLoadFile:
 ; --    f - "eq" if success
 		SECTION "ReadIdentify",CODE
 comReadIdentify:
-		push	bc-hl
+		push	bc/de/hl
 
 		jal	ComSyncResponse
 		j/ne	.done
@@ -309,7 +309,7 @@ comReadIdentify:
 .timeout	ld	t,ERROR_TIMEOUT
 
 .test		cmp	t,ERROR_SUCCESS
-.done		pop	bc-hl
+.done		pop	bc/de/hl
 		j	(hl)
 
 

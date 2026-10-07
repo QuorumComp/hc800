@@ -21,7 +21,7 @@
 ; --
 		SECTION	"SdDeviceMake",CODE
 SdDeviceMake:
-		push	bc-hl
+		push	bc/de/hl
 
 		MDebugPrint <"SdDeviceMake card $">
 		MDebugHexByte t
@@ -65,7 +65,7 @@ SdDeviceMake:
 .exit
 		MDebugPrint <"SdInit done\n">
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 

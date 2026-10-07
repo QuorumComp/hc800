@@ -72,7 +72,7 @@ KVector:	MACRO
 
 		SECTION "PrintError",CODE
 printError:
-		push	ft-de
+		push	ft/bc/de
 
 		SET_MMU_KERNEL
 
@@ -80,7 +80,7 @@ printError:
 		jal	ErrorPrintDescription
 
 		RESTORE_MMU_CFG
-		pop	bc-hl
+		pop	bc/de/hl
 		reti
 		
 
@@ -128,7 +128,7 @@ closeDirectory:
 
 		SECTION "GetKernelVersion",CODE
 getKernelVersion:
-		push	ft-de
+		push	ft/bc/de
 
 		ld	b,VERSION_MAJOR
 		ld	(ft+),b
@@ -151,7 +151,7 @@ debugCharOut:
 
 		SECTION "CharOut",CODE
 charOut:
-		push	ft-de
+		push	ft/bc/de
 
 		push	ft
 		SET_MMU_KERNEL
@@ -179,7 +179,7 @@ textSetAttributes:
 
 		SECTION "ClearScreen",CODE
 clearScreen:
-		push	ft-de
+		push	ft/bc/de
 		SET_MMU_KERNEL
 
 		jal	ScreenInitialize

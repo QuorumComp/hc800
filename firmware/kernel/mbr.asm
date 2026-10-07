@@ -189,7 +189,7 @@ MakeMbrPartitionDevice:
 .fail_pop_bc_to_hl
 		MDebugPrint <"MakeMbrPartitionDevice failed\n">
 		ld	f,FLAGS_NE
-		pop	bc-hl
+		pop	bc/de/hl
 .exit
 		MDebugPrint <"MakeMbrPartitionDevice exit ">
 		MDebugHexWord ft
@@ -283,5 +283,5 @@ mbrRead:
 
 		jal	BlockDeviceRead
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)

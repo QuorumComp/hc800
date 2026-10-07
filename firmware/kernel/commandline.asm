@@ -21,7 +21,7 @@ HUNK_DATA	EQU	2
 
 		SECTION "SysGetCommandLine",CODE
 SysGetCommandLine:
-		push	ft-de
+		push	ft/bc/de
 
 		ld	bc,ft
 		ld	de,lastCommandLine
@@ -48,7 +48,7 @@ SysGetCommandLine:
 
 		SECTION "ExecuteCommandLine",CODE
 SysExecuteCommandLine:
-		push	bc-de
+		push	bc/de
 
 		ld	ft,bc
 		ld	de,ft
@@ -129,7 +129,7 @@ SysExit:
 
 		ei
 
-		pop	bc-de
+		pop	bc/de
 
 		pop	hl	; discard KVector saved hl
 
@@ -144,7 +144,7 @@ SysExit:
 ; --   de - commandline
 		SECTION "readExecutable",CODE
 readExecutable:
-		push	bc-hl
+		push	bc/de/hl
 
 		ld	ft,de
 		ld	bc,exeFileHandle
@@ -184,14 +184,14 @@ readExecutable:
 		popa
 		j	(hl)
 
-.error		pop	bc-hl
+.error		pop	bc/de/hl
 		j	(hl)
 
 
 ; -- Inputs:
 ; --   bc - file handle
 		SECTION "ReadFile",CODE
-readFile:	push	bc-hl
+readFile:	push	bc/de/hl
 
 		jal	readHeader
 		j/ne	.error
@@ -200,7 +200,7 @@ readFile:	push	bc-hl
 		j/eq	.next_hunk
 		cmp	t,ERROR_SUCCESS
 
-.error		pop	bc-hl
+.error		pop	bc/de/hl
 		j	(hl)
 
 
@@ -208,7 +208,7 @@ readFile:	push	bc-hl
 ; --   bc - file handle
 		SECTION "ReadHunk",CODE
 readHunk:
-		push	bc-hl
+		push	bc/de/hl
 
 		jal	FileReadByte	; hunk type
 		j/ne	.exit
@@ -250,7 +250,7 @@ readHunk:
 		ld	t,ERROR_SUCCESS
 		ld	f,FLAGS_Z
 
-.exit		pop	bc-hl
+.exit		pop	bc/de/hl
 		j	(hl)
 
 ; -- Inputs:
@@ -258,7 +258,7 @@ readHunk:
 ; --   de - hunk length
 		SECTION "ReadHunkData",CODE
 readHunkData:
-		push	bc-hl
+		push	bc/de/hl
 
 		jal	FileReadByte
 		j/ne	.exit
@@ -283,7 +283,7 @@ readHunkData:
 		ld	de,$4000
 		jal	FileRead
 
-.exit		pop	bc-hl
+.exit		pop	bc/de/hl
 		j	(hl)
 
 
@@ -291,7 +291,7 @@ readHunkData:
 ; -- Inputs:
 ; --   bc - file handle
 readHunkMmu:
-		push	bc-hl
+		push	bc/de/hl
 
 		ld	ft,MMU_CONFIG_SIZE
 		ld	de,mmuConfig
@@ -305,7 +305,7 @@ readHunkMmu:
 		ld	t,MMU_CFG_CLIENT
 		jal	MmuSetConfigData
 
-.error		pop	bc-hl
+.error		pop	bc/de/hl
 		j	(hl)
 
 

@@ -28,7 +28,7 @@ MAX_FAT_VOLUMES = 3
 ; --        "ne" condition when volume index and further indices do not exist
 		SECTION	"SysGetVolume",CODE
 SysGetVolume::
-		push	bc-de
+		push	bc/de
 
 		MDebugPrint <"SysGetVolume\n">
 
@@ -70,7 +70,7 @@ SysGetVolume::
 
 .exit		MDebugPrint <"- exit\n">
 
-		pop	bc-hl
+		pop	bc/de/hl
 		reti
 
 .invalid	ld	f,FLAGS_NE
@@ -249,7 +249,7 @@ FileOpen:
 		jal	getVolumeAndComponentsFromPath
 		j/eq	.found_volume
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	.free
 
 .found_volume
@@ -320,7 +320,7 @@ FileClose:
 		pop	ft
 		jal	(hl)
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 
@@ -337,7 +337,7 @@ FileClose:
 ; --
 		SECTION	"FileSkip",CODE
 FileSkip:
-		push	bc-hl
+		push	bc/de/hl
 
 		MZeroExtend ft
 
@@ -355,7 +355,7 @@ FileSkip:
 		ld	t,ERROR_SUCCESS
 		ld	f,FLAGS_EQ
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 
@@ -377,12 +377,12 @@ FileRead:
 		MDebugRegisters
 		;MDebugMemory bc,file_SIZEOF
 
-		push	bc-hl
+		push	bc/de/hl
 
 		; adjust bytes to read
 		jal	.adjust_to_read
 
-		push	ft-bc
+		push	ft/bc
 		tst	ft
 		j/eq	.not_available
 
@@ -400,7 +400,7 @@ FileRead:
 		ld	t,(bc)
 		ld	hl,ft
 
-		pop	ft-bc
+		pop	ft/bc
 
 		jal	(hl)
 
@@ -433,7 +433,7 @@ FileRead:
 		ld	t,ERROR_SUCCESS
 		ld	f,FLAGS_EQ
 
-		pop	bc-hl
+		pop	bc/de/hl
 
 		MDebugPrint <"FileRead success ">
 		MDebugRegisters
@@ -450,7 +450,7 @@ FileRead:
 		j	(hl)
 
 .adjust_to_read
-		push	bc-hl
+		push	bc/de/hl
 
 		exg	ft,bc
 		ld	de,ft
@@ -500,7 +500,7 @@ FileRead:
 ; --
 		SECTION	"FileReadByte",CODE
 FileReadByte:
-		push	bc-hl
+		push	bc/de/hl
 
 		ld	ft,1
 		ld	de,readBuffer
@@ -508,7 +508,7 @@ FileReadByte:
 
 		ld	t,(de)
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 
@@ -533,12 +533,12 @@ DirectoryOpen:
 		;MDebugRegisters
 
 		; clear directory structure
-		push	ft-bc
+		push	ft/bc
 		ld	bc,ft
 		ld	de,dir_SIZEOF
 		ld	t,0
 		jal	SetMemory
-		pop	ft-bc
+		pop	ft/bc
 
 		MStackAlloc STRING_SIZE
 		exg	ft,bc
@@ -588,7 +588,7 @@ DirectoryOpen:
 		;MDebugStacks
 
 .exit		MStackFree STRING_SIZE
-		pop	bc-hl
+		pop	bc/de/hl
 		MDebugPrint <"DirectoryOpen exit\n">
 		MDebugStacks
 		MDebugRegisters
@@ -630,7 +630,7 @@ DirectoryRead:
 
 		jal	(hl)
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 
@@ -664,7 +664,7 @@ DirectoryClose:
 
 		jal	(hl)
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 
@@ -761,7 +761,7 @@ PathAppendChars:
 		ld	t,'/'
 		jal	StringAppendChar
 
-.append		pop	ft-de
+.append		pop	ft/bc/de
 		jal	StringAppendChars
 
 		pop	hl
@@ -787,7 +787,7 @@ PathAppend:
 		pop	ft
 		jal	PathAppendChars
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 
@@ -811,7 +811,7 @@ getVolumeAndComponentsFromPath:
 		MDebugPrint <"getVolumeAndComponentsFromPath entry\n">
 		MDebugRegisters
 
-		push	bc-hl
+		push	bc/de/hl
 		ld	de,ft
 
 		jal	getVolumeFromPath
@@ -844,7 +844,7 @@ getVolumeAndComponentsFromPath:
 		MStackFree STRING_SIZE
 		ld	f,FLAGS_EQ
 
-.exit		pop	bc-hl
+.exit		pop	bc/de/hl
 		MDebugPrint <"getVolumeAndComponentsFromPath exit\n">
 		;MDebugStacks
 		j	(hl)
@@ -971,7 +971,7 @@ normalizePathComponents:
 ;   ft  - start
 ;   ft' - end
 findComponentRange:
-		push	bc-hl
+		push	bc/de/hl
 
 		exg	de,ft
 		ld	c,t
@@ -989,11 +989,11 @@ findComponentRange:
 		add	ft,bc
 		swap	ft
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 .found_slash	ld	ft,de
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 
@@ -1123,7 +1123,7 @@ getComponentsFromPath:
 ; --
 		SECTION	"getVolumeFromPath",CODE
 getVolumeFromPath:
-		push	bc-hl
+		push	bc/de/hl
 
 		;MDebugPrint <"getVolumeFromPath entry\n">
 		;MDebugPrint <" - source: ">
@@ -1192,7 +1192,7 @@ getVolumeFromPath:
 		; not found
 		;MDebugPrint <"getVolumeFromPath exit: no match\n">
 
-		pop	bc-hl
+		pop	bc/de/hl
 		ld	f,FLAGS_NE
 		ld	t,ERROR_NOT_AVAILABLE
 		j	(hl)
@@ -1210,7 +1210,7 @@ getVolumeFromPath:
 .match		ld	f,FLAGS_EQ
 		ld	t,ERROR_SUCCESS
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 
@@ -1231,7 +1231,7 @@ checkvolumeMatch:
 		;MDebugStacks
 		;MDebugMemory bc,16
 		;MDebugRegisters
-		push	bc-hl
+		push	bc/de/hl
 
 		ld	hl,ft
 		ld	e,2
@@ -1253,7 +1253,7 @@ checkvolumeMatch:
 		dj	e,.check_string
 
 		ld	t,FLAGS_NE
-.found		pop	bc-hl
+.found		pop	bc/de/hl
 		j	(hl)
 
 

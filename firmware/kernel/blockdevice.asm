@@ -23,7 +23,7 @@ MAX_PARTITIONS = 3
 ; --    f - "eq" condition if device exists and information structure filled
 		SECTION	"SysGetBlockDevice",CODE
 SysGetBlockDevice::
-		push	ft-de
+		push	ft/bc/de
 
 		exg	ft,bc
 		ld	de,ft
@@ -328,7 +328,7 @@ BlockDeviceGet:
 ; --
 		SECTION	"BlockAllocSector",CODE
 BlockAllocSector:
-		push	bc-de
+		push	bc/de
 
 		ld	de,freeSectors
 		ld	ft,(de)
@@ -338,7 +338,7 @@ BlockAllocSector:
 		ld	ft,(bc)
 		ld	(de),ft
 
-		pop	ft-de
+		pop	ft/bc/de
 		j	(hl)
 		
 

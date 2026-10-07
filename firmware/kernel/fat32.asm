@@ -75,7 +75,7 @@ ufile_SIZEOF		RB	0
 		SECTION	"Fat32FsMake",CODE
 Fat32FsMake:
 		MDebugPrint <"Fat32FsMake enter\n">
-		push	bc-hl
+		push	bc/de/hl
 
 		MStackAlloc BYTES_PER_SECTOR
 		ld	de,ft	; de = volume boot record
@@ -98,7 +98,7 @@ Fat32FsMake:
 		ld	f,FLAGS_EQ
 
 .exit		MStackFree BYTES_PER_SECTOR
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 
@@ -185,7 +185,7 @@ fillFsStruct:
 		sub	de,fat32_DataBase
 		swap	de
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 .copy2		pusha
@@ -214,7 +214,7 @@ fillFsStruct:
 		; --
 		; BPB_FAT_BASE(2) + BPB_FAT_SIZE32(4)*BPB_TOTAL_FAT_SECTORS(1)
 .calcDataBase:
-		push	bc-hl
+		push	bc/de/hl
 
 		ld	ft,bc
 		ld	de,ft
@@ -242,7 +242,7 @@ fillFsStruct:
 		jal	MathAdd_32_32
 		pop	bc
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 
@@ -284,7 +284,7 @@ dirOpen:
 		pop	ft
 		jal	dirRead
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 
@@ -476,7 +476,7 @@ fileOpen:
 		;MDelay	10000
 		MDebugPrint <"Fat32FileOpen\n">
 		MDebugMemory ft,32
-		push	bc-hl
+		push	bc/de/hl
 
 		MDebugMemory ft,16
 
@@ -518,7 +518,7 @@ fileOpen:
 
 		MStackFree dir_SIZEOF
 
-		pop	bc-hl
+		pop	bc/de/hl
 		ld	f,FLAGS_NE
 		ld	t,ERROR_NOT_AVAILABLE
 		j	(hl)
@@ -568,7 +568,7 @@ fileOpen:
 
 		MStackFree dir_SIZEOF
 
-		pop	bc-hl
+		pop	bc/de/hl
 		pop	ft
 		swap	ft
 		pop	ft
@@ -697,7 +697,7 @@ fileRead:
 		ld	bc,ft	; bc = left to read
 		pop	ft
 		sub	ft,bc	; ft = total read
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 ; ---------------------------------------------------------------------------
@@ -730,7 +730,7 @@ loadVolumeBootRecord:
 ; --   de - pointer to VBR
 ; --
 		SECTION	"checkFat32",CODE
-checkFat32:	push	bc-hl
+checkFat32:	push	bc/de/hl
 
 		;MDebugPrint <"checkFat32\n">
 
@@ -761,7 +761,7 @@ checkFat32:	push	bc-hl
 		add	de,1
 		dj	l,.sigloop
 
-.exit		pop	bc-hl
+.exit		pop	bc/de/hl
 		j	(hl)
 
 .signature	DB	"FAT32   "
@@ -802,7 +802,7 @@ clusterToSector:
 		jal	MathAdd_32_32
 		pop	bc
 		
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 
@@ -858,7 +858,7 @@ findFile:
 		ld	f,FLAGS_NE
 		j	(hl)		
 
-.found		pop	bc-hl
+.found		pop	bc/de/hl
 		j	(hl)		
 
 
@@ -876,7 +876,7 @@ findFile:
 ; --   ft'':ft''' - cluster
 ; --   ft'''' - filename path
 findFileInCluster
-		push	bc-hl
+		push	bc/de/hl
 
 		MPush32	ft
 		push	ft/bc
@@ -914,7 +914,7 @@ findFileInCluster
 		ld	f,FLAGS_NE
 		j	(hl)
 
-.found_file	pop	bc-hl
+.found_file	pop	bc/de/hl
 		j	(hl)
 
 
@@ -928,7 +928,7 @@ findFileInCluster
 ; --   ft' - pointer into sector buffer, present if found
 
 findFileInSector
-		push	bc-hl
+		push	bc/de/hl
 
 		push	ft/bc
 		ld	ft,bc
@@ -975,7 +975,7 @@ findFileInSector
 		dj	l,.next_file
 	
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 	ENDC
 
@@ -993,7 +993,7 @@ findFileInSector
 ; --
 		SECTION	"openFileSector",CODE
 openFileSector:
-		push	bc-hl
+		push	bc/de/hl
 
 		exg	ft,de
 		ld	(bc),ft	; file_System
@@ -1027,7 +1027,7 @@ openFileSector:
 		; ufile_RemainingBytes
 		ld	(bc+),ft
 
-		pop	bc-hl
+		pop	bc/de/hl
 
 		ld	f,FLAGS_EQ
 		ld	t,ERROR_SUCCESS
@@ -1153,7 +1153,7 @@ readNextFileSector:
 ; --
 getNextCluster:
 		;MDebugPrint <"getNextCluster\n">
-		push	bc-hl
+		push	bc/de/hl
 
 		swap	ft
 		ld	hl,ft	; hl = cluster
@@ -1229,5 +1229,5 @@ getNextCluster:
 .exit
 		MStackFree	BYTES_PER_SECTOR
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)

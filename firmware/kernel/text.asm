@@ -421,7 +421,7 @@ TextScrollLinesUp:
 ; --
 		SECTION	"TextGetCharacterAt",CODE
 TextGetCharacterAt:
-		push	bc-hl
+		push	bc/de/hl
 
 		jal	TextGetAttributePointer
 		ld	bc,ft
@@ -433,7 +433,7 @@ TextGetCharacterAt:
 		exg	f,t
 		ld	t,(bc)
 		
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 
@@ -477,7 +477,7 @@ TextSetCharacterAt:
 ; --
 		SECTION	"TextGetCursor",CODE
 TextGetCursor:
-		push	bc-hl
+		push	bc/de/hl
 
 		ld	bc,VideoCursor+csr_X
 		ld	t,(bc)
@@ -485,7 +485,7 @@ TextGetCursor:
 		add	bc,1
 		ld	t,(bc)
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 

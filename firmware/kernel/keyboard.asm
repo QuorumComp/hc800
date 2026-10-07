@@ -55,7 +55,7 @@ KeyboardVBlank:
 ; --    t - ASCII character
 ; --
 KeyboardRead:
-		push	bc-hl
+		push	bc/de/hl
 
 		ld	b,IO_KEYBOARD_BASE
 		ld	c,IO_KEYBOARD_STATUS
@@ -90,7 +90,7 @@ KeyboardRead:
 
 .test_t		cmp	t,0
 
-.exit		pop	bc-hl
+.exit		pop	bc/de/hl
 		j	(hl)
 
 ; --

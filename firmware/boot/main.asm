@@ -105,7 +105,7 @@ Main:
 ; --    f - "z" condition if success
 ; --
 LoadKernel:
-		push	bc-hl
+		push	bc/de/hl
 
 		ld	bc,$4000
 		ld	de,$4000
@@ -132,7 +132,7 @@ LoadKernel:
 		MPrintString " Failure."
 
 .done		MNewline
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 .kernel_name	DB	"/kernel.bin"
@@ -146,7 +146,7 @@ LoadKernel:
 ; --    t - error code
 ; --
 CheckKernel:
-		push	bc-hl
+		push	bc/de/hl
 
 		ld	bc,$4000
 		MLDLoop	de,$4000
@@ -165,7 +165,7 @@ CheckKernel:
 .ident_false	ld	t,ERROR_PROTOCOL
 		ld	f,FLAGS_NE
 .done
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 .ident		DB	"HC8!"

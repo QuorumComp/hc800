@@ -97,7 +97,7 @@ SdResetController:
 		SECTION	"SdGetTotalBlocks",CODE
 SdGetTotalBlocks:
 		MDebugPrint <"SdGetTotalBlocks\n">
-		push	bc-hl
+		push	bc/de/hl
 
 		SELECT
 
@@ -134,7 +134,7 @@ SdGetTotalBlocks:
 
 .error		ld	b,IO_SDCARD_BASE
 		DESELECT
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 .handle_v2	push	hl
@@ -310,7 +310,7 @@ SdReadSingleBlock:
 
 .error		DESELECT
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 
@@ -321,7 +321,7 @@ SdReadSingleBlock:
 ; --    f - "eq" condition if initialized
 ; --
 		SECTION	"SdInit",CODE
-SdInit:		push	bc-hl
+SdInit:		push	bc/de/hl
 
 		ld	b,IO_SDCARD_BASE
 
@@ -347,7 +347,7 @@ SdInit:		push	bc-hl
 .store		ld	bc,SdType
 		ld	(bc),t
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 
@@ -431,7 +431,7 @@ sdSendBlockNumber:
 		ld	t,$01	; CRC
 		lio	(bc),t
 
-		pop	bc-hl
+		pop	bc/de/hl
 		j	(hl)
 
 
