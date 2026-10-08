@@ -6,7 +6,6 @@
 		INCLUDE	"filesystems.i"
 		INCLUDE	"uartfs.i"
 		INCLUDE	"uart_commands.i"
-		INCLUDE	"uart_commands_disabled.i"
 
 
 		RSSET	fs_PRIVATE

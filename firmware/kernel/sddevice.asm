@@ -6,7 +6,6 @@
 		INCLUDE	"sddevice.i"
 		INCLUDE	"uart_commands.i"
 
-		INCLUDE	"uart_commands_disabled.i"
 
 
 ; ---------------------------------------------------------------------------

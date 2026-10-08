@@ -12,7 +12,6 @@
 		INCLUDE	"text.i"
 
 		INCLUDE	"uart_commands.i"
-		INCLUDE	"uart_commands_disabled.i"
 
 		IMPORT	ResetWhenCombo
 

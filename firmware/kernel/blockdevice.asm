@@ -9,7 +9,6 @@
 		INCLUDE	"sddevice.i"
 		INCLUDE	"uart_commands.i"
 
-		INCLUDE	"uart_commands_disabled.i"
 
 BYTES_PER_SECTOR = 512
 SECTOR_HEAP_SIZE = 8
@@ -292,23 +291,18 @@ BlockDeviceGet:
 
 		add	t,t
 		ld	f,0
-		add	ft,blockDevicePointers+1
+		add	ft,blockDevicePointers
 		ld	bc,ft
 
-		lco	t,(bc)
-		sub	bc,1
-		exg	f,t
-		lco	t,(bc)
-
+		lco	ft,(bc+)
 		ld	bc,ft
+
+		; bc = ft = block device structure
 
 		; is Read function pointer NULL?
 
-		ld	d,(ft)
-		add	ft,1
-		ld	t,(ft)
-		or	t,d
-		cmp	t,0
+		ld	de,(ft+)
+		tst	de
 		j/eq	.fail
 
 		ld	f,FLAGS_EQ

@@ -5,6 +5,7 @@
 		INCLUDE	"stdlib/stream.i"
 
 		INCLUDE	"text.i"
+		INCLUDE	"uart_commands.i"
 
 
 ; --
@@ -150,8 +151,31 @@ TextSetAttributes:
 		ld	de,VideoCursor+csr_Attribute
 		ld	t,(de)
 		and	t,b
+		; debug: print b and c before or
+		push	ft
+		ld	t,b
+		jal	ComPrintHexByte
+		ld	t,c
+		jal	ComPrintHexByte
+		ld	t,10
+		jal	ComPrintChar
+		pop	ft
 		or	t,c
 		ld	(de),t
+
+		; debug: print address of write, value written, and b/c inputs
+		ld	ft,VideoCursor+csr_Attribute
+		jal	ComPrintHexWord
+		ld	t,':'
+		jal	ComPrintChar
+		ld	t,(de)
+		jal	ComPrintHexByte
+		ld	t,' '
+		jal	ComPrintChar
+		ld	t,b
+		jal	ComPrintHexByte
+		ld	t,10
+		jal	ComPrintChar
 
 		popa
 		j	(hl)

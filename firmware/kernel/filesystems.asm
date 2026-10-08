@@ -15,7 +15,6 @@
 		INCLUDE	"uartfs.i"
 
 		INCLUDE	"uart_commands.i"
-		INCLUDE	"uart_commands_disabled.i"
 
 MAX_VOLUMES = 10
 MAX_FAT_VOLUMES = 3
@@ -91,9 +90,9 @@ FileInitialize:
 		ld	bc,SearchPath
 		jal	StringCopyData
 
-		ld	t,0	; t - device identifier
-
 		ld	bc,volumes
+
+		ld	t,0	; t - device identifier
 		ld	de,fat32volumes
 
 .next_blockdevice
