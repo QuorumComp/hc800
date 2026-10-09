@@ -1,2 +1,2 @@
 #!/bin/sh
-make -s -r -j install
+make DEBUG=1 -s -r -j install

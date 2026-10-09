@@ -127,12 +127,16 @@ printReadyPrompt:
 		
 		MPrintString "[:"
 
-		; print current volume
+		; print current volume (if any)
 		ld	ft,PathCurrentFs
 		ld	bc,(ft)
+		tst	bc
+		j/eq	.print_path
+
 		add	bc,fs_Volume
 		jal	StreamBssStringOut
 
+.print_path
 		; print current path
 		ld	bc,PathCurrentPath
 		jal	StreamBssStringOut

@@ -126,23 +126,27 @@ FileInitialize:
 
 .no_uart
 		; set first volume as current
-
 		ld	ft,volumes
 		ld	de,(ft+)
+		ld	b,1
+		tst	de
+		ld/eq	b,0	; if no volumes, set string length to 0
+
+		MDebugPrint <"Set current FS\n">		
+		MDebugRegisters
 		ld	ft,PathCurrentFs
 		ld	(ft+),de
 
 		; initialize current path
 
 		ld	ft,PathCurrentPath
-		ld	b,1
-		ld	(ft),b
-		add	ft,1
+		ld	(ft+),b
 		ld	b,'/'
 		ld	(ft),b
 
 		popa
 		j	(hl)
+
 
 .storeFsPointer
 		push	ft/de/hl
@@ -230,20 +234,22 @@ mountFat:
 FileOpen:
 		pusha
 
-		MDebugPrint <"FileOpen\n">
+		MDebugPrint <"))) FileOpen\n">
+
 		MDebugMemory ft,32
 		MDebugMemory bc,file_SIZEOF
 		MDebugStacks
 
 		; clear file handle structure
+		; bc = dest
 		ld	de,file_SIZEOF
 		ld	t,0
 		jal	SetMemory
 
 		MStackAlloc STRING_SIZE
-		ld	bc,ft
+		ld	bc,ft		; bc = dest string
 		ld	t,0
-		ld	(bc),t
+		ld	(bc),t		; (bc) = length 0
 		pop	ft
 		jal	getVolumeAndComponentsFromPath
 		j/eq	.found_volume
@@ -252,43 +258,42 @@ FileOpen:
 		j	.free
 
 .found_volume
-		MDebugStacks
-		; get volume
+		MDebugPrint <".found_volume\n">
+	
 		pop	ft
-		ld	de,ft
-
-		MDebugHexWord de
-		MDebugNewLine
+		ld	de,ft	; de = volume
+		MDebugMemory de,32
 
 		; set volume pointer in file struct
 		swap	bc
+		; bc = file struct
+		; bc' = volume, components
 
 		ld	ft,bc
-		ld	(ft),e
-		add	ft,1
-		ld	(ft),d
+		ld	(ft+),de
 
 		; get open function
 		add	de,fs_Open+1
-		ld	t,(de)
-		ld	f,t
-		sub	de,1
-		ld	t,(de)
-		sub	de,fs_Open
-		ld	hl,ft
+		ld	ft,(-de)
+		ld	hl,ft	; hl = open file fn pointer
 
 		swap	bc
+		; bc = volume, components
+		; bc' = file struct
 		ld	ft,bc
-		pop	bc
-
-		MDebugRegisters
 
 		MDebugMemory ft,32
+
+		pop	bc
+		; bc = file struct
+
+		MDebugRegisters
 
 		jal	(hl)
 
 		pop	de/hl
 .free		MStackFree STRING_SIZE
+		MDebugPrint <"((( FileOpen\n">
 		j	(hl)
 
 
@@ -393,10 +398,7 @@ FileRead:
 
 		; get read function
 		add	bc,fs_Read+1
-		ld	t,(bc)
-		exg	f,t
-		sub	bc,1
-		ld	t,(bc)
+		ld	ft,(-bc)
 		ld	hl,ft
 
 		pop	ft/bc
@@ -803,7 +805,7 @@ PathAppend:
 ; --
 ; -- Outputs:
 ; --    f - "eq" if found
-; --  ft' - pointer to character or non existant if f "ne"
+; --  ft' - pointer to volume or non existant if f "ne"
 ; --
 		SECTION	"getVolumeAndComponentsFromPath",CODE
 getVolumeAndComponentsFromPath:
@@ -814,6 +816,7 @@ getVolumeAndComponentsFromPath:
 		ld	de,ft
 
 		jal	getVolumeFromPath
+		MDebugRegisters
 		j/ne	.exit
 
 		;MDebugStacks
@@ -1118,7 +1121,7 @@ getComponentsFromPath:
 ; --    t - error code
 ; --    f - "eq" if found
 ; --  when f is "ne":
-; --   ft' - pointer to character or non existant if f "ne"
+; --   ft' - pointer to volume or non existant if f "ne"
 ; --
 		SECTION	"getVolumeFromPath",CODE
 getVolumeFromPath:
@@ -1196,20 +1199,29 @@ getVolumeFromPath:
 		ld	t,ERROR_NOT_AVAILABLE
 		j	(hl)
 
-.current_fs	ld	bc,PathCurrentFs+1
-		ld	t,(bc)
-		exg	f,t
-		sub	bc,1
-		ld	t,(bc)
+.current_fs	ld	ft,PathCurrentFs
+		ld	bc,(ft+)
+
+		; no current filesystem (no volumes mounted) -> not available
+		tst	bc
+		j/eq	.no_current_fs
+
+		ld	ft,bc
+		push	ft
 
 		MDebugPrint <"getVolumeFromPath exit: use current fs ">
 		MDebugRegisters
-		push	ft
 
 .match		ld	f,FLAGS_EQ
 		ld	t,ERROR_SUCCESS
 
 		pop	bc/de/hl
+		j	(hl)
+
+.no_current_fs
+		pop	bc/de/hl
+		ld	f,FLAGS_NE
+		ld	t,ERROR_NOT_AVAILABLE
 		j	(hl)
 
 

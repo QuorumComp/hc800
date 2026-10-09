@@ -8,6 +8,8 @@
 		INCLUDE	"sd.i"
 		INCLUDE	"uart_commands.i"
 
+; -- Set to 1 to enable SD card detection, 0 to report no card present.
+SD_ENABLED	EQU	1
 
 
 CMD0_CRC	EQU	$95
@@ -74,11 +76,12 @@ MHexByteOut:	MACRO
 ; ---------------------------------------------------------------------------
 		SECTION	"SdResetController",CODE
 SdResetController:
-		IF SD_ENABLED
+	IF SD_ENABLED
 		pusha
 		jal	sdResetCard
 		popa
-		ENDC
+	ENDC
+
 		j	(hl)
 
 
@@ -94,6 +97,14 @@ SdResetController:
 		SECTION	"SdGetTotalBlocks",CODE
 SdGetTotalBlocks:
 		MDebugPrint <"SdGetTotalBlocks\n">
+		
+	IF ~SD_ENABLED
+
+		ld	f,FLAGS_NE
+		j	(hl)
+
+	ELSE
+
 		push	bc/de/hl
 
 		SELECT
@@ -230,6 +241,8 @@ SdGetTotalBlocks:
 		pop	hl
 		j	(hl)
 
+	ENDC
+
 ; ---------------------------------------------------------------------------
 ; -- Write block to SD card (CMD17)
 ; --
@@ -260,6 +273,11 @@ SdWriteSingleBlock:
 		SECTION	"SdReadSingleBlock",CODE
 SdReadSingleBlock:
 		MDebugPrint <"SdReadSingleBlock\n">
+
+	IF ~SD_ENABLED
+		ld	f,FLAGS_NE
+		j	(hl)
+	ELSE
 		pusha
 
 		SELECT
@@ -309,6 +327,7 @@ SdReadSingleBlock:
 
 		pop	bc/de/hl
 		j	(hl)
+	ENDC
 
 
 ; ---------------------------------------------------------------------------
@@ -342,6 +361,7 @@ SdInit:		push	bc/de/hl
 		j/eq	.store
 		ELSE
 		; SD driver disabled: report no card present
+		ld	f,FLAGS_NE
 		ENDC
 
 .fail		ld	t,SDTYPE_NONE
