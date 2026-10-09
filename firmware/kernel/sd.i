@@ -5,7 +5,7 @@
 ; -- When 0, SdInit skips the physical probe and the rest of the
 ; -- block-device / FAT32 code runs normally but finds no SD devices.
 ; --
-SD_ENABLED	EQU	0
+SD_ENABLED	EQU	1
 
 SDTYPE_NONE	EQU	0
 SDTYPE_V1	EQU	1

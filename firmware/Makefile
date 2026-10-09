@@ -1,5 +1,8 @@
 IMAGEDIR = _image_
 
+DEBUG ?= 0
+export DEBUG
+
 TARGETS = \
 	boot/boot.bin \
 	kernel/kernel.bin \

@@ -35,53 +35,18 @@ Main:
 		ld	de,$4000
 		ld	t,0
 		jal	SetMemory
-		MDebugPrint <"probe 2534 after BSS zero=">
-		ld	bc,VideoCursor+csr_Attribute
-		ld	t,(bc)
-		MDebugHexByte t
-		MDebugPrint <"\n">
-
 		jal	initializeMemory
-		MDebugPrint <"probe 2534 after initMem=">
-		ld	bc,VideoCursor+csr_Attribute
-		ld	t,(bc)
-		MDebugHexByte t
-		MDebugPrint <"\n">
-		
+
 		MStackInit 4096,BSS
 
 		MDebugStacks
 		MDebugPrint <"Initialize palette\n">
 		jal	InitializePalette
-		MDebugPrint <"probe 2534 after palette=">
-		ld	bc,VideoCursor+csr_Attribute
-		ld	t,(bc)
-		MDebugHexByte t
-		MDebugPrint <"\n">
 		MDebugPrint <"Initialize keyboard\n">
 		jal	KeyboardInitialize
-		MDebugPrint <"probe 2534 after keyboard=">
-		ld	bc,VideoCursor+csr_Attribute
-		ld	t,(bc)
-		MDebugHexByte t
-		MDebugPrint <"\n">
-		; isolated DRAM write->delay->read test
-		MDebugPrint <"w2534=A5 readback=">
-		ld	bc,VideoCursor+csr_Attribute
-		ld	t,$A5
-		ld	(bc),t
-		ld	d,40
-.delay		dj	d,.delay
-		ld	t,(bc)
-		MDebugHexByte t
-		MDebugPrint <"\n">
+
 		MDebugPrint <"Initialize text\n">
 		jal	TextInitialize
-		MDebugPrint <"csr_Attribute after TextInit=">
-		ld	bc,VideoCursor+csr_Attribute
-		ld	t,(bc)
-		MDebugHexByte t
-		MDebugPrint <"\n">
 
 		; enable vblank interrupts before device/filesystem initialization:
 		; the UART file-server probe uses a vblank-edge timeout, so with no
@@ -99,62 +64,7 @@ Main:
 		MDebugStacks
 
 		MDebugPrint <"Initialization done\n">
-		MDebugPrint <"csr_Attribute before KClearScreen=">
-		ld	bc,VideoCursor+csr_Attribute
-		ld	t,(bc)
-		MDebugHexByte t
-		MDebugPrint <"\n">
-
 		sys	KClearScreen
-
-		; dump chargen MMU register and first 8 attribute bytes
-		MDebugPrint <"chargen=">
-		ld	b,IO_MMU_BASE
-		ld	c,IO_MMU_CHARGEN
-		lio	t,(bc)
-		MDebugHexByte t
-		MDebugPrint <" attr[0..3]=">
-		ld	bc,ATTRIBUTES_BASE
-		ld	t,(bc)
-		MDebugHexByte t
-		add	bc,1
-		ld	t,(bc)
-		MDebugHexByte t
-		add	bc,1
-		ld	t,(bc)
-		MDebugHexByte t
-		add	bc,1
-		ld	t,(bc)
-		MDebugHexByte t
-		add	bc,1
-		ld	t,(bc)
-		MDebugHexByte t
-		add	bc,1
-		ld	t,(bc)
-		MDebugHexByte t
-		add	bc,1
-		ld	t,(bc)
-		MDebugHexByte t
-		add	bc,1
-		ld	t,(bc)
-		MDebugHexByte t
-		MDebugPrint <"\n">
-		; print one char then dump its attribute bytes
-		MPrintString "X"
-		MDebugPrint <"after X: attr[0..3]=">
-		ld	bc,ATTRIBUTES_BASE
-		ld	t,(bc)
-		MDebugHexByte t
-		add	bc,1
-		ld	t,(bc)
-		MDebugHexByte t
-		add	bc,1
-		ld	t,(bc)
-		MDebugHexByte t
-		add	bc,1
-		ld	t,(bc)
-		MDebugHexByte t
-		MDebugPrint <"\n">
 
 		MPrintString "\n /// Quorum Computing HC800 ///\n"
 
@@ -201,6 +111,9 @@ Main:
 		;j	.read_line
 		ld	hl,.read_line
 		j	(hl)
+
+.noop:	j	(hl)
+
 
 printReadyPrompt:
 		pusha
