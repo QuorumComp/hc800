@@ -21,12 +21,13 @@
 		INCLUDE "video.i"
 
 		INCLUDE	"uart_commands.i"
-		INCLUDE	"uart_commands_disabled.i"
 
 
 		SECTION	"Main",CODE
 Main:
 		di
+
+		MDebugPrint <"--- MAIN ---\n">
 
 		; initialize kernel BSS to zeroes
 
@@ -34,9 +35,8 @@ Main:
 		ld	de,$4000
 		ld	t,0
 		jal	SetMemory
-
 		jal	initializeMemory
-		
+
 		MStackInit 4096,BSS
 
 		MDebugStacks
@@ -44,6 +44,7 @@ Main:
 		jal	InitializePalette
 		MDebugPrint <"Initialize keyboard\n">
 		jal	KeyboardInitialize
+
 		MDebugPrint <"Initialize text\n">
 		jal	TextInitialize
 
@@ -54,8 +55,8 @@ Main:
 		jal	EnableVBlank
 		ei
 
-		;MDebugPrint <"Initialize SD controller\n">
-		;jal	SdResetController
+		MDebugPrint <"Initialize SD controller\n">
+		jal	SdResetController
 		MDebugPrint <"Initialize block devices\n">
 		jal	BlockDeviceInit
 		MDebugPrint <"Initialize file systems\n">
@@ -63,7 +64,6 @@ Main:
 		MDebugStacks
 
 		MDebugPrint <"Initialization done\n">
-
 		sys	KClearScreen
 
 		MPrintString "\n /// Quorum Computing HC800 ///\n"
@@ -111,6 +111,9 @@ Main:
 		;j	.read_line
 		ld	hl,.read_line
 		j	(hl)
+
+.noop:	j	(hl)
+
 
 printReadyPrompt:
 		pusha

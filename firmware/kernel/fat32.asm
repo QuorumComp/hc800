@@ -11,7 +11,6 @@
 		INCLUDE	"fat32.i"
 
 		INCLUDE	"uart_commands.i"
-		INCLUDE	"uart_commands_disabled.i"
 
 FAT32_BOOT_SIG		EQU	$29
 

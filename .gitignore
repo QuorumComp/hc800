@@ -165,3 +165,17 @@ vivado*.log
 firmware/.disk_HC800/
 firmware/addons/bigfile.txt
 firmware/addons/test.txt
+rtl/hs_err_pid*.log
+boards/mega65/hc800_mega65.v
+.gitignore
+boards/mega65/hc800_mega65.v_toplevel_memoryArea_kernel_memory.bin
+boards/nexys3/hc800_nexys3.v
+boards/nexys3/hc800_nexys3.v_toplevel_memoryArea_bootROM_memory.bin
+boards/nexys3/hc800_nexys3.v_toplevel_memoryArea_font_memory.bin
+boards/nexys3/hc800_nexys3.v_toplevel_memoryArea_kernel_memory.bin
+boards/specnext/hc800_zxnext.v
+boards/specnext/hc800_zxnext.v_toplevel_memoryArea_bootROM_memory.bin
+boards/specnext/hc800_zxnext.v_toplevel_memoryArea_font_memory.bin
+boards/specnext/hc800_zxnext.v_toplevel_memoryArea_kernel_memory.bin
+boards/mega65/hc800_mega65.v_toplevel_memoryArea_bootROM_memory.bin
+boards/mega65/hc800_mega65.v_toplevel_memoryArea_font_memory.bin

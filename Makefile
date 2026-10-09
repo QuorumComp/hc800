@@ -43,7 +43,7 @@ RTL_STAMP := $(BD)/build/rtl.stamp
 SYN_STAMP := $(BD)/build/synth.$(rev)
 BIT_STAMP := $(BD)/build/bitstream.$(rev)
 
-.PHONY: all init firmware rtl build synth bitstream blast clean
+.PHONY: all init firmware rtl build synth bitstream blast reblast clean
 all: bitstream
 
 # Check the Vivado toolchain and the board rev.
@@ -73,7 +73,13 @@ rtl: $(RTL_STAMP)
 build: rtl
 
 # Vivado synthesis only. The stamp records the board rev.
-$(SYN_STAMP): $(VIV_IN) $(DCP)
+#
+# $(FW_BINS) is listed first on purpose: make checks freshness once, at the
+# start of the run, using current mtimes. The memory bins in $(VIV_IN) are
+# *regenerated* by the rtl stage later in the same run, so at the start their
+# mtime is stale and would make this stamp look up to date. Depending directly
+# on the firmware images forces a rebuild whenever the firmware changes.
+$(SYN_STAMP): $(FW_BINS) $(VIV_IN) $(DCP)
 	source "$(vivado_env)"
 	cd "$(BD)"
 	MEGA65_REV="$(rev)" JOBS="$(jobs)" BITSTREAM=0 vivado -mode batch -nojournal -nolog -source build.tcl
@@ -81,7 +87,8 @@ $(SYN_STAMP): $(VIV_IN) $(DCP)
 synth: rtl $(SYN_STAMP)
 
 # Full bitstream: synth -> place -> route -> write_bitstream.
-$(BIT_STAMP): $(VIV_IN) $(BIT)
+# $(FW_BINS) first for the same reason as $(SYN_STAMP) above.
+$(BIT_STAMP): $(FW_BINS) $(VIV_IN) $(BIT)
 	source "$(vivado_env)"
 	cd "$(BD)"
 	MEGA65_REV="$(rev)" JOBS="$(jobs)" vivado -mode batch -nojournal -nolog -source build.tcl
@@ -94,6 +101,14 @@ bitstream: rtl $(BIT_STAMP)
 # flash would replace the MEGA65 core + hypervisor. Requires a JTAG adapter
 # on the board's 12-pin header (TE0790-03 -> cable=digilent).
 blast: bitstream
+	@command -v openFPGALoader >/dev/null || { echo "error: openFPGALoader not found; install it: pacman -S openfpgaloader" >&2; exit 1; }
+	env -u LD_LIBRARY_PATH openFPGALoader -c "$(cable)" "$(BIT)"
+
+# Re-blast the existing bitstream into the MEGA65's FPGA via JTAG
+# (openFPGALoader) without rebuilding any stage. Same volatile SRAM load as
+# `blast`; fails fast if the bitstream has not been built yet.
+reblast:
+	@test -f "$(BIT)" || { echo "error: bitstream not found at $(BIT); run 'just bitstream' first" >&2; exit 1; }
 	@command -v openFPGALoader >/dev/null || { echo "error: openFPGALoader not found; install it: pacman -S openfpgaloader" >&2; exit 1; }
 	env -u LD_LIBRARY_PATH openFPGALoader -c "$(cable)" "$(BIT)"
 

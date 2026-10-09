@@ -4,6 +4,7 @@
 #
 #   just bitstream   MEGA65 bitstream (stages skipped when up to date)
 #   just blast       build, then blast the bitstream into the board via JTAG
+#   just reblast     blast the existing bitstream into the board (no rebuild)
 #   just             list the recipes
 #
 # Variables can be overridden on the command line, e.g.
@@ -46,6 +47,10 @@ bitstream:
 # Build, then blast the bitstream into the MEGA65's FPGA via JTAG (openFPGALoader)
 blast:
     {{make}} board={{board}} rev={{rev}} jobs={{jobs}} cable={{cable}} blast
+
+# Re-blast the existing bitstream into the MEGA65's FPGA via JTAG (no rebuild)
+reblast:
+    {{make}} board={{board}} cable={{cable}} reblast
 
 # Remove the generated Vivado project (keeps the checked-in IP .xci files)
 clean:

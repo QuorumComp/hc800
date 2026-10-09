@@ -8,7 +8,6 @@
 		INCLUDE	"sd.i"
 		INCLUDE	"uart_commands.i"
 
-		INCLUDE	"uart_commands_disabled.i"
 
 
 CMD0_CRC	EQU	$95
@@ -58,18 +57,14 @@ DESELECT:	MACRO
 		pop	ft
 		ENDM
 
-	IF 1 ; 1 = disable debug
-		PURGE	MNewLine
-MNewLine:	MACRO
-		ENDM
-
-MHexByteOut:	MACRO
-		ENDM
-	ELSE
+	IF DEBUG
 MHexByteOut:	MACRO
 		push	hl
 		jal	StreamHexByteOut
 		pop	hl
+		ENDM
+	ELSE
+MHexByteOut:	MACRO
 		ENDM
 	ENDC
 
@@ -79,9 +74,11 @@ MHexByteOut:	MACRO
 ; ---------------------------------------------------------------------------
 		SECTION	"SdResetController",CODE
 SdResetController:
+		IF SD_ENABLED
 		pusha
 		jal	sdResetCard
 		popa
+		ENDC
 		j	(hl)
 
 
@@ -323,6 +320,7 @@ SdReadSingleBlock:
 		SECTION	"SdInit",CODE
 SdInit:		push	bc/de/hl
 
+		IF SD_ENABLED
 		ld	b,IO_SDCARD_BASE
 
 		jal	sdGoIdleState
@@ -342,8 +340,12 @@ SdInit:		push	bc/de/hl
 		jal	sdSetBlockLen512
 		ld	t,d
 		j/eq	.store
+		ELSE
+		; SD driver disabled: report no card present
+		ENDC
 
 .fail		ld	t,SDTYPE_NONE
+		MDebugPrint <"SdInit - no card\n">
 .store		ld	bc,SdType
 		ld	(bc),t
 

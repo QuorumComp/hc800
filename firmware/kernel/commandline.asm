@@ -12,7 +12,6 @@
 		INCLUDE	"video.i"
 
 		INCLUDE	"uart_commands.i"
-		INCLUDE	"uart_commands_disabled.i"
 
 HUNK_MMU	EQU	0
 HUNK_END	EQU	1

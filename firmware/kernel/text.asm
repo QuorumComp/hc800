@@ -5,6 +5,7 @@
 		INCLUDE	"stdlib/stream.i"
 
 		INCLUDE	"text.i"
+		INCLUDE	"uart_commands.i"
 
 
 ; --
