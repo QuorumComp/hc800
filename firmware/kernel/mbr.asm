@@ -9,6 +9,7 @@
 		INCLUDE	"mbr.i"
 		INCLUDE	"uart_commands.i"
 
+;DEBUG = 0
 
 TYPE_FAT32_LBA	EQU	$0C
 
@@ -70,13 +71,11 @@ MakeMbrPartitionDevice:
 		; ft''' - partition index
 
 		MDebugPrint <"  - load MBR\n">
-		;MDebugStacks
 		jal	BlockDeviceRead
 		j/eq	.read_mbr_ok
 		ld	hl,.fail_popa_ft
 		j	(hl)
 .read_mbr_ok
-		;MDebugStacks
 
 		pop	ft  ; restore block device
 

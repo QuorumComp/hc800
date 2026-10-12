@@ -9,36 +9,6 @@
 IDENT_NONCE	EQU	$1234
 
 
-; -- Print all stack pointers
-; --
-		SECTION	"ComPrintStackPointers",CODE
-ComPrintStackPointers:
-		pusha
-
-		ld	c,RC8_SP_FT
-		lcr	t,(c)
-		MDebugPrint "FT:$"
-		MDebugHexByte t
-
-		add	c,1
-		lcr	t,(c)
-		MDebugPrint " BC:$"
-		MDebugHexByte t
-
-		add	c,1
-		lcr	t,(c)
-		MDebugPrint " DE:$"
-		MDebugHexByte t
-
-		add	c,1
-		lcr	t,(c)
-		MDebugPrint " HL:$"
-		MDebugHexByte t
-
-		MDebugNewLine
-		popa
-
-		j	(hl)
 
 
 ; -- Print value as hexadecimal
@@ -348,42 +318,123 @@ ComReadDataString:
 
 
 ; --
-; -- Print registers to UART
+; -- Print register overview
 ; --
 ; -- ft - FT
 ; -- bc - BC
 ; -- de - DE
+; -- hl - return
 ; -- hl' - HL
 ; --
-		SECTION "ComPrintRegisters",CODE
-ComPrintRegisters:
-		swap	hl
+		SECTION "ComPrintRegisterOverview",CODE
+ComPrintRegisterOverview:
 		pusha
+		jal	.comPrintStackPointers
+		popa
 
+		; FT:FT'  BC:BC'  DE:DE'  pc:HL:HL'
+		swap	hl
+		; FT:FT'  BC:BC'  DE:DE'  HL:pc:HL'
+		pusha
+		; FT:FT:FT'  BC:BC:BC'  DE:DE:DE'  HL:HL:pc:HL'
+		push	hl
+		; FT:FT:FT'  BC:BC:BC'  DE:DE:DE'  HL:HL:HL:pc:HL'
+		jal	.comPrintRegisters
+		; ??:FT:FT'  ??:BC:BC'  ??:DE:DE'  ??:HL:HL:pc:HL'
+		pop	hl
+		; ??:FT:FT'  ??:BC:BC'  ??:DE:DE'  HL:HL:pc:HL'
+		popa
+		; FT:FT'  BC:BC'  DE:DE'  HL:pc:HL'
+
+		swapa
+		; FT':FT  BC':BC  DE':DE  pc:HL:HL'
+		pusha
+		; FT':FT':FT  BC':BC':BC  DE':DE':DE  pc:pc:HL:HL'
+		pick	hl,3
+		push	hl
+		; FT':FT':FT  BC':BC':BC  DE':DE':DE  HL':HL':pc:HL:HL'
+		jal	.comPrintRegisters
+		; FT':FT':FT  BC':BC':BC  DE':DE':DE  ??:HL':pc:HL:HL'
+		popa
+		; FT':FT  BC':BC  DE':DE  HL':pc:HL:HL'
+		pop	hl
+		; FT':FT  BC':BC  DE':DE  pc:HL:HL'
+		swapa
+		; FT:FT'  BC:BC'  DE:DE'  HL:pc:HL'
+		swap	hl
+		; FT:FT'  BC:BC'  DE:DE'  pc:HL:HL'
+		j	(hl)
+
+.comPrintStackPointers:
+		ld	c,RC8_SP_FT
+		lcr	t,(c)
+		sub	t,1 	; FT has been pushed once
+		MDebugPrint "FT:$"
+		MDebugHexByte t
+
+		ld	c,RC8_SP_BC
+		lcr	t,(c)
+		sub	t,1 	; BC has been pushed once
+		MDebugPrint " BC:$"
+		MDebugHexByte t
+
+		ld	c,RC8_SP_DE
+		lcr	t,(c)
+		sub	t,1 	; DE has been pushed once
+		MDebugPrint " DE:$"
+		MDebugHexByte t
+
+		ld	c,RC8_SP_HL
+		lcr	t,(c)
+		sub	t,2 	; HL has been pushed twice
+		MDebugPrint " HL:$"
+		MDebugHexByte t
+
+		MDebugNewLine
+		j	(hl)
+
+.comPrintRegisters:
+		; FT  BC  DE  pc:HL
+		swap	hl
+		; FT  BC  DE  HL:pc
+		push	ft/hl
+		; FT:FT  BC  DE  HL:HL:pc
+
+		push	ft
+		MDebugPrint " $"
 		pop	ft
 		jal	ComPrintHexWord
-		ld	t,' '
-		jal	ComPrintChar
+		MDebugPrint "  $"
 
-		pop	bc
+		; FT:FT  BC  DE  ??:HL:pc
+
 		ld	ft,bc
 		jal	ComPrintHexWord
-		ld	t,' '
-		jal	ComPrintChar
+		MDebugPrint "  $"
 
-		pop	de
+		; ??:FT  BC  DE:DE  ??:HL:pc
+
 		ld	ft,de
 		jal	ComPrintHexWord
-		ld	t,' '
-		jal	ComPrintChar
+		MDebugPrint "  $"
+
+		; ??:FT  BC  DE  ??:HL:pc
 
 		pop	hl
+		push	hl
 		ld	ft,hl
 		jal	ComPrintHexWord
 		ld	t,10
 		jal	ComPrintChar
 
+		; ??:FT  BC  DE  ??:HL:pc
 		pop	hl
+		swap	hl
+		; ??:FT  BC  DE  pc:HL
+
+		pop	ft
+		; FT  BC  DE  pc:HL
+
 		j	(hl)
 
 

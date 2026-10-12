@@ -9,10 +9,9 @@ COMMAND_PRINT_CHAR	EQU	3
 COMMAND_STAT_FILE	EQU	4
 COMMAND_READ_DIR	EQU	5
 
-	IF DEBUG
-
 		PURGE	MDebugPrint
 MDebugPrint:	MACRO
+	IF DEBUG
 		PUSHS
 		SECTION "DebugStrings",CODE
 .string\@	DB	\1
@@ -23,10 +22,12 @@ MDebugPrint:	MACRO
 		ld	bc,.string\@
 		jal	ComPrintCodeChars
 		popa
+	ENDC
 		ENDM
 
 		PURGE	MDebugPrintR
 MDebugPrintR:	MACRO	;register
+	IF DEBUG
 		IF	"\1".lower.compareto("hl")==0
 			FAIL "Register HL is an invalid argument"
 		ENDC
@@ -42,61 +43,65 @@ MDebugPrintR:	MACRO	;register
 		j/ne	.error\@
 		dj	l,.next\@
 .error\@	popa
+	ENDC
 		ENDM
 
 		PURGE	MDebugNewLine
 MDebugNewLine:	MACRO
+	IF DEBUG
 		pusha
 		ld	t,10
 		jal	ComPrintChar
 		popa
+	ENDC
 		ENDM
 
 		PURGE	MDebugHexWord
 MDebugHexWord:	MACRO	;register
+	IF DEBUG
 		pusha
 		IF	"\1".lower.compareto("ft")~=0
 		ld	ft,\1
 		ENDC
 		jal	ComPrintHexWord
 		popa
+	ENDC
 		ENDM
 
 		PURGE	MDebugHexLong
 MDebugHexLong:	MACRO	;register
+	IF DEBUG
 		MDebugHexWord \1
 		swap	\1
 		MDebugHexWord \1
 		swap	\1
+	ENDC
 		ENDM
 
 		PURGE	MDebugHexByte
 MDebugHexByte:	MACRO	;register
+	IF DEBUG
 		pusha
 		IF	"\1".lower.compareto("t")~=0
 		ld	t,\1
 		ENDC
 		jal	ComPrintHexByte
 		popa
+	ENDC
 		ENDM
 
 		PURGE	MDebugRegisters
 MDebugRegisters: MACRO
-		pusha
+	IF DEBUG
 		push	hl
-		jal	ComPrintRegisters
-		popa
-		ENDM
-
-		PURGE	MDebugStacks
-MDebugStacks:	MACRO
-		pusha
-		jal	ComPrintStackPointers
-		popa
+		jal	ComPrintRegisterOverview
+		pop	hl
+	ENDC
 		ENDM
 
 		PURGE	MDebugMemory
 MDebugMemory:	MACRO	;memory,size
+	IF DEBUG
 		pusha
 		IF	"\1".lower.compareto("bc")~=0
 			IF	"\1".lower.compareto("ft")~=0
@@ -107,47 +112,9 @@ MDebugMemory:	MACRO	;memory,size
 		ld	de,\2
 		jal	ComDumpMemory
 		popa
-		ENDM
-
-	ELSE
-
-		PURGE	MDebugPrint
-MDebugPrint:	MACRO
-		ENDM
-
-		PURGE	MDebugPrintR
-MDebugPrintR:	MACRO	;register
-		ENDM
-
-		PURGE	MDebugNewLine
-MDebugNewLine:	MACRO
-		ENDM
-
-		PURGE	MDebugHexWord
-MDebugHexWord:	MACRO	;register
-		ENDM
-
-		PURGE	MDebugHexLong
-MDebugHexLong:	MACRO	;register
-		ENDM
-
-		PURGE	MDebugHexByte
-MDebugHexByte:	MACRO	;register
-		ENDM
-
-		PURGE	MDebugRegisters
-MDebugRegisters: MACRO
-		ENDM
-
-		PURGE	MDebugStacks
-MDebugStacks:	MACRO
-		ENDM
-
-		PURGE	MDebugMemory
-MDebugMemory:	MACRO	;memory,size
-		ENDM
-
 	ENDC
+		ENDM
+
 
 	GLOBAL	ComIdentify
 	GLOBAL	ComLoadFile
@@ -155,7 +122,6 @@ MDebugMemory:	MACRO	;memory,size
 	GLOBAL	ComReadFile
 	GLOBAL	ComRequestChar
 	GLOBAL	ComDumpMemory
-	GLOBAL	ComPrintStackPointers
 	GLOBAL	ComPrintHexByte
 	GLOBAL	ComPrintHexWord
 	GLOBAL	ComPrintChar
@@ -164,4 +130,4 @@ MDebugMemory:	MACRO	;memory,size
 	GLOBAL	ComSendDataString
 	GLOBAL	ComReadDataString
 	GLOBAL	ComSyncResponse
-	GLOBAL	ComPrintRegisters
+	GLOBAL	ComPrintRegisterOverview

@@ -23,7 +23,7 @@ ASSEMBLE = $(ASM) $(DEPFLAGS) $(ASMFLAGS)
 
 $(TARGET) : $(notdir $(SRCS:asm=obj)) $(LOWLEVEL)lowlevel.lib
 	@echo "\033[1;33m    Link\033[0m $(@F)"
-	@$(LINK) -sEntry -m$(@:bin=map) -l$(@:bin=list) -o$@ -chc800b -fbin $+
+	@$(LINK) -sEntry -m$(@:bin=sym) -l$(@:bin=lst) -o$@ -chc800b -fbin $+
 
 %.obj : %.asm
 %.obj : %.asm $(DEPDIR)/%.d

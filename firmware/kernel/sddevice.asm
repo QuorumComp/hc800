@@ -6,7 +6,7 @@
 		INCLUDE	"sddevice.i"
 		INCLUDE	"uart_commands.i"
 
-
+;DEBUG = 0
 
 ; ---------------------------------------------------------------------------
 ; -- Make SD block device structure
@@ -22,7 +22,7 @@
 SdDeviceMake:
 		push	bc/de/hl
 
-		MDebugPrint <"SdDeviceMake card $">
+		MDebugPrint <"SdDeviceMake enter - card $">
 		MDebugHexByte t
 		MDebugNewLine
 
@@ -97,11 +97,11 @@ writeBlock:
 readBlock:
 		push	hl
 
-		MDebugPrint <"SD readBlock ">
+		MDebugPrint <"SD readBlock - enter - FT:">
 		MDebugHexLong ft
-		MDebugPrint <" ">
+		MDebugPrint <" BC:">
 		MDebugHexWord bc
-		MDebugPrint <" ">
+		MDebugPrint <" DE:">
 		MDebugHexWord de
 		MDebugNewLine
 

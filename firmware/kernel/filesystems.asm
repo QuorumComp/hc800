@@ -188,12 +188,13 @@ FileInitialize:
 mountFat:
 		pusha
 
-		MDebugPrint <"mountFat\n">
+		MDebugPrint <"mountFat - enter\n">
 
 		jal	BlockDeviceGet
 		j/ne	.fail
 
-		MDebugPrint <" - got block device\n">
+		MDebugPrint <"mountFat - got block device\n">
+		MDebugRegisters
 
 		jal	Fat32FsMake
 		j/ne	.fail
@@ -238,7 +239,6 @@ FileOpen:
 
 		MDebugMemory ft,32
 		MDebugMemory bc,file_SIZEOF
-		MDebugStacks
 
 		; clear file handle structure
 		; bc = dest
@@ -377,7 +377,7 @@ FileSkip:
 ; --
 		SECTION	"FileRead",CODE
 FileRead:
-		MDebugPrint <"FileRead entry ">
+		MDebugPrint <"FileRead - enter\n">
 		MDebugRegisters
 		;MDebugMemory bc,file_SIZEOF
 
@@ -415,7 +415,7 @@ FileRead:
 		swap	ft
 		popa
 
-		MDebugPrint <"FileRead fail ">
+		MDebugPrint <"FileRead - fail\n">
 		MDebugRegisters
 
 		j	(hl)
@@ -436,7 +436,7 @@ FileRead:
 
 		pop	bc/de/hl
 
-		MDebugPrint <"FileRead success ">
+		MDebugPrint <"FileRead - success\n">
 		MDebugRegisters
 
 		j	(hl)
@@ -526,9 +526,7 @@ FileReadByte:
 ; --
 		SECTION	"DirectoryOpen",CODE
 DirectoryOpen:
-		MDebugPrint <"DirectoryOpen\n">
-		MDebugStacks
-		;MDebugStacks
+		MDebugPrint <"DirectoryOpen - enter\n">
 		pusha
 
 		;MDebugRegisters
@@ -583,16 +581,11 @@ DirectoryOpen:
 		pop	ft
 		MDebugMemory bc,16
 
-		;MDebugRegisters
-		;MDebugStacks
 		jal	(hl)
-		;MDebugStacks
 
 .exit		MStackFree STRING_SIZE
 		pop	bc/de/hl
 		MDebugPrint <"DirectoryOpen exit\n">
-		MDebugStacks
-		MDebugRegisters
 		j	(hl)
 
 
@@ -809,7 +802,7 @@ PathAppend:
 ; --
 		SECTION	"getVolumeAndComponentsFromPath",CODE
 getVolumeAndComponentsFromPath:
-		MDebugPrint <"getVolumeAndComponentsFromPath entry\n">
+		MDebugPrint <"getVolumeAndComponentsFromPath - entry\n">
 		MDebugRegisters
 
 		push	bc/de/hl
@@ -819,27 +812,17 @@ getVolumeAndComponentsFromPath:
 		MDebugRegisters
 		j/ne	.exit
 
-		;MDebugStacks
-
 		MStackAlloc STRING_SIZE
 		ld	bc,ft
 		ld	ft,de
 		jal	getComponentsFromPath
 		MDebugPrint <"Components: ">
 		MDebugMemory bc,$40
-		;swap	ft
-		;MDebugRegisters
-		;swap	ft
-		;MDebugStacks
 
 		ld	ft,bc
 		swap	bc
 		jal	normalizePathComponents
 		MDebugMemory bc,16
-		;swap	ft
-		;MDebugRegisters
-		;swap	ft
-		;MDebugStacks
 
 		swap	bc
 
@@ -848,7 +831,6 @@ getVolumeAndComponentsFromPath:
 
 .exit		pop	bc/de/hl
 		MDebugPrint <"getVolumeAndComponentsFromPath exit\n">
-		;MDebugStacks
 		j	(hl)
 
 
@@ -1010,7 +992,7 @@ findComponentRange:
 		SECTION	"getComponentsFromPath",CODE
 getComponentsFromPath:
 		;MDebugPrint <"getComponentsFromPath entry\n">
-		;MDebugStacks
+		;MDebugRegisters
 
 		pusha
 
@@ -1108,7 +1090,6 @@ getComponentsFromPath:
 		MDebugPrint <"getComponentsFromPath exit\n">
 		MDebugMemory ft,16
 		MDebugMemory bc,16
-		;MDebugStacks
 		j	(hl)
 
 ; ---------------------------------------------------------------------------
@@ -1239,7 +1220,6 @@ getVolumeFromPath:
 		SECTION	"checkvolumeMatch",CODE
 checkvolumeMatch:
 		;MDebugPrint <"checkvolumeMatch entry\n">
-		;MDebugStacks
 		;MDebugMemory bc,16
 		;MDebugRegisters
 		push	bc/de/hl

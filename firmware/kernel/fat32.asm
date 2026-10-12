@@ -73,7 +73,8 @@ ufile_SIZEOF		RB	0
 ; --
 		SECTION	"Fat32FsMake",CODE
 Fat32FsMake:
-		MDebugPrint <"Fat32FsMake enter\n">
+		MDebugPrint <"Fat32FsMake - enter\n">
+		MDebugRegisters
 		push	bc/de/hl
 
 		MStackAlloc BYTES_PER_SECTOR
@@ -82,10 +83,12 @@ Fat32FsMake:
 		jal	loadVolumeBootRecord
 		j/ne	.exit
 
+		MDebugPrint <"Fat32FsMake - VBR loaded\n">
+
 		jal	checkFat32
 		j/ne	.exit
 
-		MDebugPrint <"FAT32 found\n">
+		MDebugPrint <"Fat32FsMake - FAT32 found\n">
 
 		ld	ft,de
 		ld	bc,ft	; bc = volume boot record
@@ -710,7 +713,8 @@ fileRead:
 loadVolumeBootRecord:
 		push	hl
 
-		;MDebugPrint <"loadVolumeBootRecord\n">
+		MDebugPrint <"loadVolumeBootRecord - enter\n">
+		MDebugRegisters
 
 		; load volume boot record
 
@@ -731,7 +735,7 @@ loadVolumeBootRecord:
 		SECTION	"checkFat32",CODE
 checkFat32:	push	bc/de/hl
 
-		;MDebugPrint <"checkFat32\n">
+		MDebugPrint <"checkFat32\n">
 
 		add	de,BS_BOOT_RECORD_SIG
 		ld	t,(de)
@@ -747,6 +751,8 @@ checkFat32:	push	bc/de/hl
 		ld	t,(de)
 		cmp	t,FAT32_BOOT_SIG
 		j/ne	.exit
+
+		MDebugPrint <"checkFat32 - magic ok\n">
 
 		add	de,BS_FSTYPE32-BS_BOOT_SIG32
 		ld	bc,.signature

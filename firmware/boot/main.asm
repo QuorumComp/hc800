@@ -46,6 +46,7 @@ Main:
 		jal	ComIdentify
 		j/eq	.kernel_ok_ask_boot
 
+		MPrintString <"No UART host, starting kernel">
 		sys	0		
 
 .boot_uart	jal	WaitUart

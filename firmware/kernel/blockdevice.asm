@@ -9,6 +9,7 @@
 		INCLUDE	"sddevice.i"
 		INCLUDE	"uart_commands.i"
 
+;DEBUG = 0
 
 BYTES_PER_SECTOR = 512
 SECTOR_HEAP_SIZE = 8
@@ -178,16 +179,9 @@ BlockDeviceInit:
 		ld	bc,ft
 		pop	ft
 
-		;MDebugPrint <"Call MakeMbrPartitionDevice ">
-		;MDebugNewLine
-		;MDebugStacks
 		push	ft
 		jal	MakeMbrPartitionDevice
-		;MDebugMemory bc,mbrdev_SIZEOF
 		pop	ft
-		;MDebugPrint <"After MakeMbrPartitionDevice ">
-		;MDebugNewLine
-		;MDebugStacks
 
 		pop	bc
 		
@@ -221,7 +215,7 @@ BlockDeviceInit:
 ; --
 		SECTION	"BlockDeviceRead",CODE
 BlockDeviceRead:
-		MDebugPrint <"BlockDeviceRead call ">
+		MDebugPrint <"BlockDeviceRead - enter\n">
 		MDebugRegisters
 		
 		push	bc/hl
@@ -232,15 +226,14 @@ BlockDeviceRead:
 		sub	ft,bdev_Read+1
 		exg	ft,bc
 
-		MDebugStacks
 		MDebugMemory bc,8
 
 		jal	(hl)
 
 		pop	bc/hl
 
-		MDebugPrint <"BlockDeviceRead exit ">
-		MDebugStacks
+		MDebugPrint <"BlockDeviceRead - exit\n">
+		MDebugRegisters
 
 		j	(hl)
 
@@ -286,16 +279,20 @@ BlockDeviceSize:
 BlockDeviceGet:
 		push	de
 
+		MDebugPrint <"BlockDeviceGet - enter\n">
+
 		cmp	t,TOTAL_BLOCKDEVICES
 		j/geu	.fail
 
 		add	t,t
-		ld	f,0
-		add	ft,blockDevicePointers
-		ld	bc,ft
+		ld	c,t
+		ld	b,0
+		add	bc,blockDevicePointers
 
 		lco	ft,(bc+)
 		ld	bc,ft
+
+		MDebugRegisters
 
 		; bc = ft = block device structure
 
@@ -307,6 +304,10 @@ BlockDeviceGet:
 
 		ld	f,FLAGS_EQ
 		pop	de
+
+		MDebugPrint <"BlockDeviceGet - exit\n">
+		MDebugRegisters
+
 		j	(hl)
 
 .fail		ld	f,FLAGS_NE

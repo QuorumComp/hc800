@@ -7,8 +7,8 @@
 ; -- to the assembler, which defines the symbol. Default is 0.
 ; --
 		IFD _DEBUG
-DEBUG	EQU	1
+DEBUG	SET	1
 		ENDC
 		IFND _DEBUG
-DEBUG	EQU	0
+DEBUG	SET	0
 		ENDC

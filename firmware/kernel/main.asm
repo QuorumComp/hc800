@@ -22,6 +22,7 @@
 
 		INCLUDE	"uart_commands.i"
 
+;DEBUG = 1
 
 		SECTION	"Main",CODE
 Main:
@@ -39,7 +40,6 @@ Main:
 
 		MStackInit 4096,BSS
 
-		MDebugStacks
 		MDebugPrint <"Initialize palette\n">
 		jal	InitializePalette
 		MDebugPrint <"Initialize keyboard\n">
@@ -55,13 +55,13 @@ Main:
 		jal	EnableVBlank
 		ei
 
+.initialize_volumes
 		MDebugPrint <"Initialize SD controller\n">
 		jal	SdResetController
 		MDebugPrint <"Initialize block devices\n">
 		jal	BlockDeviceInit
 		MDebugPrint <"Initialize file systems\n">
 		jal	FileInitialize
-		MDebugStacks
 
 		MDebugPrint <"Initialization done\n">
 		sys	KClearScreen
@@ -77,6 +77,21 @@ Main:
 		ls	ft,4
 		jal	StreamDecimalWordOut
 		MPrintString " KiB\n"
+
+		; print current volume (if any)
+		ld	ft,PathCurrentFs
+		ld	bc,(ft)
+		tst	bc
+		j/ne	.read_line
+
+		MPrintString "\nNo volumes present. Press any key to retry.\n"
+
+.wait_key	jal	KeyboardRead
+		j/z	.wait_key
+
+		ld	hl,.initialize_volumes	
+		j	(hl)
+
 
 .read_line
 		jal	printReadyPrompt
@@ -136,10 +151,11 @@ printReadyPrompt:
 		add	bc,fs_Volume
 		jal	StreamBssStringOut
 
-.print_path
 		; print current path
 		ld	bc,PathCurrentPath
 		jal	StreamBssStringOut
+
+.print_path
 
 		MPrintString "]\n"
 
