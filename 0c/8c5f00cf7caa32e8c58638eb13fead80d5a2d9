@@ -1,0 +1,18 @@
+firmware/kernel/main.asm
+  h_3a90fbf9715846 25
+firmware/kernel/mbr.asm
+  h_3a90fbf9715846 12
+firmware/kernel/sd.asm
+  h_3a90fbf9715846 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0c8c5f00cf7caa32e8c58638eb13fead80d5a2d9",
+  "prompts": {},
+  "humans": {
+    "h_3a90fbf9715846": {
+      "author": "Carsten Elton Sørensen <cso@rift.dk>"
+    }
+  }
+}
