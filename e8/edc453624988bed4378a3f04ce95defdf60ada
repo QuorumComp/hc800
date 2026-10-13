@@ -1,0 +1,14 @@
+firmware/boot/Makefile
+  h_3a90fbf9715846 26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e8edc453624988bed4378a3f04ce95defdf60ada",
+  "prompts": {},
+  "humans": {
+    "h_3a90fbf9715846": {
+      "author": "Carsten Elton Sørensen <cso@rift.dk>"
+    }
+  }
+}
