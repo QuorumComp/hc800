@@ -1,0 +1,36 @@
+firmware/debug.i
+  h_3a90fbf9715846 10,13
+firmware/kernel/filesystems.asm
+  h_3a90fbf9715846 191,196-197,380,418,439,529,805,995
+firmware/kernel/blockdevice.asm
+  h_3a90fbf9715846 12,218,235-236,282-283,288-290,295-296,307-310
+firmware/kernel/fat32.asm
+  h_3a90fbf9715846 76-77,86-87,91,716-717,738,755-756
+firmware/boot/Makefile
+  h_3a90fbf9715846 26
+firmware/kernel/sd.asm
+  h_3a90fbf9715846 11-12
+firmware/kernel/sddevice.asm
+  h_3a90fbf9715846 9,25,100,102,104
+firmware/kernel/main.asm
+  h_3a90fbf9715846 25,58,81-95,158-159
+firmware/boot/main.asm
+  h_3a90fbf9715846 49
+firmware/kernel/uart_commands.asm
+  h_3a90fbf9715846 321,326,329-335,337-350,352-366,368-404,407-409,413-415,419-421,424,430,432-437
+firmware/kernel/uart_commands.i
+  h_3a90fbf9715846 14,25,30,46,51,56,61,68,73,78,83,90,95,97-99,104,115,133
+firmware/kernel/mbr.asm
+  h_3a90fbf9715846 12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0f77eeda978d143232a941ed62c4e7f50a1e8b1b",
+  "prompts": {},
+  "humans": {
+    "h_3a90fbf9715846": {
+      "author": "Carsten Elton Sørensen <cso@rift.dk>"
+    }
+  }
+}
