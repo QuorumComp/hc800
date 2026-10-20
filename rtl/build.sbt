@@ -2,7 +2,7 @@ import scala.sys.process._
 
 lazy val buildMachineCode = taskKey[Unit]("Execute ASMotor")
 
-val spinalVersion = "1.6.4"
+val spinalVersion = "1.15.0"
 
 lazy val hc800 = (project in file("."))
 	.settings(
@@ -19,6 +19,8 @@ lazy val hc800 = (project in file("."))
 		),
 
 		libraryDependencies += "com.typesafe.play" %% "play-json" % "2.7.4",
+
+		libraryDependencies += "org.scalameta" %% "munit" % "1.1.1" % Test,
 
 		fork := true,
 
