@@ -25,7 +25,11 @@ rev        ?= r6
 board      ?= mega65
 jobs       ?= 8
 cable      ?= digilent
-vivado_env ?= /home/ces/Xilinx/vivado_env.sh
+# Default toolchain: 2024.1 — the version the design data (IP customizations)
+# was authored with.  2023.2 (vivado_env_2023.2.sh) is the tested fallback.
+# Never use 2025.2: its synthesizer corrupts the CPU ALU (see LOG.md,
+# 2026-10-09); that release has been uninstalled from this machine.
+vivado_env ?= /home/ces/Xilinx/vivado_env_2024.1.sh
 
 BD        := boards/$(board)
 RUNS      := $(BD)/build/Mega65Hc800/Mega65Hc800.runs
@@ -124,11 +128,14 @@ reblast:
 #     libs under _image_/ and each target dir)
 #   - generated board Verilog + memory init images (the bitstream inputs;
 #     all boards, since one sbt run regenerates them together)
-#   - the generated Vivado project (keeps the checked-in IP .xci files)
-# Kept: checked-in sources, Vivado IP customizations, sbt caches
-# (rtl/target, rtl/simWorkspace), and the emulator disk image firmware/hd.img.
+#   - the generated Vivado project and the IP generation outputs under
+#     boards/<board>/ip/ (stale .dcp/.v from another Vivado version would
+#     otherwise be declared "up to date" and then fail to load)
+# IP outputs are ignored files, so git clean -x sweeps exactly them.
+# Kept: checked-in sources (incl. the .xci/.xml IP customizations), sbt
+# caches (rtl/target, rtl/simWorkspace), and the emulator disk hd.img.
 clean:
 	$(MAKE) -C firmware --no-print-directory -s clean
-	rm -rf "$(BD)/build" "$(BD)/.Xil"
 	rm -f rtl/RC811.v rtl/RC811.v_toplevel_*.bin
 	rm -f boards/*/hc800_*.v boards/*/hc800_*.v_toplevel_*.bin
+	git clean -fdxq -- "$(BD)"
