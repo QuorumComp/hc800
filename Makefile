@@ -43,6 +43,13 @@ RTL_STAMP := $(BD)/build/rtl.stamp
 SYN_STAMP := $(BD)/build/synth.$(rev)
 BIT_STAMP := $(BD)/build/bitstream.$(rev)
 
+# Generated artifacts that no stage owns as an explicit target (sbt and
+# build.tcl write them as side effects of the stamp recipes).  Empty rules
+# keep make from erroring when 'clean' removes them; their absence then
+# counts as "updated" and re-triggers the owning stage.
+$(GEN_V) $(GEN_BINS) $(DCP) $(BIT):
+	@:
+
 .PHONY: all init firmware rtl build synth bitstream blast reblast clean
 all: bitstream
 
@@ -112,6 +119,16 @@ reblast:
 	@command -v openFPGALoader >/dev/null || { echo "error: openFPGALoader not found; install it: pacman -S openfpgaloader" >&2; exit 1; }
 	env -u LD_LIBRARY_PATH openFPGALoader -c "$(cable)" "$(BIT)"
 
-# Remove the generated Vivado project (keeps the checked-in IP .xci files).
+# Full clean: everything the build graph regenerates.
+#   - firmware outputs (delegated to the firmware Makefile: images, objects,
+#     libs under _image_/ and each target dir)
+#   - generated board Verilog + memory init images (the bitstream inputs;
+#     all boards, since one sbt run regenerates them together)
+#   - the generated Vivado project (keeps the checked-in IP .xci files)
+# Kept: checked-in sources, Vivado IP customizations, sbt caches
+# (rtl/target, rtl/simWorkspace), and the emulator disk image firmware/hd.img.
 clean:
+	$(MAKE) -C firmware --no-print-directory -s clean
 	rm -rf "$(BD)/build" "$(BD)/.Xil"
+	rm -f rtl/RC811.v rtl/RC811.v_toplevel_*.bin
+	rm -f boards/*/hc800_*.v boards/*/hc800_*.v_toplevel_*.bin

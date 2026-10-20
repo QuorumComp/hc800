@@ -52,6 +52,7 @@ blast:
 reblast:
     {{make}} board={{board}} cable={{cable}} reblast
 
-# Remove the generated Vivado project (keeps the checked-in IP .xci files)
+# Full clean: firmware outputs, generated Verilog + memory images, Vivado
+# project (keeps checked-in IP .xci files, sbt caches, and firmware/hd.img)
 clean:
     {{make}} clean
