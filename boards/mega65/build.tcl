@@ -29,7 +29,7 @@ if {![info exists cfg(project)]}   { set cfg(project)   Mega65Hc800 }
 if {![info exists cfg(part)]}      { set cfg(part)      xc7a200tfbg484-2 }
 if {![info exists cfg(top)]}       { set cfg(top)       Mega65Top }
 if {![info exists cfg(out_dir)]}   { set cfg(out_dir)   build }
-if {![info exists cfg(jobs)]}      { set cfg(jobs)      8 }
+if {![info exists cfg(jobs)]}      { set cfg(jobs)      32 }
 if {![info exists cfg(bitstream)]} { set cfg(bitstream) 1 }
 if {![info exists cfg(clean)]}     { set cfg(clean)     0 }
 # MEGA65 board revision -> mega65<rev>.xdc. r6 is the current board.

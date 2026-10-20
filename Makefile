@@ -11,7 +11,9 @@
 #  or run make directly. Overridable variables:
 #      rev        r3 | r6     board revision -> mega65<rev>.xdc
 #      board      mega65      board directory under boards/
-#      jobs       8           Vivado parallel jobs
+#      jobs       32          Vivado parallel jobs (32-thread host; each
+#                             IP/OOC sub-run is mostly single-threaded, so
+#                             parallel jobs are how synthesis uses cores)
 #      cable      digilent    openFPGALoader cable model
 #      vivado_env             Vivado environment script
 # =====================================================================
@@ -23,10 +25,11 @@ SHELL := /bin/bash
 
 rev        ?= r6
 board      ?= mega65
-jobs       ?= 8
+jobs       ?= 32
 cable      ?= digilent
 # Default toolchain: 2024.1 — the version the design data (IP customizations)
-# was authored with.  2023.2 (vivado_env_2023.2.sh) is the tested fallback.
+# was authored with.  2023.2 was the tested fallback but has been uninstalled
+# from this machine.
 # Never use 2025.2: its synthesizer corrupts the CPU ALU (see LOG.md,
 # 2026-10-09); that release has been uninstalled from this machine.
 vivado_env ?= /home/ces/Xilinx/vivado_env_2024.1.sh

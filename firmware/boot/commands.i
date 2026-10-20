@@ -9,6 +9,7 @@ ERROR_FORMAT		RB	1
 ERROR_last		RB	0
 
 MDebugPrint:	MACRO
+	IF _DEBUG
 		PUSHS
 		SECTION "DebugStrings",CODE
 .string\@	DB	\1
@@ -19,6 +20,7 @@ MDebugPrint:	MACRO
 		ld	bc,.string\@
 		jal	ComPrintCodeChars
 		popa
+	ENDC
 		ENDM
 
 	GLOBAL	ComIdentify

@@ -8,6 +8,7 @@
 		INCLUDE	"sd.i"
 		INCLUDE	"uart_commands.i"
 
+;	PURGE	_DEBUG
 ;_DEBUG = 0
 
 ; -- Set to 1 to enable SD card detection, 0 to report no card present.
@@ -276,8 +277,9 @@ SdWriteSingleBlock:
 SdReadSingleBlock:
 		MDebugPrint <"SdReadSingleBlock\n">
 
-	IF ~SD_ENABLED
+	IF SD_ENABLED==0
 		ld	f,FLAGS_NE
+		pop	ft
 		j	(hl)
 	ELSE
 		pusha

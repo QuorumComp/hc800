@@ -187,16 +187,13 @@ FileInitialize:
 ; de - file system structure
 mountFat:
 		MBreak
+		MDebugPrint <"mountFat - enter\n">
+		MDebugRegisters
 
 		pusha
 
-		MDebugPrint <"mountFat - enter\n">
-
 		jal	BlockDeviceGet
 		j/ne	.fail
-
-		MDebugPrint <"mountFat - got block device\n">
-		MDebugRegisters
 
 		jal	Fat32FsMake
 		j/ne	.fail
@@ -215,10 +212,14 @@ mountFat:
 
 		popa
 		ld	f,FLAGS_EQ
+		MDebugPrint <"mountFat - exit success\n">
+		MDebugRegisters
 		j	(hl)
 
 .fail		popa
 		ld	f,FLAGS_NE
+		MDebugPrint <"mountFat - exit failure\n">
+		MDebugRegisters
 		j	(hl)
 
 

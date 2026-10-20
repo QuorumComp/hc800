@@ -229,7 +229,11 @@ BlockDeviceRead:
 
 		MDebugMemory bc,8
 
+		MDebugPrint <"BlockDeviceRead - call enter\n">
+		MDebugRegisters
 		jal	(hl)
+		MDebugPrint <"BlockDeviceRead - call exit\n">
+		MDebugRegisters
 
 		pop	bc/hl
 
@@ -281,6 +285,7 @@ BlockDeviceGet:
 		push	de
 
 		MDebugPrint <"BlockDeviceGet - enter\n">
+		MDebugRegisters
 
 		cmp	t,TOTAL_BLOCKDEVICES
 		j/geu	.fail
@@ -306,13 +311,16 @@ BlockDeviceGet:
 		ld	f,FLAGS_EQ
 		pop	de
 
-		MDebugPrint <"BlockDeviceGet - exit\n">
+		MDebugPrint <"BlockDeviceGet - exit - got block device\n">
 		MDebugRegisters
 
 		j	(hl)
 
 .fail		ld	f,FLAGS_NE
 		pop	de
+
+		MDebugPrint <"BlockDeviceGet - exit - NO block device\n">
+		MDebugRegisters
 		j	(hl)
 
 

@@ -13,7 +13,7 @@
 
 board := "mega65"
 rev   := "r6"
-jobs  := "8"
+jobs  := "32"
 cable := "digilent"
 make  := "make --no-print-directory"
 

@@ -12,6 +12,9 @@
 
 		INCLUDE	"uart_commands.i"
 
+;	PURGE	_DEBUG
+;_DEBUG = 0
+
 FAT32_BOOT_SIG		EQU	$29
 
 BPB_SECTORS_PER_CLUSTER	EQU	$0D
