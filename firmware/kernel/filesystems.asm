@@ -186,9 +186,7 @@ FileInitialize:
 ; t  - device identifier
 ; de - file system structure
 mountFat:
-		IF _DEBUG
-		j	@+1
-		ENDC
+		MBreak
 
 		pusha
 

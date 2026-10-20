@@ -73,9 +73,7 @@ ufile_SIZEOF		RB	0
 ; --
 		SECTION	"Fat32FsMake",CODE
 Fat32FsMake:
-		IF _DEBUG
-		j	@+1
-		ENDC
+		MBreak
 
 		MDebugPrint <"Fat32FsMake - enter\n">
 		MDebugRegisters

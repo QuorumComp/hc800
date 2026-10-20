@@ -99,9 +99,7 @@ SysGetBlockDevice::
 BlockDeviceInit:
 		pusha
 
-		IF _DEBUG
-		j	@+1
-		ENDC
+		MBreak
 
 		MDebugPrint <"Init sector heap\n">
 		ld	bc,sectors
