@@ -2,7 +2,9 @@ STD = ../stdlib/std.lib
 LOWLEVEL = ../lowlevel/lowlevel.lib
 LIBS = $(STD) $(LOWLEVEL)
 SRCS = volumes.asm
+DEBUG ?= 0
 ASMFLAGS = -g -el -z0 -i../
+ASMFLAGS += -D _DEBUG=$(DEBUG)
 TARGET = volumes
 
 ASM = motorrc8

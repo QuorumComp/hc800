@@ -8,7 +8,7 @@
 		INCLUDE	"sd.i"
 		INCLUDE	"uart_commands.i"
 
-;DEBUG = 0
+;_DEBUG = 0
 
 ; -- Set to 1 to enable SD card detection, 0 to report no card present.
 SD_ENABLED	EQU	1
@@ -61,7 +61,7 @@ DESELECT:	MACRO
 		pop	ft
 		ENDM
 
-	IF DEBUG
+	IF _DEBUG
 MHexByteOut:	MACRO
 		push	hl
 		jal	StreamHexByteOut

@@ -186,6 +186,10 @@ FileInitialize:
 ; t  - device identifier
 ; de - file system structure
 mountFat:
+		IF _DEBUG
+		j	@+1
+		ENDC
+
 		pusha
 
 		MDebugPrint <"mountFat - enter\n">

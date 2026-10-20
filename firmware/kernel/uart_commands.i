@@ -1,6 +1,5 @@
 		INCLUDE	ONCE
 
-		INCLUDE	"debug.i"
 
 COMMAND_IDENTIFY	EQU	0
 COMMAND_LOAD_FILE	EQU	1
@@ -11,7 +10,7 @@ COMMAND_READ_DIR	EQU	5
 
 		PURGE	MDebugPrint
 MDebugPrint:	MACRO
-	IF DEBUG
+	IF _DEBUG
 		PUSHS
 		SECTION "DebugStrings",CODE
 .string\@	DB	\1
@@ -27,7 +26,7 @@ MDebugPrint:	MACRO
 
 		PURGE	MDebugPrintR
 MDebugPrintR:	MACRO	;register
-	IF DEBUG
+	IF _DEBUG
 		IF	"\1".lower.compareto("hl")==0
 			FAIL "Register HL is an invalid argument"
 		ENDC
@@ -48,7 +47,7 @@ MDebugPrintR:	MACRO	;register
 
 		PURGE	MDebugNewLine
 MDebugNewLine:	MACRO
-	IF DEBUG
+	IF _DEBUG
 		pusha
 		ld	t,10
 		jal	ComPrintChar
@@ -58,7 +57,7 @@ MDebugNewLine:	MACRO
 
 		PURGE	MDebugHexWord
 MDebugHexWord:	MACRO	;register
-	IF DEBUG
+	IF _DEBUG
 		pusha
 		IF	"\1".lower.compareto("ft")~=0
 		ld	ft,\1
@@ -70,7 +69,7 @@ MDebugHexWord:	MACRO	;register
 
 		PURGE	MDebugHexLong
 MDebugHexLong:	MACRO	;register
-	IF DEBUG
+	IF _DEBUG
 		MDebugHexWord \1
 		swap	\1
 		MDebugHexWord \1
@@ -80,7 +79,7 @@ MDebugHexLong:	MACRO	;register
 
 		PURGE	MDebugHexByte
 MDebugHexByte:	MACRO	;register
-	IF DEBUG
+	IF _DEBUG
 		pusha
 		IF	"\1".lower.compareto("t")~=0
 		ld	t,\1
@@ -92,7 +91,7 @@ MDebugHexByte:	MACRO	;register
 
 		PURGE	MDebugRegisters
 MDebugRegisters: MACRO
-	IF DEBUG
+	IF _DEBUG
 		push	hl
 		jal	ComPrintRegisterOverview
 		pop	hl
@@ -101,7 +100,7 @@ MDebugRegisters: MACRO
 
 		PURGE	MDebugMemory
 MDebugMemory:	MACRO	;memory,size
-	IF DEBUG
+	IF _DEBUG
 		pusha
 		IF	"\1".lower.compareto("bc")~=0
 			IF	"\1".lower.compareto("ft")~=0

@@ -1,7 +1,9 @@
 STD = ../stdlib/std.lib
 LIBS = $(STD)
 SRCS = type.asm
+DEBUG ?= 0
 ASMFLAGS = -g -el -z0 -i../
+ASMFLAGS += -D _DEBUG=$(DEBUG)
 TARGET = type
 
 ASM = motorrc8

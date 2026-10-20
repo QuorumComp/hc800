@@ -50,6 +50,13 @@ Debug:		MACRO
 		j	(hl)
 
 
+		; Reserve the zero page so a null pointer has a defined, harmless
+		; target. ROOT keeps it linked even if nothing references it; the
+		; startup clear zeroes [0,$4000), so these bytes start at zero.
+		SECTION	"ZeroPage",BSS[0],ROOT
+nullPage:	DS	2
+
+
 		SECTION "FailEntry",CODE
 FailEntry:
 		di

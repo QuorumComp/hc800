@@ -22,7 +22,7 @@
 
 		INCLUDE	"uart_commands.i"
 
-;DEBUG = 1
+;_DEBUG = 1
 
 		SECTION	"Main",CODE
 Main:

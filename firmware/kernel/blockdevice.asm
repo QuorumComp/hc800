@@ -9,7 +9,7 @@
 		INCLUDE	"sddevice.i"
 		INCLUDE	"uart_commands.i"
 
-;DEBUG = 0
+;_DEBUG = 0
 
 BYTES_PER_SECTOR = 512
 SECTOR_HEAP_SIZE = 8
@@ -99,12 +99,15 @@ SysGetBlockDevice::
 BlockDeviceInit:
 		pusha
 
+		IF _DEBUG
+		j	@+1
+		ENDC
+
 		MDebugPrint <"Init sector heap\n">
 		ld	bc,sectors
 
 		ld	ft,freeSectors
-		ld	(ft+),c
-		ld	(ft),b
+		ld	(ft+),bc
 	
 		ld	l,SECTOR_HEAP_SIZE-1
 .sector_heap_loop

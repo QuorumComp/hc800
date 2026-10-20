@@ -6,7 +6,7 @@
 		INCLUDE	"sddevice.i"
 		INCLUDE	"uart_commands.i"
 
-;DEBUG = 0
+;_DEBUG = 0
 
 ; ---------------------------------------------------------------------------
 ; -- Make SD block device structure
