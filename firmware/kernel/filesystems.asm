@@ -279,6 +279,7 @@ FileOpen:
 		add	de,fs_Open+1
 		ld	ft,(-de)
 		ld	hl,ft	; hl = open file fn pointer
+		sub	de,fs_Open	; de = pointer to filesystem structure again
 
 		swap	bc
 		; bc = volume, components

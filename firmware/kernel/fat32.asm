@@ -133,8 +133,8 @@ fillFsStruct:
 		add	de,1
 		dj	f,.copy_template
 
-		; copy volume label
-		add	de,fs_Label+BS_LABEL_SIZEOF-fs_PRIVATE
+		; copy volume label (length-prefixed string)
+		add	de,fs_Label+BS_LABEL_SIZEOF+1-fs_PRIVATE
 		add	bc,BS_LABEL+BS_LABEL_SIZEOF
 		ld	l,BS_LABEL_SIZEOF
 .find_label_end	sub	bc,1
@@ -148,14 +148,23 @@ fillFsStruct:
 		dj	l,.find_label_end
 		j	.no_label
 .label_end_found
+		push	hl
 		ld	(de),t
 		j	.label_copy_entry
 .label_copy	sub	bc,1
 		sub	de,1
 		ld	t,(bc)
+		cmp	t,' '
+		j/ne	.label_store
+		ld	t,'_'		; mount points are path components: no spaces
+.label_store
 		ld	(de),t
 .label_copy_entry
 		dj	l,.label_copy
+		pop	hl
+		sub	de,1
+		ld	t,l
+		ld	(de),t
 .no_label
 		;MDebugMemory de,16
 		; determine how much to shift a cluster number to get sector

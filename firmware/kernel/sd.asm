@@ -63,13 +63,18 @@ DESELECT:	MACRO
 		ENDM
 
 	IF _DEBUG
-MHexByteOut:	MACRO
+MScreenByteOut:	MACRO
 		push	hl
 		jal	StreamHexByteOut
 		pop	hl
 		ENDM
+MScreenNewLine:	MACRO
+		MNewLine
+		ENDM
 	ELSE
-MHexByteOut:	MACRO
+MScreenByteOut:	MACRO
+		ENDM
+MScreenNewLine:	MACRO
 		ENDM
 	ENDC
 
@@ -127,7 +132,7 @@ SdGetTotalBlocks:
 		; 16 bytes
 
 		lio	t,(bc)
-		MHexByteOut
+		MScreenByteOut
 		and	t,$C0
 		cmp	t,0
 		j/eq	.v1
@@ -140,7 +145,7 @@ SdGetTotalBlocks:
 
 .v1		jal	.handle_v1
 
-.done		MNewLine
+.done		MScreenNewLine
 		ld	f,FLAGS_EQ
 
 .error		ld	b,IO_SDCARD_BASE
@@ -157,13 +162,13 @@ SdGetTotalBlocks:
 		jal	sdSkipBytes8
 
 		lio	t,(bc)
-		MHexByteOut
+		MScreenByteOut
 		and	t,$1F	; 60:56
 		exg	f,t
 		nop
 		nop
 		lio	t,(bc)	; 55:48
-		MHexByteOut
+		MScreenByteOut
 
 		ls	ft,3
 		push	ft
@@ -606,7 +611,7 @@ sdSkipBytes6:
 		ld	f,6
 .entry		ld	c,IO_SD_DATA
 .loop		lio	t,(bc)
-		MHexByteOut
+		MScreenByteOut
 		nop
 		nop
 		nop
@@ -931,7 +936,7 @@ sdInFirst:
 		ld	e,100
 .loop		ld	c,IO_SD_DATA
 		lio	t,(bc)
-		MHexByteOut
+		MScreenByteOut
 		ld	d,t
 		and	t,$80
 		cmp	t,$00
@@ -940,7 +945,7 @@ sdInFirst:
 		ld	f,FLAGS_NE
 		j	.exit
 
-.done		MNewLine
+.done		MScreenNewLine
 		ld	t,REPLY_ERRORS
 		and	t,d
 		cmp	t,0	; set success flag
@@ -976,7 +981,7 @@ sdInFirst_GoIdle:
 .wait		dj	l,.wait
 		ld	c,IO_SD_DATA
 		lio	t,(bc)
-		MHexByteOut
+		MScreenByteOut
 		ld	d,t
 		cmp	t,REPLY_IDLE
 		j/eq	.done
@@ -984,9 +989,10 @@ sdInFirst_GoIdle:
 		ld	f,FLAGS_NE
 		j	.exit
 
-.done		MNewLine
+.done		MScreenNewLine
+
 		MDebugHexByte d
-		MNewLine
+		MDebugNewLine
 		ld	t,REPLY_ERRORS
 		and	t,d
 		cmp	t,0	; set success flag
@@ -1010,7 +1016,7 @@ sdInFirst_GoIdle:
 sdInLast:
 		ld	c,IO_SD_DATA
 		lio	t,(bc)
-		MHexByteOut
+		MScreenByteOut
 
 		push	ft
 
@@ -1071,7 +1077,7 @@ sdInPacket:	push	de/hl
 
 		MLDLoop	de,1000
 .wait_packet	lio	t,(bc)
-		MHexByteOut
+		MScreenByteOut
 		cmp	t,$FF
 		j/ne	.got_packet
 		MDelay	100
@@ -1080,7 +1086,7 @@ sdInPacket:	push	de/hl
 
 .got_packet	cmp	t,$FE
 
-		MNewLine
+		MScreenNewLine
 
 		pop	de/hl
 		j	(hl)

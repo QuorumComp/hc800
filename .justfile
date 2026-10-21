@@ -11,6 +11,9 @@
 #   just rev=r3 bitstream     # MEGA65 R3 board constraints
 #   just jobs=16 bitstream
 
+# Fall back to parent justfiles (hc800-meta/.justfile) for unknown recipes
+set fallback
+
 board := "mega65"
 rev   := "r6"
 jobs  := "32"
