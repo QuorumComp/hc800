@@ -56,8 +56,6 @@ Main:
 		ei
 
 .initialize_volumes
-		MDebugPrint <"Initialize SD controller\n">
-		jal	SdResetController
 		MDebugPrint <"Initialize block devices\n">
 		jal	BlockDeviceInit
 		MDebugPrint <"Initialize file systems\n">

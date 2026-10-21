@@ -146,6 +146,9 @@ fillFsStruct:
 		j/ne	.label_end_found
 .label_pad
 		dj	l,.find_label_end
+		sub	de,1		; align with the length byte position
+		ld	t,0
+		ld	(de),t		; empty label
 		j	.no_label
 .label_end_found
 		push	hl

@@ -53,15 +53,6 @@ SELECT_SLOW:	MACRO
 		lio	(bc),t
 		ENDM
 
-		; b is assumed to be IO_SDCARD_BASE
-DESELECT:	MACRO
-		push	ft
-		ld	t,0
-		ld	c,IO_SD_SELECT
-		lio	(bc),t
-		pop	ft
-		ENDM
-
 	IF _DEBUG
 MScreenByteOut:	MACRO
 		push	hl
@@ -149,7 +140,7 @@ SdGetTotalBlocks:
 		ld	f,FLAGS_EQ
 
 .error		ld	b,IO_SDCARD_BASE
-		DESELECT
+		jal	sdDeselect
 		pop	bc/de/hl
 		j	(hl)
 
@@ -332,7 +323,7 @@ SdReadSingleBlock:
 
 		ld	f,FLAGS_EQ
 
-.error		DESELECT
+.error		jal	sdDeselect
 
 		pop	bc/de/hl
 		j	(hl)
@@ -351,11 +342,23 @@ SdInit:		push	bc/de/hl
 		IF SD_ENABLED
 		ld	b,IO_SDCARD_BASE
 
-		jal	sdGoIdleState
-		cmp	t,REPLY_IDLE
-		j/ne	.fail
+		; Power-up clocks with both cards deselected; self-contained so
+		; SdInit does not depend on a caller-side controller reset.
+		jal	sdResetCard
 
-		jal	sdSendIfCond
+		; CMD0 is accepted in SPI mode, but a card that was left in an
+		; unknown state (warm restart) may need a second attempt after
+		; the failed transaction has been deselected again.
+		ld	e,3
+.retry_idle	push	de
+		jal	sdGoIdleState
+		pop	de
+		cmp	t,REPLY_IDLE
+		j/eq	.idle_ok
+		dj	e,.retry_idle
+		j	.fail
+
+.idle_ok	jal	sdSendIfCond
 		j/eq	.v2_card
 
 		jal	sdInitV1
@@ -415,6 +418,42 @@ sdResetCard:
 		j/eq	.wait
 
 		dj	d,.next_byte
+
+		popa
+		j	(hl)
+
+
+; ---------------------------------------------------------------------------
+; -- Deselect the card and release its DO line
+; --
+; -- Inputs:
+; --       b  - IO_SDCARD_BASE
+; --
+		SECTION	"sdDeselect",CODE
+sdDeselect:
+		pusha
+
+		ld	t,0
+		ld	c,IO_SD_SELECT
+		lio	(bc),t		; CS high
+
+		; Let the previous byte shift finish, then send one dummy byte
+		; with CS high so the card releases its DO line.
+		ld	c,IO_SD_STATUS
+.wait_prev	lio	t,(bc)
+		and	t,IO_STAT_ACTIVE
+		cmp	t,IO_STAT_ACTIVE
+		j/eq	.wait_prev
+
+		ld	c,IO_SD_DATA
+		ld	t,$FF
+		lio	(bc),t
+
+		ld	c,IO_SD_STATUS
+.wait_dummy	lio	t,(bc)
+		and	t,IO_STAT_ACTIVE
+		cmp	t,IO_STAT_ACTIVE
+		j/eq	.wait_dummy
 
 		popa
 		j	(hl)
@@ -489,7 +528,7 @@ sdSetBlockLen512:
 
 		jal	sdInFirst
 
-		DESELECT
+		jal	sdDeselect
 
 		pop	de/hl
 		j	(hl)
@@ -751,7 +790,7 @@ sdReadOcr:
 		jal	sdInLast
 		ld	e,t
 
-.fail		DESELECT
+.fail		jal	sdDeselect
 
 		pop	hl
 		j	(hl)
@@ -901,21 +940,17 @@ sdGoIdleState:
 
 		SELECT_SLOW
 
-		ld	de,.bytesFF
-		jal	sdSendBytes6_Slow
-
 		ld	de,.bytes
 		jal	sdSendBytes6_Slow
 
 		jal	sdInFirst_GoIdle	;R1
 
-		DESELECT
+		jal	sdDeselect
 
 		pop	hl
 		j	(hl)
 
 .bytes		DB	0|$40,0,0,0,0,CMD0_CRC
-.bytesFF	DB	$FF,$FF,$FF,$FF,$FF,$FF
 
 
 ; ---------------------------------------------------------------------------
