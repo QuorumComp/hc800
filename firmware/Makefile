@@ -19,7 +19,7 @@ LIBS = stdlib/std.lib lowlevel/lowlevel.lib
 
 CLEAN = $(addsuffix .clean,$(dir $(TARGETS) $(LIBS)))
 
-.PHONY: install all clean disk disk-part disk-2part $(TARGETS) $(LIBS)
+.PHONY: install all clean disk disk-part disk-2part disk-large $(TARGETS) $(LIBS)
 
 install: $(TARGETS)
 ifeq ($(MAKE_HOST),Windows32)
@@ -38,6 +38,9 @@ disk-part: install
 
 disk-2part: install
 	just disk-2part
+
+disk-large: install
+	just disk-large
 
 clean: $(CLEAN)
 ifeq ($(MAKE_HOST),Windows32)

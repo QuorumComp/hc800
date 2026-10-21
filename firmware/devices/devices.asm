@@ -61,8 +61,7 @@ printDevice:
 
 		ld	b,11
 		jal	MathShiftRight_32
-		pop	ft
-		jal	StreamDecimalWordOut
+		jal	StreamDecimalLongOut
 
 		MPrintString <" MiB\n">
 
