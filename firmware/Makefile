@@ -19,7 +19,7 @@ LIBS = stdlib/std.lib lowlevel/lowlevel.lib
 
 CLEAN = $(addsuffix .clean,$(dir $(TARGETS) $(LIBS)))
 
-.PHONY: install all clean $(TARGETS) $(LIBS)
+.PHONY: install all clean disk disk-part disk-2part $(TARGETS) $(LIBS)
 
 install: $(TARGETS)
 ifeq ($(MAKE_HOST),Windows32)
@@ -31,7 +31,13 @@ else
 endif
 
 disk: install
-	./mkdisk.sh
+	just disk
+
+disk-part: install
+	just disk-part
+
+disk-2part: install
+	just disk-2part
 
 clean: $(CLEAN)
 ifeq ($(MAKE_HOST),Windows32)

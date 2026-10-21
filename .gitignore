@@ -113,6 +113,8 @@ firmware/devices/devices
 firmware/dir/dir
 firmware/gfxtest/gfxtest
 firmware/hd.img
+firmware/hd-part.img
+firmware/hd-2part.img
 firmware/mathtest/mathtest
 firmware/monitor/monitor.com
 firmware/reset/reset

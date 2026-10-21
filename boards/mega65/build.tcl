@@ -13,7 +13,7 @@
 #  keyboard / HDMI glue in this directory and `boards/common/hdmi`.
 #
 #  Everything tunable lives in the configuration block below. Each knob
-#  can also be overridden from the environment (used by the justfile):
+#  can also be overridden from the environment (used by the .justfile):
 #      MEGA65_REV  r3 | r6      -> mega65<rev>.xdc
 #      JOBS        parallel jobs
 #      BITSTREAM   1 = full bitstream, 0 = stop after synthesis

@@ -11,7 +11,11 @@
 
 ;_DEBUG = 0
 
-TYPE_FAT32_LBA	EQU	$0C
+; MBR partition types
+TYPE_EMPTY		EQU	$00
+TYPE_EXTENDED		EQU	$05
+TYPE_EXTENDED_LBA	EQU	$0F
+TYPE_EXTENDED_LINUX	EQU	$85
 
 		RSRESET
 part_Status	RB	1
@@ -120,14 +124,23 @@ MakeMbrPartitionDevice:
 		;MDebugPrint <"  - partition ok\n">
 
 		; check type
+		;
+		; Expose any non-empty primary data partition. The filesystem
+		; layer probes the partition contents, so non-FAT partitions
+		; (e.g. Linux swap) are still available as block devices.
 
 		add	de,part_Type
 		ld	t,(de)
-		;jal	ComPrintHexByte
-		cmp	t,TYPE_FAT32_LBA
-		j/ne	.fail_pop_bc_to_hl
+		cmp	t,TYPE_EMPTY
+		j/eq	.fail_pop_bc_to_hl
+		cmp	t,TYPE_EXTENDED		; extended container, not a data partition
+		j/eq	.fail_pop_bc_to_hl
+		cmp	t,TYPE_EXTENDED_LBA
+		j/eq	.fail_pop_bc_to_hl
+		cmp	t,TYPE_EXTENDED_LINUX
+		j/eq	.fail_pop_bc_to_hl
 
-		MDebugPrint <"  - partition is FAT32\n">
+		MDebugPrint <"  - partition type ok\n">
 
 		; copy underlying pointer to structure
 
