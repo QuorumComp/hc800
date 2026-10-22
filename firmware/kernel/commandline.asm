@@ -308,7 +308,7 @@ readHunkMmu:
 		j	(hl)
 
 
-; -- Read header and check if it is 'UC'
+; -- Read header and check if it is 'NP'
 ; -- Inputs:
 ; --   bc - file handle
 readHeader:
@@ -324,7 +324,7 @@ readHeader:
 		ld	e,t
 
 		MDebugRegisters
-		sub	de,'UC'
+		sub	de,'NP'
 		tst	de
 		ld	t,ERROR_FORMAT
 
