@@ -127,7 +127,11 @@ class SD extends Component {
 			is (Register.select) {
 				fastClock := io.bus.dataFromMaster(3)
 				slowClock := io.bus.dataFromMaster(2)
-				cardSelect := io.bus.dataFromMaster(1 downto 0)
+				// Enforce one-hot: on boards that share MISO between cards,
+				// selecting both at once would put two slaves on the bus.
+				// Both bits set therefore selects neither.
+				val cardBits = io.bus.dataFromMaster(1 downto 0)
+				cardSelect := Mux(cardBits(1) =/= cardBits(0), cardBits, B"00")
 			}
 		}
 	}

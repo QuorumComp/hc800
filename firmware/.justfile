@@ -1,4 +1,8 @@
-# Disk image recipes for the HC800 firmware.
+# Firmware recipes for the HC800.
+#
+#   just build                build and install the firmware into _image_
+#   just debug=1 build        same, with UART debug output enabled
+#   just clean                remove firmware build outputs
 #
 #   just disk         hd.img         FAT32 over the whole card
 #   just disk-part    hd-part.img    one FAT32 primary partition
@@ -13,6 +17,10 @@
 
 set fallback
 set shell := ["bash", "-uc"]
+
+# Firmware build settings. DEBUG=1 turns on the MDebug* macros (UART output).
+debug := "0"
+jobs  := "32"
 
 sector_size   := "512"
 total_sectors := "100000"
@@ -46,6 +54,14 @@ large_fs := tmp / "hc800-large-fs.img"
 
 default:
     @just --list
+
+# Build and install the firmware into _image_ (replaces b.sh)
+build:
+    make DEBUG={{debug}} -s -r -j install
+
+# Remove firmware build outputs (replaces clean.sh)
+clean:
+    make -j {{jobs}} clean
 
 # Generate the test files copied into the images
 addons:

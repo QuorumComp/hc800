@@ -8,6 +8,62 @@
 		INCLUDE	"sd.i"
 		INCLUDE	"uart_commands.i"
 
+; ---------------------------------------------------------------------------
+; -- SD card driver (SPI mode)
+; ---------------------------------------------------------------------------
+;
+; CLOCKS
+;   IO_SD_SELECT selects one card and one SPI rate:
+;     bits 1:0  card, one-hot (card 0 = 1, card 1 = 2; 0 = none)
+;     bit  2    slow clock, 13.5 MHz / 64 = 211 kHz
+;     bit  3    fast clock, 13.5 MHz /  4 = 3.375 MHz
+;   The controller only clocks while a card is selected and a shift is in
+;   progress. The RTL enforces one-hot card selection.
+;
+;   The SD spec requires 100-400 kHz for the power-up clocks and for CMD0,
+;   CMD8, CMD55 and ACMD41. Initialisation ends when ACMD41 reports the card
+;   ready; CMD58 and CMD16 may then run fast, but are kept slow here.
+;
+; INITIALISATION (SdInit)
+;   SdInit
+;     sdResetCard       select slow, ~40 ms supply settle, 80 clocks of $FF
+;     sdGoIdleState     CMD0 -> R1 (retried up to 3 times)
+;     sdSendIfCond      CMD8 -> R7; success means a V2 card
+;     sdSendOpCond      CMD55 + ACMD41 until R1 bit0 = 0 (ready)
+;       V1 -> sdInitV1
+;       V2 -> sdInitV2 -> sdReadCcsBit -> sdReadOcr (CMD58) -> CCS
+;     sdSetBlockLen512  CMD16, standard-capacity cards only; SDHC/SDXC use
+;                       a fixed 512-byte block length
+;   The resulting type is stored in SdType. sdDeselect releases the card
+;   (release byte, wait, select = 0); it is called after CMD0, after CMD58,
+;   after CMD16 and after each block read. CMD8 and the ACMD41 loop leave
+;   the card selected until the next one.
+;
+; BLOCK READ (SdReadSingleBlock)
+;   select fast, CMD17, block number, R1, $FE token, 512 data bytes, CRC,
+;   deselect.
+;
+; TIMING POLICY
+;   Slow paths poll the busy bit before every access (WAIT_READY), so they
+;   are correct at either clock.
+;   The one fixed-delay path is the 512-byte read loop. It relies on the
+;   body outlasting one fast-clock byte: 32 bus clocks = four instructions
+;   (the CPU takes 4 CPU clocks = 8 bus clocks per instruction), and the
+;   extra nop makes five, leaving one instruction of margin.
+;   Do not shorten that loop, and do not use it at the slow clock, where a
+;   byte is 64 instructions long.
+;
+; REGISTER INTERFACE
+;   IO_SD_DATA    read: returns the previously received byte and starts the
+;                 next shift; write: sends a byte and starts a shift
+;   IO_SD_STATUS  bit0 = shift in progress; bit1 = card detect
+;   IO_SD_SELECT  see CLOCKS above
+;
+;   An access to IO_SD_DATA while a shift is in progress is ignored by the
+;   controller (a read then returns a partially shifted byte), which is why
+;   every access polls or waits long enough first.
+; ---------------------------------------------------------------------------
+
 ;	PURGE	_DEBUG
 ;_DEBUG = 0
 
@@ -35,6 +91,7 @@ REPLY_PARAMETER_ERROR	EQU	$40
 
 REPLY_ERRORS		EQU	REPLY_ILLEGAL_COMMAND|REPLY_CRC_ERROR|REPLY_ERASE_SEQ_ERROR|REPLY_ADDRESS_ERROR|REPLY_PARAMETER_ERROR
 
+; -- Select the current card and the fast SPI clock (3.375 MHz).
 SELECT:		MACRO
 		ld	bc,SdSelect
 		ld	t,(bc)
@@ -44,6 +101,7 @@ SELECT:		MACRO
 		lio	(bc),t
 		ENDM
 
+; -- Select the current card and the slow SPI clock (211 kHz).
 SELECT_SLOW:	MACRO
 		ld	bc,SdSelect
 		ld	t,(bc)
@@ -51,6 +109,23 @@ SELECT_SLOW:	MACRO
 		ld	b,IO_SDCARD_BASE
 		ld	c,IO_SD_SELECT
 		lio	(bc),t
+		ENDM
+
+; -- Wait for the controller to finish shifting the current byte.
+; -- Requires b = IO_SDCARD_BASE. Clobbers c, t and the flags.
+WAIT_READY:	MACRO
+		ASSERTF	IO_STAT_ACTIVE==FLAGS_CARRY,"IO_STAT_ACTIVE and FLAGS_CARRY must be equal"
+		ld	c,IO_SD_STATUS
+.wait\@		lio	t,(bc)
+		ld	f,t
+		j/cs	.wait\@		; IO_STAT_ACTIVE set?
+		ENDM
+
+; -- Same, but preserves the FT pair (for callers holding a value in FT).
+WAIT_READY_KEEP_FT:	MACRO
+		push	ft
+		WAIT_READY
+		pop	ft
 		ENDM
 
 	IF _DEBUG
@@ -72,7 +147,9 @@ MScreenNewLine:	MACRO
 
 ; ---------------------------------------------------------------------------
 ; -- Reset SD card controller
-; ---------------------------------------------------------------------------
+; --
+; -- Clock: selects slow (via sdResetCard).
+; --
 		SECTION	"SdResetController",CODE
 SdResetController:
 	IF SD_ENABLED
@@ -93,6 +170,8 @@ SdResetController:
 ; -- Returns:
 ; --    f - "eq" condition if success
 ; --
+; -- Clock: selects fast; the response and CSD reads poll, so they tolerate either clock.
+; --
 		SECTION	"SdGetTotalBlocks",CODE
 SdGetTotalBlocks:
 		MDebugPrint <"SdGetTotalBlocks\n">
@@ -108,6 +187,7 @@ SdGetTotalBlocks:
 
 		SELECT
 
+		WAIT_READY
 		ld	c,IO_SD_DATA
 		ld	t,9|$40		;CMD9
 		lio	(bc),t
@@ -156,8 +236,7 @@ SdGetTotalBlocks:
 		MScreenByteOut
 		and	t,$1F	; 60:56
 		exg	f,t
-		nop
-		nop
+		WAIT_READY_SAVE_FT
 		lio	t,(bc)	; 55:48
 		MScreenByteOut
 
@@ -192,13 +271,11 @@ SdGetTotalBlocks:
 		lio	t,(bc)
 		and	t,$03
 		ld	f,t
-		nop
-		nop
+		WAIT_READY_SAVE_FT
 		lio	t,(bc)
 		ls	ft,2
 		ld	de,ft
-		nop
-		nop
+		WAIT_READY_SAVE_FT
 		lio	t,(bc)
 		ld	f,0
 		ls	ft,2
@@ -213,8 +290,7 @@ SdGetTotalBlocks:
 		lio	t,(bc)
 		and	t,$03
 		ld	f,t
-		nop
-		nop
+		WAIT_READY_SAVE_FT
 		lio	t,(bc)
 		rs	ft,7	; ft = C_SIZE_MULT
 		add	ft,2
@@ -252,6 +328,8 @@ SdGetTotalBlocks:
 ; -- Returns:
 ; --    f - "eq" condition if success
 ; --
+; -- Clock: not implemented; does not touch the controller.
+; --
 		SECTION	"SdWriteSingleBlock",CODE
 SdWriteSingleBlock:
 		ld	f,FLAGS_NE
@@ -269,6 +347,8 @@ SdWriteSingleBlock:
 ; -- Returns:
 ; --    f - "eq" condition if success
 ; --
+; -- Clock: selects fast; the 512-byte loop relies on fast-clock timing.
+; --
 		SECTION	"SdReadSingleBlock",CODE
 SdReadSingleBlock:
 		MDebugPrint <"SdReadSingleBlock\n">
@@ -282,6 +362,7 @@ SdReadSingleBlock:
 
 		SELECT
 
+		WAIT_READY
 		ld	c,IO_SD_DATA
 		ld	t,17|$40	;CMD17
 		lio	(bc),t
@@ -294,32 +375,44 @@ SdReadSingleBlock:
 		pop	de
 
 		jal	sdInFirst
-		j/ne	.error
+		j/eq	.first_ok
+		jal	.error
 
-		jal	sdInPacket
-		j/ne	.error
+.first_ok	jal	sdInPacket
+		j/eq	.packet_ok
+		jal	.error
 
-		MDebugPrint <"  do read\n">
+.packet_ok	MDebugPrint <"  do read\n">
 
-		ld	l,BLOCKLEN/8
-.read_loop	REPT	8
+		ld	c,IO_SD_DATA
+
+		; Each data access clocks one SPI byte. An access that lands while a
+		; shift is active returns a partially shifted byte and starts no new
+		; shift, so the body must outlast one byte time. Fast clock: 4 bus
+		; clocks/bit = 32 bus clocks/byte. CPU: 4 CPU clocks (8 bus clocks)
+		; per instruction, so a byte is exactly four instructions. These five
+		; instructions are 40 bus clocks: one instruction of margin.
+		; Do not shorten this loop, and do not use it at the slow clock,
+		; where a byte is 64 instructions long.
+		
+ 		MLDLoop	hl,BLOCKLEN
+.read_loop
 		lio	t,(bc)
 		ld	(de),t
 		add	de,1
 		nop
-		nop
-		ENDR
 		dj	l,.read_loop
+		dj	h,.read_loop
 
 		MDebugPrint <"  did read\n">
 
-		; CRC
+		; Discard CRC
+		ld	l,2
+.crc_loop
+		WAIT_READY
+		ld	c,IO_SD_DATA
 		lio	t,(bc)
-		nop
-		nop
-		nop
-		nop
-		lio	t,(bc)
+		dj	l,.crc_loop
 
 		ld	f,FLAGS_EQ
 
@@ -335,6 +428,8 @@ SdReadSingleBlock:
 ; --
 ; -- Returns:
 ; --    f - "eq" condition if initialized
+; --
+; -- Clock: each step selects its own clock; initialisation steps are slow.
 ; --
 		SECTION	"SdInit",CODE
 SdInit:		push	bc/de/hl
@@ -367,6 +462,10 @@ SdInit:		push	bc/de/hl
 .v2_card	jal	sdInitV2
 
 .handle_status	j/ne	.fail
+		; SDHC/SDXC use a fixed 512-byte block length; CMD16 is not
+		; supported there and a strict card may reject it.
+		cmp	t,SDTYPE_V2_HC
+		j/eq	.store
 		ld	d,t
 		jal	sdSetBlockLen512
 		ld	t,d
@@ -381,6 +480,9 @@ SdInit:		push	bc/de/hl
 .store		ld	bc,SdType
 		ld	(bc),t
 
+		cmp	t,SDTYPE_NONE
+		not	f		; invert eq/ne
+
 		pop	bc/de/hl
 		j	(hl)
 
@@ -394,15 +496,24 @@ SdInit:		push	bc/de/hl
 ; --
 ; -- Inputs:
 ; --       b  - IO_SDCARD_BASE
-; ---------------------------------------------------------------------------
+; --
+; -- Clock: selects slow; polls each byte, so correct at either clock.
+; --
 		SECTION	"sdResetCard",CODE
 sdResetCard:	
 		MDebugPrint <"sdResetCard\n">
 		pusha
 
-		ld	t,IO_SEL_SLOW_CLOCK
-		ld	c,IO_SD_SELECT
-		lio	(bc),t
+		; Power-up clocks must actually reach the card. The board gates
+		; the SD clock off while the card is deselected, so select the
+		; current card (CS low) while sending the >=74 initial clocks.
+		SELECT_SLOW
+
+		; Selecting the card also enables its supply on the MEGA65, so
+		; allow for the ramp and the SD spec's 1 ms start-up before the
+		; first clock. Two calls because MDelay's loop count is a byte-pair.
+		MDelay	20000
+		MDelay	20000
 
 		ld	d,10	; 10 * 8 bits = 80 cycles. At least 74.
 
@@ -411,11 +522,7 @@ sdResetCard:
 		ld	t,$FF
 		lio	(bc),t
 
-		ld	c,IO_SD_STATUS
-.wait		lio	t,(bc)
-		and	t,IO_STAT_ACTIVE
-		cmp	t,IO_STAT_ACTIVE
-		j/eq	.wait
+		WAIT_READY
 
 		dj	d,.next_byte
 
@@ -429,16 +536,14 @@ sdResetCard:
 ; -- Inputs:
 ; --       b  - IO_SDCARD_BASE
 ; --
+; -- Clock: any clock; polls before and after the release byte. Leaves select = 0.
+; --
 		SECTION	"sdDeselect",CODE
 sdDeselect:
 		pusha
 
-		ld	t,0
-		ld	c,IO_SD_SELECT
-		lio	(bc),t		; CS high
-
-		; Let the previous byte shift finish, then send one dummy byte
-		; with CS high so the card releases its DO line.
+		; Let the previous byte shift finish, send one release byte while the
+		; card is still selected, wait for it, then deassert the card select.
 		ld	c,IO_SD_STATUS
 .wait_prev	lio	t,(bc)
 		and	t,IO_STAT_ACTIVE
@@ -455,6 +560,12 @@ sdDeselect:
 		cmp	t,IO_STAT_ACTIVE
 		j/eq	.wait_dummy
 
+		; Deselect both cards (and stop the clocks). Safe here: no shift
+		; is active, so clearing the clock-select bits cannot stall one.
+		ld	t,0
+		ld	c,IO_SD_SELECT
+		lio	(bc),t
+
 		popa
 		j	(hl)
 
@@ -466,6 +577,10 @@ sdDeselect:
 ; --   ft:ft' - block number (consumed)
 ; --       b  - IO_SDCARD_BASE
 ; --       d  - SD type
+; --
+; -- Clock: caller's clock; both the argument bytes (sdSendInt32) and the
+; -- CRC byte poll, so any clock. Currently called from SdReadSingleBlock
+; -- with the fast clock selected.
 ; --
 sdSendBlockNumber:
 		MDebugPrint <"sdSendBlockNumber ">
@@ -498,6 +613,8 @@ sdSendBlockNumber:
 
 		jal	sdSendInt32
 
+		WAIT_READY
+		ld	c,IO_SD_DATA
 		ld	t,$01	; CRC
 		lio	(bc),t
 
@@ -514,6 +631,7 @@ sdSendBlockNumber:
 ; -- Returns:
 ; --    t - card type
 ; --    f - "eq" condition if initialized
+; -- Clock: selects slow (CMD16 may legally run fast after ACMD41, but slow is conservative).
 ; --
 		SECTION	"sdSetBlockLen512",CODE
 sdSetBlockLen512:
@@ -521,10 +639,10 @@ sdSetBlockLen512:
 
 		push	de/hl
 
-		SELECT
+		SELECT_SLOW
 
 		ld	de,.bytes
-		jal	sdSendBytes6
+		jal	sdSendBytes6_Slow
 
 		jal	sdInFirst
 
@@ -543,66 +661,44 @@ sdSetBlockLen512:
 ; --   ft:ft' - integer to send (consumed)
 ; --       b - IO_SDCARD_BASE
 ; --
+; -- Clock: caller's clock; polls before each byte, so any clock.
+; -- WAIT_READY_KEEP_FT preserves the value still held in FT.
+; --
 sdSendInt32:
 		push	bc
 
+		WAIT_READY_KEEP_FT
 		ld	c,IO_SD_DATA
-
 		exg	f,t
 		lio	(bc),t
 
-		nop
-		nop
-		nop
+		WAIT_READY_KEEP_FT
+		ld	c,IO_SD_DATA
 		exg	f,t
 		lio	(bc),t
 
-		nop
-		nop
+		WAIT_READY_KEEP_FT
+		ld	c,IO_SD_DATA
 		pop	ft
 		exg	f,t
 		lio	(bc),t
 
-		nop
-		nop
-		nop
+		WAIT_READY_KEEP_FT
+		ld	c,IO_SD_DATA
 		exg	f,t
 		lio	(bc),t
 
-		nop
-		nop
 		pop	bc
 		j	(hl)
 
 
 ; ---------------------------------------------------------------------------
-; -- Send six bytes to SD card
+; -- Send six bytes to SD card assuming the slow frequency
 ; --
 ; -- Inputs:
 ; --   de - pointer to six bytes in code segment
-; --
-		SECTION	"sdSendBytes",CODE
-sdSendBytes6:
-		MDebugPrint <"sdSendBytes6\n">
-		pusha
-
-		ld	c,IO_SD_DATA
-		ld	f,6
-.loop		lco	t,(de)
-		add	de,1
-		nop
-		lio	(bc),t
-		dj	f,.loop
-
-		popa
-		j	(hl)
-
-
-; ---------------------------------------------------------------------------
-; -- Send six bytes to SD card using the slow frequency
-; --
-; -- Inputs:
-; --   de - pointer to six bytes in code segment
+; -- Clock: caller's clock. Called from sdSetBlockLen512, sdSendIfCond and
+; -- sdGoIdleState, all of which select slow; polls before each byte.
 ; --
 		SECTION	"sdSendBytes",CODE
 sdSendBytes6_Slow:
@@ -610,15 +706,12 @@ sdSendBytes6_Slow:
 		pusha
 
 		ld	l,6
-.loop		ld	c,IO_SD_DATA
+.loop
+		WAIT_READY
+
+		ld	c,IO_SD_DATA
 		lco	t,(de+)
 		lio	(bc),t
-
-		ld	c,IO_SD_STATUS
-.wait		lio	t,(bc)
-		and	t,IO_STAT_ACTIVE
-		cmp	t,IO_STAT_ACTIVE
-		j/eq	.wait
 
 		dj	l,.loop
 
@@ -629,32 +722,34 @@ sdSendBytes6_Slow:
 ; ---------------------------------------------------------------------------
 ; -- Skip bytes from SD card
 ; --
+; -- Clock: caller's clock. Called only from SdGetTotalBlocks (fast);
+; -- polls before each read.
+; --
 		SECTION	"sdSkipBytes",CODE
 sdSkipBytes4:
 		pusha
-		ld	f,4
+		ld	l,4
 		j	sdSkipBytes6\.entry
 
 sdSkipBytes5:
 		pusha
-		ld	f,5
+		ld	l,5
 		j	sdSkipBytes6\.entry
 
 sdSkipBytes8:
 		pusha
-		ld	f,8
+		ld	l,8
 		j	sdSkipBytes6\.entry
 
 sdSkipBytes6:
 		pusha
-		ld	f,6
-.entry		ld	c,IO_SD_DATA
-.loop		lio	t,(bc)
+		ld	l,6
+.entry
+.loop		WAIT_READY
+		ld	c,IO_SD_DATA
+		lio	t,(bc)
 		MScreenByteOut
-		nop
-		nop
-		nop
-		dj	f,.loop
+		dj	l,.loop
 
 		popa
 		j	(hl)
@@ -668,6 +763,8 @@ sdSkipBytes6:
 ; -- Returns:
 ; --    t - card type
 ; --    f - "eq" condition if initialized
+; --
+; -- Clock: slow (via sdSendOpCond).
 ; --
 		SECTION	"sdInitV1",CODE
 sdInitV1:
@@ -692,6 +789,7 @@ sdInitV1:
 ; -- Returns:
 ; --    t - card type
 ; --    f - "eq" condition if initialized
+; -- Clock: slow (via sdSendOpCond and sdReadOcr).
 ; --
 		SECTION	"sdInitV2",CODE
 sdInitV2:
@@ -726,6 +824,8 @@ sdInitV2:
 ; --    t - ccs bit (0 or 1)
 ; --    f - "eq" condition if successful
 ; --
+; -- Clock: slow (via sdReadOcr).
+; --
 		SECTION	"sdReadCcsBit",CODE
 sdReadCcsBit:
 		MDebugPrint <"sdReadCcsBit\n">
@@ -754,14 +854,16 @@ sdReadCcsBit:
 ; -- Returns:
 ; --    f - "eq" if OK
 ; --   de - top (d=15:8, e=7:0), next(d=31:24, e=23:16)
+; -- Clock: selects slow (CMD58 is post-ACMD41, so fast would also be legal).
 ; --
 		SECTION	"sdReadOcr",CODE
 sdReadOcr:
 		MDebugPrint <"sdReadOcr\n">
 		push	hl
 
-		SELECT
+		SELECT_SLOW
 
+		WAIT_READY
 		ld	c,IO_SD_DATA
 		ld	t,58|$40	;CMD58
 		lio	(bc),t
@@ -771,27 +873,32 @@ sdReadOcr:
 		jal	sdInFirst
 		j/ne	.fail
 
+		WAIT_READY
 		ld	c,IO_SD_DATA
 		lio	t,(bc)
 
-		nop
-		nop
-		nop
 		ld	d,t
+		WAIT_READY
+		ld	c,IO_SD_DATA
 		lio	t,(bc)
 
-		nop
-		nop
 		ld	e,t
 		push	de
+		WAIT_READY
+		ld	c,IO_SD_DATA
 		lio	t,(bc)
 		ld	d,t
 
 		jal	sdInLast
 		ld	e,t
 
-.fail		jal	sdDeselect
+		ld	t,0		; success marker
+		j	.exit
 
+.fail		ld	t,1		; failure marker
+
+.exit		jal	sdDeselect
+		cmp	t,0		; set eq flag if successful, after deselect
 		pop	hl
 		j	(hl)
 
@@ -805,6 +912,7 @@ sdReadOcr:
 ; --
 ; -- Returns:
 ; --   f - "eq" if OK
+; -- Clock: slow (CMD55 selects slow; the ACMD41 bytes poll).
 ; --
 		SECTION	"sdSendOpCond",CODE
 sdSendOpCond:
@@ -817,13 +925,13 @@ sdSendOpCond:
 .idle		jal	sdAppCommand
 		j/ne	.done
 
+		WAIT_READY
 		ld	c,IO_SD_DATA
 		ld	t,41|$40	;ACMD41
 		lio	(bc),t
 
-		nop
-		nop
-		nop
+		WAIT_READY
+		ld	c,IO_SD_DATA
 		ld	t,d
 		lio	(bc),t
 
@@ -850,14 +958,16 @@ sdSendOpCond:
 ; --
 ; -- Returns:
 ; --    f - "eq" if OK
+; -- Clock: selects slow.
 ; --
 		SECTION	"sdAppCommand",CODE
 sdAppCommand:
 		MDebugPrint <"sdAppCommand\n">
 		push	hl
 
-		SELECT
+		SELECT_SLOW
 
+		WAIT_READY
 		ld	c,IO_SD_DATA
 		ld	t,55|$40	;CMD55
 		lio	(bc),t
@@ -880,32 +990,31 @@ sdAppCommand:
 ; -- Returns:
 ; --   f - "eq" if OK
 ; --   t - pattern
+; -- Clock: selects slow.
 ; --
 		SECTION	"sdSendIfCond",CODE
 sdSendIfCond:
 		MDebugPrint <"sdSendIfCond\n">
 		push	de/hl
 
-		SELECT
+		SELECT_SLOW
 
 		ld	de,.bytes
-		jal	sdSendBytes6
+		jal	sdSendBytes6_Slow
 
 		jal	sdInFirst
 		j/ne	.fail
 
+		WAIT_READY
+		ld	c,IO_SD_DATA
 		lio	t,(bc)		;R7[31:24]
 
-		nop
-		nop
-		nop
-		nop
+		WAIT_READY
+		ld	c,IO_SD_DATA
 		lio	t,(bc)		;R7[23:16]
 
-		nop
-		nop
-		nop
-		nop
+		WAIT_READY
+		ld	c,IO_SD_DATA
 		lio	t,(bc)		;R7[15:8]
 		and	t,CMD8_VOLTAGES
 		ld	d,t		;d = voltage mask
@@ -932,6 +1041,7 @@ sdSendIfCond:
 ; --
 ; -- Returns:
 ; --    f - "eq" condition if success
+; -- Clock: selects slow.
 ; --
 		SECTION	"sdGoIdleState",CODE
 sdGoIdleState:
@@ -962,6 +1072,9 @@ sdGoIdleState:
 ; -- Returns:
 ; --    f - "eq" condition if success
 ; --    t - byte
+; -- Clock: caller's clock; polls before each read. Called fast from
+; -- SdReadSingleBlock and SdGetTotalBlocks, slow from sdSetBlockLen512,
+; -- sdReadOcr, sdSendOpCond, sdAppCommand and sdSendIfCond.
 ; --
 		SECTION	"sdInFirst",CODE
 sdInFirst:
@@ -969,7 +1082,8 @@ sdInFirst:
 		push	de/hl
 
 		ld	e,100
-.loop		ld	c,IO_SD_DATA
+.loop		WAIT_READY
+		ld	c,IO_SD_DATA
 		lio	t,(bc)
 		MScreenByteOut
 		ld	d,t
@@ -999,6 +1113,7 @@ sdInFirst:
 ; -- Returns:
 ; --    f - "eq" condition if success
 ; --    t - byte
+; -- Clock: selects slow itself.
 ; --
 		SECTION	"sdInFirst",CODE
 sdInFirst_GoIdle:
@@ -1012,11 +1127,9 @@ sdInFirst_GoIdle:
 		lio	(bc),t
 
 		ld	e,100
-.loop		ld	l,64
-.wait		dj	l,.wait
+.loop		WAIT_READY
 		ld	c,IO_SD_DATA
 		lio	t,(bc)
-		MScreenByteOut
 		ld	d,t
 		cmp	t,REPLY_IDLE
 		j/eq	.done
@@ -1046,9 +1159,12 @@ sdInFirst_GoIdle:
 ; -- Returns:
 ; --    f - "eq" condition if success
 ; --    t - byte
+; -- Clock: caller's clock; polls. Called fast from SdGetTotalBlocks and
+; -- slow from sdReadOcr and sdSendIfCond.
 ; --
 		SECTION	"sdInLast",CODE
 sdInLast:
+		WAIT_READY
 		ld	c,IO_SD_DATA
 		lio	t,(bc)
 		MScreenByteOut
@@ -1070,31 +1186,32 @@ sdInLast:
 ; -- Inputs:
 ; --   	b - IO_SDCARD_BASE
 ; --
+; -- Clock: caller's clock; polls before each byte. sdFinalBits5 is called
+; -- fast from SdGetTotalBlocks and slow from sdReadOcr and sdAppCommand;
+; -- sdFinalBits4 from sdSendOpCond (slow)
+; --
 		SECTION	"sdFinalBits",CODE
 sdFinalBits5:
 		; argument, stuff bits
-		ld	f,5-1
-		j	sdFinalBits4\.entry
-sdFinalBits2:
-		; argument, stuff bits
-		ld	f,2-1
+		push	hl
+		ld	l,5-1
 		j	sdFinalBits4\.entry
 sdFinalBits4:
 		; argument, stuff bits
-		ld	f,4-1
-.entry		; f contains the number of bytes to write - 1 to account for final CRC
+		push	hl
+		ld	l,4-1
+.entry		; l contains the number of bytes to write - 1 to account for final CRC
+.arg		WAIT_READY
+		ld	c,IO_SD_DATA
 		ld	t,$00
-.arg		lio	(bc),t
-		nop
-		nop
-		nop
-		dj	f,.arg
+		lio	(bc),t
+		dj	l,.arg
+		WAIT_READY
+		ld	c,IO_SD_DATA
 		ld	t,$01
 		lio	(bc),t
-		nop
-		nop
-		nop
 
+		pop	hl
 		j	(hl)
 
 
@@ -1107,11 +1224,16 @@ sdFinalBits4:
 ; -- Returns:
 ; --    f - "eq" condition if success
 ; --
+; -- Clock: caller's clock; polls before each read. Called fast from
+; -- SdReadSingleBlock and SdGetTotalBlocks.
+; --
 		SECTION	"sdInPacket",CODE
 sdInPacket:	push	de/hl
 
 		MLDLoop	de,1000
-.wait_packet	lio	t,(bc)
+.wait_packet	WAIT_READY
+		ld	c,IO_SD_DATA
+		lio	t,(bc)
 		MScreenByteOut
 		cmp	t,$FF
 		j/ne	.got_packet
