@@ -411,11 +411,15 @@ wire sd_detect_n;
 
 assign sd_clk_o   = sd_select_1_n ? 1'b0 : sd_clock;
 assign sd_mosi_o  = sd_select_1_n ? 1'b1 : sd_mosi;
-assign sd_reset_o = sd_select_1_n;
 
 assign sd2_clk_o   = sd_select_2_n ? 1'b0 : sd_clock;
 assign sd2_mosi_o  = sd_select_2_n ? 1'b1 : sd_mosi;
-assign sd2_reset_o = sd_select_2_n;
+
+// The MEGA65 wires these pins to the SD power/CS enable and must see them
+// low from configuration onwards (the stock core holds cs_bo/cs2_bo low).
+// Card selection is done by gating the clock and muxing MISO instead.
+assign sd_reset_o = 1'b0;
+assign sd2_reset_o = 1'b0;
 
 assign sd_miso =
     !sd_select_1_n ? sd_miso_i :
