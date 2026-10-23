@@ -217,8 +217,7 @@ BlockDeviceInit:
 		SECTION	"BlockDeviceRead",CODE
 BlockDeviceRead:
 		MDebugPrint <"BlockDeviceRead - enter\n">
-		MDebugRegisters
-		
+		;MDebugRegisters
 		push	bc/hl
 
 		exg	ft,bc
@@ -230,16 +229,14 @@ BlockDeviceRead:
 		MDebugMemory bc,8
 
 		MDebugPrint <"BlockDeviceRead - call enter\n">
-		MDebugRegisters
+		;MDebugRegisters
 		jal	(hl)
 		MDebugPrint <"BlockDeviceRead - call exit\n">
-		MDebugRegisters
-
+		;MDebugRegisters
 		pop	bc/hl
 
 		MDebugPrint <"BlockDeviceRead - exit\n">
-		MDebugRegisters
-
+		;MDebugRegisters
 		j	(hl)
 
 
@@ -285,8 +282,7 @@ BlockDeviceGet:
 		push	de
 
 		MDebugPrint <"BlockDeviceGet - enter\n">
-		MDebugRegisters
-
+		;MDebugRegisters
 		cmp	t,TOTAL_BLOCKDEVICES
 		j/geu	.fail
 
@@ -298,8 +294,7 @@ BlockDeviceGet:
 		lco	ft,(bc+)
 		ld	bc,ft
 
-		MDebugRegisters
-
+		;MDebugRegisters
 		; bc = ft = block device structure
 
 		; is Read function pointer NULL?
@@ -312,15 +307,14 @@ BlockDeviceGet:
 		pop	de
 
 		MDebugPrint <"BlockDeviceGet - exit - got block device\n">
-		MDebugRegisters
-
+		;MDebugRegisters
 		j	(hl)
 
 .fail		ld	f,FLAGS_NE
 		pop	de
 
 		MDebugPrint <"BlockDeviceGet - exit - NO block device\n">
-		MDebugRegisters
+		;MDebugRegisters
 		j	(hl)
 
 

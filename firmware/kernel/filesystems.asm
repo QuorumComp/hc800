@@ -133,7 +133,7 @@ FileInitialize:
 		ld/eq	b,0	; if no volumes, set string length to 0
 
 		MDebugPrint <"Set current FS\n">		
-		MDebugRegisters
+		;MDebugRegisters
 		ld	ft,PathCurrentFs
 		ld	(ft+),de
 
@@ -188,8 +188,7 @@ FileInitialize:
 mountFat:
 		MBreak
 		MDebugPrint <"mountFat - enter\n">
-		MDebugRegisters
-
+		;MDebugRegisters
 		pusha
 
 		jal	BlockDeviceGet
@@ -213,13 +212,13 @@ mountFat:
 		popa
 		ld	f,FLAGS_EQ
 		MDebugPrint <"mountFat - exit success\n">
-		MDebugRegisters
+		;MDebugRegisters
 		j	(hl)
 
 .fail		popa
 		ld	f,FLAGS_NE
 		MDebugPrint <"mountFat - exit failure\n">
-		MDebugRegisters
+		;MDebugRegisters
 		j	(hl)
 
 
@@ -291,8 +290,7 @@ FileOpen:
 		pop	bc
 		; bc = file struct
 
-		MDebugRegisters
-
+		;MDebugRegisters
 		jal	(hl)
 
 		pop	de/hl
@@ -382,7 +380,7 @@ FileSkip:
 		SECTION	"FileRead",CODE
 FileRead:
 		MDebugPrint <"FileRead - enter\n">
-		MDebugRegisters
+		;MDebugRegisters
 		;MDebugMemory bc,file_SIZEOF
 
 		push	bc/de/hl
@@ -420,8 +418,7 @@ FileRead:
 		popa
 
 		MDebugPrint <"FileRead - fail\n">
-		MDebugRegisters
-
+		;MDebugRegisters
 		j	(hl)
 
 .no_error	add	bc,file_Offset-file_Error
@@ -441,8 +438,7 @@ FileRead:
 		pop	bc/de/hl
 
 		MDebugPrint <"FileRead - success\n">
-		MDebugRegisters
-
+		;MDebugRegisters
 		j	(hl)
 
 .not_available
@@ -624,8 +620,7 @@ DirectoryRead:
 		ld	h,(ft)
 
 		pop	ft
-		MDebugRegisters
-
+		;MDebugRegisters
 		jal	(hl)
 
 		pop	bc/de/hl
@@ -658,8 +653,7 @@ DirectoryClose:
 		ld	h,(ft)
 
 		pop	ft
-		MDebugRegisters
-
+		;MDebugRegisters
 		jal	(hl)
 
 		pop	bc/de/hl
@@ -807,13 +801,12 @@ PathAppend:
 		SECTION	"getVolumeAndComponentsFromPath",CODE
 getVolumeAndComponentsFromPath:
 		MDebugPrint <"getVolumeAndComponentsFromPath - entry\n">
-		MDebugRegisters
-
+		;MDebugRegisters
 		push	bc/de/hl
 		ld	de,ft
 
 		jal	getVolumeFromPath
-		MDebugRegisters
+		;MDebugRegisters
 		j/ne	.exit
 
 		MStackAlloc STRING_SIZE
@@ -1195,8 +1188,7 @@ getVolumeFromPath:
 		push	ft
 
 		MDebugPrint <"getVolumeFromPath exit: use current fs ">
-		MDebugRegisters
-
+		;MDebugRegisters
 .match		ld	f,FLAGS_EQ
 		ld	t,ERROR_SUCCESS
 

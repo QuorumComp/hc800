@@ -11,6 +11,7 @@ Entry::
 		;jal	TestPick
 		;jal	TestStringDrop
 		;jal	TestStringCompare
+		jal	TestStackPointer
 		jal	TestCompare
 		jal	TestPrint
 		jal	TestShift
@@ -38,6 +39,47 @@ TestPick:
 
 		pop	ft
 		pop	ft
+
+		popa
+		j	(hl)
+
+TestStackPointer:
+		pusha
+
+		MPrintString <"SP rewind expect $0055 = $">
+		ld	ft,$00AA
+		push	ft
+		ld	ft,$0055
+		push	ft
+		ld	c,RC8_SP_FT
+		ld	t,$FD
+		lcr	(c),t
+		jal	StreamHexWordOut
+		MNewLine
+
+		MPrintString <"SP rewind expect $00AA = $">
+		ld	c,RC8_SP_FT
+		ld	t,$FE
+		lcr	(c),t
+		jal	StreamHexWordOut
+		MNewLine
+
+		MPrintString <"SP same expect $5678 = $">
+		ld	d,$56
+		ld	e,$78
+		ld	c,RC8_SP_DE
+		lcr	t,(c)          ; T = SP_DE
+		lcr	(c),t          ; write it back unchanged
+		ld	ft,de
+		jal	StreamHexWordOut
+		MNewLine
+
+		MPrintString <"SP push/pop expect $00AA = $">
+		ld	ft,$00AA
+		push	ft
+		pop	ft
+		jal	StreamHexWordOut
+		MNewLine
 
 		popa
 		j	(hl)

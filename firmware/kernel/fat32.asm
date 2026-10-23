@@ -79,7 +79,7 @@ Fat32FsMake:
 		MBreak
 
 		MDebugPrint <"Fat32FsMake - enter\n">
-		MDebugRegisters
+		;MDebugRegisters
 		push	bc/de/hl
 
 		MStackAlloc BYTES_PER_SECTOR
@@ -731,8 +731,7 @@ loadVolumeBootRecord:
 		push	hl
 
 		MDebugPrint <"loadVolumeBootRecord - enter\n">
-		MDebugRegisters
-
+		;MDebugRegisters
 		; load volume boot record
 
 		ld	ft,0
