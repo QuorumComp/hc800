@@ -350,7 +350,14 @@ ComPrintRegisterOverview:
 		; FT':FT  BC':BC  DE':DE  pc:HL:HL'
 		pusha
 		; FT':FT':FT  BC':BC':BC  DE':DE':DE  pc:pc:HL:HL'
-		pick	hl,3
+
+		; Park FT around the pick
+		push	ft
+		ld	t,3
+		pick	hl
+		pop	ft
+		; FT':FT':FT  BC':BC':BC  DE':DE':DE  HL':pc:HL:HL'
+
 		push	hl
 		; FT':FT':FT  BC':BC':BC  DE':DE':DE  HL':HL':pc:HL:HL'
 		jal	.comPrintRegisters
