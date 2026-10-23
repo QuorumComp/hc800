@@ -1,42 +1,5 @@
-STD = ../stdlib/std.lib
-LOWLEVEL = ../lowlevel/lowlevel.lib
-LIBS = $(STD) $(LOWLEVEL)
 SRCS = dir.asm
-DEBUG ?= 0
-ASMFLAGS = -g -el -z0 -i../
-ASMFLAGS += -D _DEBUG=$(DEBUG)
 TARGET = dir
-
-ASM = motorrc8
-LIB = xlib
-LINK = xlink
-
-DEPDIR := .d
-DEPFLAGS = -d$(DEPDIR)/$*.d
-
-ifeq ($(MAKE_HOST),Windows32)
-$(shell mkdir $(DEPDIR) >NUL 2>&1)
-REMOVEALL = del /S /Q $(TARGET) $(notdir $(SRCS:asm=obj)) $(DEPDIR) >NUL
-else
-$(shell mkdir -p $(DEPDIR) >/dev/null)
-REMOVEALL = rm -rf $(TARGET) $(notdir $(SRCS:asm=obj)) $(DEPDIR)
-endif
-
-ASSEMBLE = $(ASM) $(DEPFLAGS) $(ASMFLAGS)
-
-$(TARGET) : $(notdir $(SRCS:asm=obj)) $(LIBS)
-	@echo "\033[1;33m    Link\033[0m $(@F)"
-	@$(LINK) -sEntry -m$@.sym -o$@ -chc8s -fhc800 $+
-
-%.obj : %.asm
-%.obj : %.asm $(DEPDIR)/%.d
-	@echo "\033[0;32mAssemble\033[0m $(@F)"
-	@$(ASSEMBLE) -o$@ $<
-
-$(DEPDIR)/%.d: ;
-.PRECIOUS: $(DEPDIR)/%.d
-
-clean :
-	$(REMOVEALL)
-
-include $(wildcard $(patsubst %,$(DEPDIR)/%.d,$(basename $(notdir $(SRCS)))))
+LIBS = $(STD) $(LOWLEVEL)
+LINKFLAGS = -sEntry -m$@.sym -o$@ -chc8s -fhc800
+include ../rules.mk

@@ -36,7 +36,14 @@ lazy val hc800 = (project in file("."))
 			}
 		},
 
-		Compile / unmanagedSourceDirectories += baseDirectory.value / "rc800",
+		// Only the core sources; the submodule's own build also runs its tests.
+		Compile / unmanagedSourceDirectories +=
+			baseDirectory.value / "rc800" / "spinal" / "src" / "main" / "scala",
+
+		// The submodule owns the tests, but Metals imports this build, so give
+		// them a Test classpath (and let `sbt test` here run them too).
+		Test / unmanagedSourceDirectories +=
+			baseDirectory.value / "rc800" / "spinal" / "src" / "test" / "scala",
 
 		Compile / run := ((Compile / run) dependsOn buildMachineCode)
 	)

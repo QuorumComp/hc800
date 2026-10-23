@@ -10,6 +10,7 @@ TARGETS = \
 	devices/devices \
 	dir/dir \
 	gfxtest/gfxtest \
+	jurgen/jurgen \
 	mathtest/mathtest \
 	reset/reset \
 	type/type \

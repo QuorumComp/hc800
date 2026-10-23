@@ -46,7 +46,9 @@ class SD extends Component {
 		} elsewhen (fastClock) {
 			sdClock := clockCount(1)
 			shiftDataOut := clockCount(1 downto 0) === 0
-			shiftDataIn := clockCount(1 downto 0) === 2
+			// Sample late in the high phase (the stock core's timing), giving
+			// a slow card a full phase to drive MISO after the rising edge.
+			shiftDataIn := clockCount(1 downto 0) === 3
 		}
 
 		when (sdClock.fall()) {

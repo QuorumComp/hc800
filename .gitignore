@@ -112,6 +112,7 @@ firmware/boot/boot.bin
 firmware/devices/devices
 firmware/dir/dir
 firmware/gfxtest/gfxtest
+firmware/jurgen/jurgen
 firmware/hd.img
 firmware/hd-part.img
 firmware/hd-2part.img
@@ -182,3 +183,5 @@ boards/specnext/hc800_zxnext.v_toplevel_memoryArea_font_memory.bin
 boards/specnext/hc800_zxnext.v_toplevel_memoryArea_kernel_memory.bin
 boards/mega65/hc800_mega65.v_toplevel_memoryArea_bootROM_memory.bin
 boards/mega65/hc800_mega65.v_toplevel_memoryArea_font_memory.bin
+boards/*/hc800_*.v_toplevel_*_registers_registers_registers_*_even.bin
+boards/*/hc800_*.v_toplevel_*_registers_registers_registers_*_odd.bin
