@@ -11,6 +11,7 @@ Entry::
 		;jal	TestPick
 		;jal	TestStringDrop
 		;jal	TestStringCompare
+		jal	TestStow
 		jal	TestStackPointer
 		jal	TestCompare
 		jal	TestPrint
@@ -39,6 +40,23 @@ TestPick:
 
 		pop	ft
 		pop	ft
+
+		popa
+		j	(hl)
+
+TestStow:
+		pusha
+
+		MPrintString <"STOW expect $ABCD = $">
+		ld	bc,$ABCD
+		ld	t,4
+		stow	bc		; BC stack entry 4 <- $ABCD
+		ld	bc,$1234	; the register changes, the entry does not
+		ld	t,4
+		pick	bc		; BC <- entry 4
+		ld	ft,bc
+		jal	StreamHexWordOut
+		MNewLine
 
 		popa
 		j	(hl)
