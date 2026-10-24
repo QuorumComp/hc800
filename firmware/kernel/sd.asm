@@ -128,6 +128,23 @@ WAIT_READY_KEEP_FT:	MACRO
 		pop	ft
 		ENDM
 
+; -- Read one byte from the card into T.
+; -- Requires b = IO_SDCARD_BASE. Clobbers c, t and the flags.
+SD_READ:	MACRO
+		WAIT_READY
+		ld	c,IO_SD_DATA
+		lio	t,(bc)
+		ENDM
+
+; -- Check an R1 reply byte in D; leave it in T and set EQ if no error bits.
+; -- Clobbers t and the flags.
+SD_CHECK_R1:	MACRO
+		ld	t,REPLY_ERRORS
+		and	t,d
+		cmp	t,0	; set success flag
+		ld	t,d
+		ENDM
+
 	IF _DEBUG
 MScreenByteOut:	MACRO
 		push	hl
@@ -165,7 +182,7 @@ SdResetController:
 ; -- Get total number of blocks (CMD9)
 ; --
 ; -- Inputs:
-; --   bc - pointer to 32 bit block number
+; --   bc - pointer to 32 bit block count
 ; --
 ; -- Returns:
 ; --    f - "eq" condition if success
@@ -176,7 +193,7 @@ SdResetController:
 SdGetTotalBlocks:
 		MDebugPrint <"SdGetTotalBlocks\n">
 		
-	IF ~SD_ENABLED
+	IF SD_ENABLED==0
 
 		ld	f,FLAGS_NE
 		j	(hl)
@@ -184,6 +201,8 @@ SdGetTotalBlocks:
 	ELSE
 
 		push	bc/de/hl
+		; The caller's size destination stays in the BC stack frame; the
+		; scratch entry created by the push is what the decoder writes.
 
 		SELECT
 
@@ -195,26 +214,135 @@ SdGetTotalBlocks:
 		jal	sdFinalBits5	;arg, CRC
 
 		jal	sdInFirst
-		j/ne	.error
-
+		jal/ne	.error	; conditional long jump; clobbers HL when taken; does not return
 		jal	sdInPacket
-		j/ne	.error
+		jal/ne	.error	; conditional long jump; clobbers HL when taken; does not return
 
-		; 16 bytes
-
-		lio	t,(bc)
-		MScreenByteOut
+		; The 16-byte CSD is decoded as it streams; nothing is buffered.
+		; Byte 0 selects the layout; the remaining bytes are consumed with
+		; the fields captured on the fly.
+		SD_READ
 		and	t,$C0
 		cmp	t,0
-		j/eq	.v1
-
+		jal/eq	.v1	; conditional long jump; clobbers HL when taken; does not return
 		cmp	t,$40
-		j/ne	.error
+		jal/ne	.error	; conditional long jump; clobbers HL when taken; does not return
 
-.v2		jal	.handle_v2
+		; fallthrough to .v2
+
+; -- CSD version 2 (high capacity): (C_SIZE+1) * 512 KiB, C_SIZE = [69:48]
+; -- bytes 1-6 discarded, 7-9 captured, 10-15 discarded
+.v2		MDebugPrint <"CSD v2\n">
+
+		; skip csd[1..6]; t = csd[7]
+		ld	t,6
+		jal	sdSkipThenRead
+
+		; l = C_SIZE[21:16] = csd[7] & $3F
+		and	t,$3F
+		ld	l,t
+
+		; de = C_SIZE[15:0] = csd[8] << 8 | csd[9]
+		SD_READ
+		ld	d,t
+		SD_READ
+		ld	e,t
+
+		push	hl		; save C_SIZE high across the call
+		ld	t,6
+		jal	sdSkipBytes
+		pop	hl
+
+		; hl = C_SIZE high word
+		ld	h,0
+
+		; ft:ft' = C_SIZE, then C_SIZE+1
+		ld	ft,de
+		push	ft
+		ld	ft,hl
+		jal	MathInc_32
+
+		; blocks = (C_SIZE+1) << 10
+		ld	b,10
+		jal	MathShiftLeft_32
+		jal	.store	; long jump; clobbers HL; does not return
+
+; -- CSD version 1 (standard capacity):
+; -- bytes = (C_SIZE+1) * 2^(C_SIZE_MULT+2) * 2^READ_BL_LEN
+; -- blocks = (C_SIZE+1) << (C_SIZE_MULT + 2 + READ_BL_LEN - 9)
+; -- bytes 1-4 discarded, 5-10 captured, 11-15 discarded
+.v1		MDebugPrint <"CSD v1\n">
+
+		; skip csd[1..4]; t = csd[5] (READ_BL_LEN)
+		ld	t,4
+		jal	sdSkipThenRead
+
+		; h = READ_BL_LEN - 9
+		and	t,$0F
+		sub	t,9
+		ld	h,t
+
+		; de = (csd[6] & $03) << 10
+		SD_READ
+		and	t,$03
+		ls	ft,10
+		ld	de,ft
+
+		; de |= csd[7] << 2
+		SD_READ
+		ld	f,0
+		ls	ft,2
+		add	ft,de
+		ld	de,ft
+
+		; de = C_SIZE+1 = de + (csd[8] >> 6) + 1
+		SD_READ
+		and	t,$C0
+		ld	f,0
+		rs	ft,6
+		add	ft,de
+		add	ft,1
+		ld	de,ft
+
+		; l = (C_SIZE_MULT[2:1]) << 1
+		SD_READ
+		and	t,$03
+		ls	ft,1
+		ld	l,t
+
+		; t = C_SIZE_MULT
+		SD_READ
+		and	t,$80
+		ld	f,0
+		rs	ft,7
+		add	t,l
+
+		; park C_SIZE_MULT while the rest of the packet is discarded
+		push	ft/hl		; save READ_BL_LEN - 9 across the call
+		ld	t,5
+		jal	sdSkipBytes
+		pop	ft/hl
+
+		; shift = C_SIZE_MULT + 2 + (READ_BL_LEN - 9)
+		add	t,h
+		add	t,2
+		ld	b,t
+
+		; ft:ft' = 0 : (C_SIZE+1)
+		ld	ft,de
+		push	ft
+		ld	ft,0
+		jal	MathShiftLeft_32
+
+.store
+		; The BC stack top is the scratch slot made by PUSH BC/DE/HL; the
+		; caller's size pointer is the entry below it.
+		push	ft
+		ld	t,1
+		pick	bc
+		pop	ft
+		jal	MathStoreLong
 		j	.done
-
-.v1		jal	.handle_v1
 
 .done		MScreenNewLine
 		ld	f,FLAGS_EQ
@@ -224,106 +352,14 @@ SdGetTotalBlocks:
 		pop	bc/de/hl
 		j	(hl)
 
-.handle_v2	push	hl
-		MDebugPrint <"CSD v2\n">
-
-		; 13 bits []
-		; shift 19
-
-		jal	sdSkipBytes8
-
-		lio	t,(bc)
-		MScreenByteOut
-		and	t,$1F	; 60:56
-		exg	f,t
-		WAIT_READY_SAVE_FT
-		lio	t,(bc)	; 55:48
-		MScreenByteOut
-
-		ls	ft,3
-		push	ft
-
-		jal	sdSkipBytes4
-		jal	sdInLast
-
-		ld	ft,0
-		swap	ft	; ft:ft' 13 bits << 19
-
-		pop	bc
-		jal	MathStoreLong
-
-		pop	hl
-		j	(hl)
-
-.handle_v1	push	hl
-
-		MDebugPrint <"CSD v1\n">
-		jal	sdSkipBytes4
-
-		; READ_BL_LEN [83:80]
-		lio	t,(bc)
-		and	t,$0F
-		sub	t,9	; map block length to shift factor
-		ld	f,0
-		ld	hl,ft
-
-		; C_SIZE [73:62]
-		lio	t,(bc)
-		and	t,$03
-		ld	f,t
-		WAIT_READY_SAVE_FT
-		lio	t,(bc)
-		ls	ft,2
-		ld	de,ft
-		WAIT_READY_SAVE_FT
-		lio	t,(bc)
-		ld	f,0
-		ls	ft,2
-		ld	t,d
-		exg	f,t
-		or	t,e
-		ld	de,ft	; de = C_SIZE, 12 bits
-		add	de,1
-
-		; C_SIZE_MULT [49:47]
-
-		lio	t,(bc)
-		and	t,$03
-		ld	f,t
-		WAIT_READY_SAVE_FT
-		lio	t,(bc)
-		rs	ft,7	; ft = C_SIZE_MULT
-		add	ft,2
-		add	ft,hl	; ft = shift amount for C_SIZE
-		ld	bc,ft
-
-		push	bc
-		jal	sdSkipBytes5
-		jal	sdInLast
-		pop	bc
-
-		push	ft
-		ld	ft,0
-
-		; ft:ft' = C_SIZE
-		; bc = shift amount for C_SIZE
-		; bc' = pointer to size
-
-		jal	MathShiftLeft_32
-		pop	bc
-		jal	MathStoreLong
-
-		pop	hl
-		j	(hl)
-
 	ENDC
 
 ; ---------------------------------------------------------------------------
-; -- Write block to SD card (CMD17)
+; -- Write block to SD card (CMD24, not implemented)
 ; --
 ; -- Inputs:
-; --   bc - pointer to 32 bit block number
-; --   de - pointer to destination
+; --   ft:ft' - block number
+; --   de - pointer to source
 ; --
 ; -- Returns:
 ; --    f - "eq" condition if success
@@ -407,12 +443,8 @@ SdReadSingleBlock:
 		MDebugPrint <"  did read\n">
 
 		; Discard CRC
-		ld	l,2
-.crc_loop
-		WAIT_READY
-		ld	c,IO_SD_DATA
-		lio	t,(bc)
-		dj	l,.crc_loop
+		ld	t,2
+		jal	sdSkipBytes
 
 		ld	f,FLAGS_EQ
 
@@ -544,21 +576,13 @@ sdDeselect:
 
 		; Let the previous byte shift finish, send one release byte while the
 		; card is still selected, wait for it, then deassert the card select.
-		ld	c,IO_SD_STATUS
-.wait_prev	lio	t,(bc)
-		and	t,IO_STAT_ACTIVE
-		cmp	t,IO_STAT_ACTIVE
-		j/eq	.wait_prev
+		WAIT_READY
 
 		ld	c,IO_SD_DATA
 		ld	t,$FF
 		lio	(bc),t
 
-		ld	c,IO_SD_STATUS
-.wait_dummy	lio	t,(bc)
-		and	t,IO_STAT_ACTIVE
-		cmp	t,IO_STAT_ACTIVE
-		j/eq	.wait_dummy
+		WAIT_READY
 
 		; Deselect both cards (and stop the clocks). Safe here: no shift
 		; is active, so clearing the clock-select bits cannot stall one.
@@ -629,8 +653,8 @@ sdSendBlockNumber:
 ; --   	b - IO_SDCARD_BASE
 ; --
 ; -- Returns:
-; --    t - card type
-; --    f - "eq" condition if initialized
+; --    f - "eq" condition if the card accepted CMD16
+; --    t - R1 response byte
 ; -- Clock: selects slow (CMD16 may legally run fast after ACMD41, but slow is conservative).
 ; --
 		SECTION	"sdSetBlockLen512",CODE
@@ -720,38 +744,35 @@ sdSendBytes6_Slow:
 
 
 ; ---------------------------------------------------------------------------
-; -- Skip bytes from SD card
+; -- Skip/read bytes from the SD card
 ; --
-; -- Clock: caller's clock. Called only from SdGetTotalBlocks (fast);
-; -- polls before each read.
+; -- Inputs:
+; --   	t - byte count (1-255)
+; --   	b - IO_SDCARD_BASE
+; --
+; -- sdSkipBytes:    read and discard t bytes; the last read remains in t
+; -- sdSkipThenRead: skip t bytes and return the next byte in t
+; --
+; -- Clobbers t, f, c and l. JAL clobbers HL, so a caller with a live value
+; -- in HL must save it around the call.
+; --
+; -- Clock: caller's clock; polls before each read.
 ; --
 		SECTION	"sdSkipBytes",CODE
-sdSkipBytes4:
-		pusha
-		ld	l,4
-		j	sdSkipBytes6\.entry
+; -- Skip t bytes, then read the next byte into t.
+sdSkipThenRead:
+		add	t,1
 
-sdSkipBytes5:
-		pusha
-		ld	l,5
-		j	sdSkipBytes6\.entry
+		; fall through
 
-sdSkipBytes8:
-		pusha
-		ld	l,8
-		j	sdSkipBytes6\.entry
-
-sdSkipBytes6:
-		pusha
-		ld	l,6
-.entry
-.loop		WAIT_READY
-		ld	c,IO_SD_DATA
-		lio	t,(bc)
-		MScreenByteOut
+; -- Read t bytes, discarding them. The last byte read remains in t.
+sdSkipBytes:
+		push	hl
+		ld	l,t
+.loop
+		SD_READ
 		dj	l,.loop
-
-		popa
+		pop	hl
 		j	(hl)
 
 ; ---------------------------------------------------------------------------
@@ -873,22 +894,13 @@ sdReadOcr:
 		jal	sdInFirst
 		j/ne	.fail
 
-		WAIT_READY
-		ld	c,IO_SD_DATA
-		lio	t,(bc)
-
+		SD_READ
 		ld	d,t
-		WAIT_READY
-		ld	c,IO_SD_DATA
-		lio	t,(bc)
-
+		SD_READ
 		ld	e,t
 		push	de
-		WAIT_READY
-		ld	c,IO_SD_DATA
-		lio	t,(bc)
+		SD_READ
 		ld	d,t
-
 		jal	sdInLast
 		ld	e,t
 
@@ -1005,20 +1017,13 @@ sdSendIfCond:
 		jal	sdInFirst
 		j/ne	.fail
 
-		WAIT_READY
-		ld	c,IO_SD_DATA
-		lio	t,(bc)		;R7[31:24]
-
-		WAIT_READY
-		ld	c,IO_SD_DATA
-		lio	t,(bc)		;R7[23:16]
-
-		WAIT_READY
-		ld	c,IO_SD_DATA
-		lio	t,(bc)		;R7[15:8]
+		; skip R7[31:24] and R7[23:16]; t = R7[15:8] (voltage)
+		ld	t,2
+		jal	sdSkipThenRead
 		and	t,CMD8_VOLTAGES
 		ld	d,t		;d = voltage mask
 
+		; R7[7:0] = check pattern
 		jal	sdInLast	;R7[7:0]
 
 		cmp	d,CMD8_VOLTAGES
@@ -1082,9 +1087,7 @@ sdInFirst:
 		push	de/hl
 
 		ld	e,100
-.loop		WAIT_READY
-		ld	c,IO_SD_DATA
-		lio	t,(bc)
+.loop		SD_READ
 		MScreenByteOut
 		ld	d,t
 		and	t,$80
@@ -1095,10 +1098,7 @@ sdInFirst:
 		j	.exit
 
 .done		MScreenNewLine
-		ld	t,REPLY_ERRORS
-		and	t,d
-		cmp	t,0	; set success flag
-		ld	t,d
+		SD_CHECK_R1
 
 .exit		pop	de/hl
 		j	(hl)
@@ -1120,16 +1120,10 @@ sdInFirst_GoIdle:
 		MDebugPrint <"sdInFirst_GoIdle\n">
 		push	de/hl
 
-		ld	ft,SdSelect
-		ld	t,(ft)
-		or	t,IO_SEL_SLOW_CLOCK
-		ld	c,IO_SD_SELECT
-		lio	(bc),t
+		SELECT_SLOW
 
 		ld	e,100
-.loop		WAIT_READY
-		ld	c,IO_SD_DATA
-		lio	t,(bc)
+.loop		SD_READ
 		ld	d,t
 		cmp	t,REPLY_IDLE
 		j/eq	.done
@@ -1141,42 +1135,26 @@ sdInFirst_GoIdle:
 
 		MDebugHexByte d
 		MDebugNewLine
-		ld	t,REPLY_ERRORS
-		and	t,d
-		cmp	t,0	; set success flag
-		ld	t,d
+		SD_CHECK_R1
 
 .exit		pop	de/hl
 		j	(hl)
 		
 
 ; ---------------------------------------------------------------------------
-; -- Fetch last reply byte, disable hardware fetch circuit
+; -- Fetch last reply byte
 ; --
 ; -- Inputs:
 ; --   	b - IO_SDCARD_BASE
 ; --
 ; -- Returns:
-; --    f - "eq" condition if success
 ; --    t - byte
-; -- Clock: caller's clock; polls. Called fast from SdGetTotalBlocks and
-; -- slow from sdReadOcr and sdSendIfCond.
+; -- Clock: caller's clock; polls. Called slow from sdReadOcr and sdSendIfCond.
 ; --
 		SECTION	"sdInLast",CODE
 sdInLast:
-		WAIT_READY
-		ld	c,IO_SD_DATA
-		lio	t,(bc)
+		SD_READ
 		MScreenByteOut
-
-		push	ft
-
-		ld	c,IO_SD_STATUS
-		ld	t,0
-		lio	(bc),t
-
-		pop	ft
-
 		j	(hl)
 		
 
@@ -1231,9 +1209,7 @@ sdFinalBits4:
 sdInPacket:	push	de/hl
 
 		MLDLoop	de,1000
-.wait_packet	WAIT_READY
-		ld	c,IO_SD_DATA
-		lio	t,(bc)
+.wait_packet	SD_READ
 		MScreenByteOut
 		cmp	t,$FF
 		j/ne	.got_packet

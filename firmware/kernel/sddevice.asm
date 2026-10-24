@@ -123,17 +123,16 @@ readBlock:
 ; --    f - "eq" condition if success
 ; --
 getSize:
+		push	hl
 		push	bc
 
-		ld	t,$FF
-		ld	f,4
-.loop		ld	(bc),t
-		add	bc,1
-		dj	f,.loop
+		ld	bc,ft		; device structure
+		jal	setSdVariables
+		pop	bc		; size target
 
-		ld	f,FLAGS_NE
+		jal	SdGetTotalBlocks
 
-		pop	bc
+		pop	hl
 		j	(hl)
 
 
