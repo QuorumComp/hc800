@@ -12,6 +12,7 @@ Entry::
 		;jal	TestStringDrop
 		;jal	TestStringCompare
 		jal	TestStow
+		jal	TestRegisterLocals
 		jal	TestStackPointer
 		jal	TestCompare
 		jal	TestPrint
@@ -59,6 +60,74 @@ TestStow:
 		MNewLine
 
 		popa
+		j	(hl)
+
+TestRegisterLocals:
+		pusha
+
+		MPrintString <"locals expect $0006 = $">
+		ld	bc,$0000
+		ld	ft,$FFFF
+		jal	local_rmw
+		jal	StreamHexWordOut
+		MNewLine
+
+		MPrintString <"locals expect $555D = $">
+		ld	bc,$1111
+		ld	ft,$2222
+		jal	local_rmw
+		jal	StreamHexWordOut
+		MNewLine
+
+		popa
+		j	(hl)
+
+; --
+; -- local_rmw
+; --   Demonstrates register-stack locals: store the first argument in a
+; --   local, update a second local in place, then run an FT-only operation
+; --   on it and write it back.
+; --
+; -- Inputs:
+; --   FT: x
+; --   BC: y
+; --
+; -- Outputs:
+; --   FT: ((x + 4) << 1) + y
+; --
+		SECTION "local_rmw",CODE
+local_rmw:
+		push	de
+		ld	de,0
+		push	de
+		push	de
+		; depth 0 = scratch, 1 = local 1, 2 = local 2, 3 = caller DE
+
+		ld	de,ft
+		ld	t,2
+		stow	de
+
+		ld	t,2
+		pick	de
+		add	de,4
+		ld	t,1
+		stow	de
+
+		ld	t,1
+		pick	de
+		exg	ft,de
+		ls	ft,1
+		add	ft,bc
+		exg	ft,de
+		stow	de
+
+		ld	t,1
+		pick	de
+		ld	ft,de
+
+		pop	de
+		pop	de
+		pop	de
 		j	(hl)
 
 TestStackPointer:
@@ -254,6 +323,76 @@ TestDiv:
 		pop	ft
 		pop	bc
 		pop	bc
+		MNewLine
+
+		; signed divides: C99 truncates the quotient toward zero and
+		; keeps the remainder on the dividend's side of zero, so a
+		; negative dividend must give a negative remainder.
+
+		MPrintString <"-7 / 2 = (signed, expect FFFF:FFFD) ">
+		MPush32	ft,$FFFFFFF9
+		ld	bc,2
+		jal	MathDivideSigned_32by16_q16_r16
+		jal	StreamHexWordOut
+		MPrintChar ':'
+		pop	ft
+		jal	StreamHexWordOut
+		pop	ft
+		MNewLine
+
+		MPrintString <"-7 / -2 = (signed, expect FFFF:0003) ">
+		MPush32	ft,$FFFFFFF9
+		ld	bc,$FFFE
+		jal	MathDivideSigned_32by16_q16_r16
+		jal	StreamHexWordOut
+		MPrintChar ':'
+		pop	ft
+		jal	StreamHexWordOut
+		pop	ft
+		MNewLine
+
+		MPrintString <"7 / -2 = (signed, expect 0001:FFFD) ">
+		MPush32	ft,$00000007
+		ld	bc,$FFFE
+		jal	MathDivideSigned_32by16_q16_r16
+		jal	StreamHexWordOut
+		MPrintChar ':'
+		pop	ft
+		jal	StreamHexWordOut
+		pop	ft
+		MNewLine
+
+		MPrintString <"-100 / 7 = (signed, expect FFFE:FFF2) ">
+		MPush32	ft,$FFFFFF9C
+		ld	bc,7
+		jal	MathDivideSigned_32by16_q16_r16
+		jal	StreamHexWordOut
+		MPrintChar ':'
+		pop	ft
+		jal	StreamHexWordOut
+		pop	ft
+		MNewLine
+
+		MPrintString <"100 / -7 = (signed, expect 0002:FFF2) ">
+		MPush32	ft,$00000064
+		ld	bc,$FFF9
+		jal	MathDivideSigned_32by16_q16_r16
+		jal	StreamHexWordOut
+		MPrintChar ':'
+		pop	ft
+		jal	StreamHexWordOut
+		pop	ft
+		MNewLine
+
+		MPrintString <"-1000000 / 333 = (signed, expect FFFF:F445) ">
+		MPush32	ft,$FFF0BDC0
+		ld	bc,$014D
+		jal	MathDivideSigned_32by16_q16_r16
+		jal	StreamHexWordOut
+		MPrintChar ':'
+		pop	ft
+		jal	StreamHexWordOut
+		pop	ft
 		MNewLine
 
 		popa

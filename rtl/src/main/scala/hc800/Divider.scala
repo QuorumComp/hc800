@@ -66,9 +66,10 @@ class DividerUnit32x32 extends Component {
 	divider.io.divisor  := operandAsUInt(io.divisor)
 
 	private val negateResult = io.signed & (io.dividend.msb ^ io.divisor.msb)
+	private val negateRemainder = io.signed & io.dividend.msb
 
 	io.quotient  := (negateResult ? -divider.io.quotient.asSInt | divider.io.quotient.asSInt).asBits
-	io.remainder := divider.io.remainder.asBits
+	io.remainder := (negateRemainder ? -divider.io.remainder.asSInt | divider.io.remainder.asSInt).asBits
 	io.ready     := divider.io.ready
 }
 
