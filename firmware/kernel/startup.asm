@@ -6,9 +6,8 @@
 		INCLUDE	"main.i"
 		INCLUDE	"mmu.i"
 		INCLUDE "text.i"
+		INCLUDE	"video.i"
 		INCLUDE "uart_commands.i"
-
-		IMPORT	VBlankHandler
 
 Debug:		MACRO
 		pusha
@@ -24,26 +23,6 @@ Debug:		MACRO
 		SECTION "Checksum",CODE[7],ROOT
 		DB	0
 
-		SECTION "NMI",CODE[$8],ROOT
-		ld	t,$08
-		ld	de,FailEntry
-		j	(de)
-
-		SECTION "IllegalIrq",CODE[$10],ROOT
-		ld	t,$10
-		ld	de,FailEntry
-		j	(de)
-
-		SECTION "IllegalInstruction",CODE[$18],ROOT
-		ld	t,$18
-		ld	de,FailEntry
-		j	(de)
-
-		SECTION "StackOverflow",CODE[$20],ROOT
-		ld	t,$20
-		ld	de,FailEntry
-		j	(de)
-
 		SECTION "Interrupt",CODE[$28],ROOT
 		pusha
 		ld	hl,Interrupt
@@ -55,27 +34,6 @@ Debug:		MACRO
 		; startup clear zeroes [0,$4000), so these bytes start at zero.
 		SECTION	"ZeroPage",BSS[0],ROOT
 nullPage:	DS	2
-
-
-		SECTION "FailEntry",CODE
-FailEntry:
-		di
-		push	hl
-		jal	ComPrintHexByte
-		MDebugPrint <" vector crashed at ">
-		pop	hl
-		ld	ft,hl
-		ld	de,ft
-		ld	t,d
-		jal	ComPrintHexByte
-		ld	t,e
-		jal	ComPrintHexByte
-		ld	t,10
-		jal	ComPrintChar
-
-		ld	f,$FF
-		jal	SetHexSegments
-.spin		j	.spin
 
 
 		SECTION "Startup",CODE

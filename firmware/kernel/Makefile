@@ -3,6 +3,7 @@ SRCS = startup.asm \
 	commandline.asm \
 	editor.asm \
 	error.asm \
+	fail.asm \
 	fat32.asm \
 	filesystems.asm \
 	keyboard.asm \

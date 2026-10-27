@@ -91,6 +91,8 @@ InitializePalette:
 		DRGB	$1F,$1B,$16
 		DRGB	$0D,$05,$00
 		DRGB	$1F,$0D,$05
+		DRGB	$00,$00,$00	; 4: fail-screen background (black)
+		DRGB	$1F,$00,$00	; 5: fail-screen foreground (red)
 
 ; 00000  00100  01001  01101  10010  10110  11011  11111
 ; $00,   $05,   $09,   $0D,   $12,   $16,   $1B,   $1F
