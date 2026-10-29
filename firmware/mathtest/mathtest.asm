@@ -291,8 +291,8 @@ TestPrint:
 		MPrintString <"Expect 3124567890 = ">
 		jal	StreamDecimalLongOut
 		MNewLine
-		pop	ft
-		pop	ft
+		; StreamDecimalLongOut consumes the ft:ft' parameter; no pops
+		; here - extra pops would underflow the FT stack
 
 		popa
 		j	(hl)
