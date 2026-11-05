@@ -50,11 +50,9 @@ TestStow:
 
 		MPrintString <"STOW expect $ABCD = $">
 		ld	bc,$ABCD
-		ld	t,4
-		stow	bc		; BC stack entry 4 <- $ABCD
+		stow	bc,4		; BC stack entry 4 <- $ABCD
 		ld	bc,$1234	; the register changes, the entry does not
-		ld	t,4
-		pick	bc		; BC <- entry 4
+		pick	bc,4		; BC <- entry 4
 		ld	ft,bc
 		jal	StreamHexWordOut
 		MNewLine
@@ -104,25 +102,20 @@ local_rmw:
 		; depth 0 = scratch, 1 = local 1, 2 = local 2, 3 = caller DE
 
 		ld	de,ft
-		ld	t,2
-		stow	de
+		stow	de,2
 
-		ld	t,2
-		pick	de
+		pick	de,2
 		add	de,4
-		ld	t,1
-		stow	de
+		stow	de,1
 
-		ld	t,1
-		pick	de
+		pick	de,1
 		exg	ft,de
 		ls	ft,1
 		add	ft,bc
 		exg	ft,de
-		stow	de
+		stow	de,1
 
-		ld	t,1
-		pick	de
+		pick	de,1
 		ld	ft,de
 
 		pop	de

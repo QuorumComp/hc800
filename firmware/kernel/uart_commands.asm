@@ -351,10 +351,10 @@ ComPrintRegisterOverview:
 		pusha
 		; FT':FT':FT  BC':BC':BC  DE':DE':DE  pc:pc:HL:HL'
 
-		; Park FT around the pick
+		; Park FT around the pick (kept for symmetry; the immediate pick
+		; no longer clobbers T)
 		push	ft
-		ld	t,3
-		pick	hl
+		pick	hl,3
 		pop	ft
 		; FT':FT':FT  BC':BC':BC  DE':DE':DE  HL':pc:HL:HL'
 

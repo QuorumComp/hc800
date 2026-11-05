@@ -338,8 +338,7 @@ SdGetTotalBlocks:
 		; The BC stack top is the scratch slot made by PUSH BC/DE/HL; the
 		; caller's size pointer is the entry below it.
 		push	ft
-		ld	t,1
-		pick	bc
+		pick	bc,1
 		pop	ft
 		jal	MathStoreLong
 		j	.done
