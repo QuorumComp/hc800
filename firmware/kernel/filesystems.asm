@@ -868,8 +868,8 @@ normalizePathComponents:
 		push	ft
 
 		; adjust remaining length
-		exg	t,e
 		sub	t,e
+		neg	t
 		ld	e,t
 
 		pop	ft
