@@ -182,6 +182,8 @@ boards/specnext/hc800_zxnext.v_toplevel_memoryArea_bootROM_memory.bin
 boards/specnext/hc800_zxnext.v_toplevel_memoryArea_font_memory.bin
 boards/specnext/hc800_zxnext.v_toplevel_memoryArea_kernel_memory.bin
 boards/mega65/hc800_mega65.v_toplevel_memoryArea_bootROM_memory.bin
+# decode-table ROM contents, loaded by $readmemb when simulating generated RTL
+boards/*/*decodeArea_decoderUnit_decoder_1_signalMem.bin
 boards/mega65/hc800_mega65.v_toplevel_memoryArea_font_memory.bin
 boards/*/hc800_*.v_toplevel_*_registers_registers_registers_*_even.bin
 boards/*/hc800_*.v_toplevel_*_registers_registers_registers_*_odd.bin

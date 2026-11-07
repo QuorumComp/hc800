@@ -73,11 +73,28 @@ firmware:
 	$(MAKE) -C firmware --no-print-directory -s
 $(FW_BINS): | firmware
 
+# Decoder tables: the ROM decoder's rows are generated *from* the
+# combinational chain, and this build elaborates the ROM.  So regenerate
+# and verify before anything consumes it: the generators rewrite the golden
+# control-word table and LookupDecoder.scala only when they differ (unchanged
+# output keeps its timestamp, so a no-op regeneration stays a no-op), and the
+# decoder tests then prove the committed ROM still matches the chain.  An
+# edit to the chain therefore refreshes the table on its own; an edit that
+# the table has not caught up with stops the build instead of shipping a
+# stale decode.  'just decodertables' at the meta root is the same stage on
+# its own.
+DEC_STAMP := $(BD)/build/decoder.stamp
+
+$(DEC_STAMP): $(RTL_SRCS)
+	cd rtl && sbt -batch "runMain rc800.decoder.DecoderGoldenGen" "runMain rc800.decoder.LookupTableGen" "testOnly rc800.decoder.*"
+	mkdir -p "$(abspath $(BD)/build)"
+	touch "$(abspath $@)"
+
 # SpinalHDL -> board Verilog + memory images. sbt runs only when Scala
 # sources, firmware images, or font data are newer than the artifacts
 # (the artifacts are prerequisites of the stamp, so deleting any of them
 # also forces regeneration).
-$(RTL_STAMP): $(RTL_SRCS) $(FW_BINS) $(DATA_BINS) $(GEN_V) $(GEN_BINS)
+$(RTL_STAMP): $(DEC_STAMP) $(RTL_SRCS) $(FW_BINS) $(DATA_BINS) $(GEN_V) $(GEN_BINS)
 	cd rtl && sbt "runMain hc800.HC800TopLevel"
 	mkdir -p "$(abspath $(BD)/build)"
 	touch "$(abspath $@)"
