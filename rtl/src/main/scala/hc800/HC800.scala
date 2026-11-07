@@ -365,9 +365,12 @@ object HC800TopLevel {
 	}
 
 	def main(args: Array[String]): Unit = {
-		generate("../boards/mega65/hc800_mega65.v", BoardId.Board.mega65, Vendor.Xilinx)(rc800.lpm.generic.Components)
-		generate("../boards/specnext/hc800_zxnext.v", BoardId.Board.zxNext, Vendor.Xilinx)(rc800.lpm.generic.Components)
-		generate("../boards/nexys3/hc800_nexys3.v", BoardId.Board.nexys3, Vendor.Xilinx)(rc800.lpm.generic.Components)
+		// The Xilinx boards use the Xilinx component set, whose ROM lands in
+		// block memory; the Altera LPM set is only what the mist targets use,
+		// and the pure-Scala set is what the standalone simulation builds with.
+		generate("../boards/mega65/hc800_mega65.v", BoardId.Board.mega65, Vendor.Xilinx)(rc800.lpm.xilinx.Components)
+		generate("../boards/specnext/hc800_zxnext.v", BoardId.Board.zxNext, Vendor.Xilinx)(rc800.lpm.xilinx.Components)
+		generate("../boards/nexys3/hc800_nexys3.v", BoardId.Board.nexys3, Vendor.Xilinx)(rc800.lpm.xilinx.Components)
 		//generate("../../../rtl/hc800_mist.v", BoardId.Board.mist, Vendor.Altera)(rc800.lpm.blackbox.Components)
 		//generate("../../../rtl/hc800_mister.v", BoardId.Board.mister, Vendor.Altera)(rc800.lpm.blackbox.Components)
 	}
