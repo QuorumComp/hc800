@@ -67,17 +67,29 @@ Entry::
 
 .key_left
 		ld	bc,scrollX
-		ld	ft,(bc+)
+		ld	t,(bc)
+		add	bc,1
+		exg	f,t
+		ld	t,(bc)
+		exg	f,t
 		add	ft,1
 		j	.update_scrollx
 
 .key_right
 		ld	bc,scrollX
-		ld	ft,(bc+)
+		ld	t,(bc)
+		add	bc,1
+		exg	f,t
+		ld	t,(bc)
+		exg	f,t
 		sub	ft,1
 
 .update_scrollx	
-		ld	(-bc),ft
+		exg	f,t
+		ld	(bc),t
+		add	bc,-1
+		exg	f,t
+		ld	(bc),t
 
 		ld	b,IO_VIDEO_BASE
 
@@ -92,17 +104,29 @@ Entry::
 
 .key_up
 		ld	bc,scrollY
-		ld	ft,(bc+)
+		ld	t,(bc)
+		add	bc,1
+		exg	f,t
+		ld	t,(bc)
+		exg	f,t
 		add	ft,1
 		j	.update_scrolly
 
 .key_down
 		ld	bc,scrollY
-		ld	ft,(bc+)
+		ld	t,(bc)
+		add	bc,1
+		exg	f,t
+		ld	t,(bc)
+		exg	f,t
 		sub	ft,1
 
 .update_scrolly
-		ld	(-bc),ft
+		exg	f,t
+		ld	(bc),t
+		add	bc,-1
+		exg	f,t
+		ld	(bc),t
 
 		ld	b,IO_VIDEO_BASE
 

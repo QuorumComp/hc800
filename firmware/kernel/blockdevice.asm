@@ -105,7 +105,9 @@ BlockDeviceInit:
 		ld	bc,sectors
 
 		ld	ft,freeSectors
-		ld	(ft+),bc
+		ld	(ft),c
+		add	ft,1
+		ld	(ft),b
 	
 		ld	l,SECTOR_HEAP_SIZE-1
 .sector_heap_loop
@@ -222,7 +224,9 @@ BlockDeviceRead:
 
 		exg	ft,bc
 		add	ft,bdev_Read
-		ld	hl,(ft+)
+		ld	l,(ft)
+		add	ft,1
+		ld	h,(ft)
 		sub	ft,bdev_Read+1
 		exg	ft,bc
 
@@ -291,7 +295,11 @@ BlockDeviceGet:
 		ld	b,0
 		add	bc,blockDevicePointers
 
-		lco	ft,(bc+)
+		lco	t,(bc)
+		add	bc,1
+		exg	f,t
+		lco	t,(bc)
+		exg	f,t
 		ld	bc,ft
 
 		;MDebugRegisters
@@ -299,7 +307,9 @@ BlockDeviceGet:
 
 		; is Read function pointer NULL?
 
-		ld	de,(ft+)
+		ld	e,(ft)
+		add	ft,1
+		ld	d,(ft)
 		tst	de
 		j/eq	.fail
 

@@ -320,7 +320,11 @@ dirClose:
 
 		ld	de,ft
 		add	de,udir_File
-		ld	ft,(de+)
+		ld	t,(de)
+		add	de,1
+		exg	f,t
+		ld	t,(de)
+		exg	f,t
 
 		push	ft
 		jal	fileClose
@@ -354,7 +358,11 @@ dirRead:
 		; bc <- file struct
 .next_file_entry
 		add	de,udir_File
-		ld	ft,(de+)
+		ld	t,(de)
+		add	de,1
+		exg	f,t
+		ld	t,(de)
+		exg	f,t
 		ld	bc,ft
 
 		; alloc 32 bytes
@@ -466,11 +474,19 @@ dirRead:
 		add	bc,udir_StartCluster-dir_Length
 		add	de,DIRENT_CLUSTER_LOW-DIRENT_LENGTH
 		ld	ft,(de)
-		ld	(bc+),ft
+		ld	(bc),t
+		add	bc,1
+		exg	f,t
+		ld	(bc),t
+		exg	f,t
 		add	bc,1
 		add	de,DIRENT_CLUSTER_HIGH-DIRENT_CLUSTER_LOW
 		ld	ft,(de)
-		ld	(bc+),ft
+		ld	(bc),t
+		add	bc,1
+		exg	f,t
+		ld	(bc),t
+		exg	f,t
 
 		popa
 		ld	f,FLAGS_EQ
@@ -607,7 +623,11 @@ fileClose:
 
 		ld	bc,ft
 		add	bc,ufile_SectorData
-		ld	ft,(bc+)
+		ld	t,(bc)
+		add	bc,1
+		exg	f,t
+		ld	t,(bc)
+		exg	f,t
 		jal	BlockFreeSector
 
 		popa
@@ -635,7 +655,11 @@ fileRead:
 		; --
 .read_next
 		add	bc,ufile_RemainingBytes
-		ld	ft,(bc+)
+		ld	t,(bc)
+		add	bc,1
+		exg	f,t
+		ld	t,(bc)
+		exg	f,t
 		ld	hl,ft
 		pop	ft
 		push	ft
@@ -652,13 +676,21 @@ fileRead:
 		pusha
 		exg	ft,hl
 		sub	ft,hl
-		ld	(-bc),ft	; adjust remaining in structure
+		exg	f,t
+		ld	(bc),t
+		add	bc,-1
+		exg	f,t
+		ld	(bc),t	; adjust remaining in structure
 		popa
 
 		push	ft
 
 		add	bc,ufile_SectorData-(ufile_RemainingBytes+1)
-		ld	ft,(bc+)
+		ld	t,(bc)
+		add	bc,1
+		exg	f,t
+		ld	t,(bc)
+		exg	f,t
 		add	ft,BYTES_PER_SECTOR
 		sub	ft,hl
 		ld	bc,ft	; bc <- source
@@ -689,7 +721,11 @@ fileRead:
 		pop	bc
 		push	bc
 		add	bc,ufile_RemainingBytes
-		ld	ft,(bc+)
+		ld	t,(bc)
+		add	bc,1
+		exg	f,t
+		ld	t,(bc)
+		exg	f,t
 		tst	ft
 		j/ne	.dont_read_next
 
@@ -1022,18 +1058,34 @@ openFileSector:
 
 		add	bc,ufile_RootCluster
 		swap	ft
-		ld	(bc+),ft
+		ld	(bc),t
+		add	bc,1
+		exg	f,t
+		ld	(bc),t
+		exg	f,t
 		add	bc,1
 		swap	ft
-		ld	(bc+),ft
+		ld	(bc),t
+		add	bc,1
+		exg	f,t
+		ld	(bc),t
+		exg	f,t
 		add	bc,1
 
 		; ufile_Cluster
 		swap	ft
-		ld	(bc+),ft
+		ld	(bc),t
+		add	bc,1
+		exg	f,t
+		ld	(bc),t
+		exg	f,t
 		add	bc,1
 		pop	ft
-		ld	(bc+),ft
+		ld	(bc),t
+		add	bc,1
+		exg	f,t
+		ld	(bc),t
+		exg	f,t
 		add	bc,1
 
 		; ufile_SectorIndex
@@ -1041,12 +1093,20 @@ openFileSector:
 
 		jal	BlockAllocSector
 		; ufile_SectorData
-		ld	(bc+),ft
+		ld	(bc),t
+		add	bc,1
+		exg	f,t
+		ld	(bc),t
+		exg	f,t
 		add	bc,1
 
 		ld	ft,0
 		; ufile_RemainingBytes
-		ld	(bc+),ft
+		ld	(bc),t
+		add	bc,1
+		exg	f,t
+		ld	(bc),t
+		exg	f,t
 
 		pop	bc/de/hl
 
@@ -1139,7 +1199,10 @@ readNextFileSector:
 		push	bc
 		add	bc,fs_BlockDevice+1
 		push	ft
-		ld	ft,(-bc)
+		ld	t,(bc)
+		add	bc,-1
+		exg	f,t
+		ld	t,(bc)
 		ld	bc,ft
 		; bc - block device
 
@@ -1154,7 +1217,9 @@ readNextFileSector:
 		push	ft
 		add	ft,ufile_RemainingBytes
 		ld	bc,BYTES_PER_SECTOR
-		ld	(ft+),bc
+		ld	(ft),c
+		add	ft,1
+		ld	(ft),b
 
 		popa
 		ld	f,FLAGS_EQ
@@ -1189,7 +1254,10 @@ getNextCluster:
 
 		push	ft
 		add	bc,fat32_FatBase+1
-		ld	ft,(-bc)
+		ld	t,(bc)
+		add	bc,-1
+		exg	f,t
+		ld	t,(bc)
 		ld	bc,ft
 		push	bc
 		ld	bc,0
@@ -1204,7 +1272,10 @@ getNextCluster:
 		pop	bc
 		push	bc
 		add	bc,fs_BlockDevice+1
-		ld	ft,(-bc)
+		ld	t,(bc)
+		add	bc,-1
+		exg	f,t
+		ld	t,(bc)
 		ld	bc,ft
 		; bc - block device
 
