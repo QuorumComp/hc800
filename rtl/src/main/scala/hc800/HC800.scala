@@ -123,7 +123,13 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 		frequency = FixedFrequency(Constants.baseFrequency * 2),
 		config = ClockDomainConfig(
 			clockEdge        = RISING,
-			resetKind        = ASYNC,
+			// SYNC, not ASYNC: the board wrapper already registers sys_rst_i
+			// into this very clock (and holds it over power-up), so the reset
+			// is a timed signal, and asserting it synchronously keeps every
+			// RAM address cone inside static timing - an async clear on these
+			// flops is what made Vivado report the register-file stacks and
+			// the decode ROM as REQP-1840/1839 async-control violations.
+			resetKind        = SYNC,
 			resetActiveLevel = HIGH
 		)
 	)
@@ -149,7 +155,10 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 		frequency = FixedFrequency(Constants.baseFrequency * 4),
 		config = ClockDomainConfig(
 			clockEdge        = RISING,
-			resetKind        = ASYNC,
+			// SYNC for the same reason as the bus domain: the wrapper's reset
+			// is registered in the same clock group, so it needs no async
+			// clear here either.
+			resetKind        = SYNC,
 			resetActiveLevel = HIGH
 		)
 	)
