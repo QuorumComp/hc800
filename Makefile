@@ -86,7 +86,7 @@ $(FW_BINS): | firmware
 DEC_STAMP := $(BD)/build/decoder.stamp
 
 $(DEC_STAMP): $(RTL_SRCS)
-	cd rtl && sbt -batch "runMain rc800.decoder.DecoderGoldenGen" "runMain rc800.decoder.LookupTableGen" "testOnly rc800.decoder.*"
+	cd rtl && sbt -batch "runMain rc800.decoder.gen.DecoderGoldenGen" "runMain rc800.decoder.gen.LookupTableGen" "testOnly rc800.decoder.*"
 	mkdir -p "$(abspath $(BD)/build)"
 	touch "$(abspath $@)"
 
