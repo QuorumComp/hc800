@@ -1217,9 +1217,8 @@ readNextFileSector:
 		push	ft
 		add	ft,ufile_RemainingBytes
 		ld	bc,BYTES_PER_SECTOR
-		ld	(ft),c
-		add	ft,1
-		ld	(ft),b
+		ld	(ft+),c
+		ld	(ft+),b
 
 		popa
 		ld	f,FLAGS_EQ

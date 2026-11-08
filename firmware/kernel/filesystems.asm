@@ -127,9 +127,8 @@ FileInitialize:
 .no_uart
 		; set first volume as current
 		ld	ft,volumes
-		ld	e,(ft)
-		add	ft,1
-		ld	d,(ft)
+		ld	e,(ft+)
+		ld	d,(ft+)
 		ld	b,1
 		tst	de
 		ld/eq	b,0	; if no volumes, set string length to 0
@@ -137,9 +136,8 @@ FileInitialize:
 		MDebugPrint <"Set current FS\n">		
 		;MDebugRegisters
 		ld	ft,PathCurrentFs
-		ld	(ft),e
-		add	ft,1
-		ld	(ft),d
+		ld	(ft+),e
+		ld	(ft+),d
 
 		; initialize current path
 
@@ -276,9 +274,8 @@ FileOpen:
 		; bc' = volume, components
 
 		ld	ft,bc
-		ld	(ft),e
-		add	ft,1
-		ld	(ft),d
+		ld	(ft+),e
+		ld	(ft+),d
 
 		; get open function
 		add	de,fs_Open+1
@@ -1190,9 +1187,8 @@ getVolumeFromPath:
 		j	(hl)
 
 .current_fs	ld	ft,PathCurrentFs
-		ld	c,(ft)
-		add	ft,1
-		ld	b,(ft)
+		ld	c,(ft+)
+		ld	b,(ft+)
 
 		; no current filesystem (no volumes mounted) -> not available
 		tst	bc
