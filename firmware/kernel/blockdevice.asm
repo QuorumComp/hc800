@@ -195,12 +195,7 @@ BlockDeviceInit:
 		j	(hl)
 
 ; bc - device pointers
-.next_device	lco	t,(bc)
-		exg	f,t
-		add	bc,1
-		lco	t,(bc)
-		exg	f,t
-		add	bc,1
+.next_device	lco	ft,(bc+)
 		j	(hl)
 
 
@@ -223,8 +218,7 @@ BlockDeviceRead:
 
 		exg	ft,bc
 		add	ft,bdev_Read
-		ld	l,(ft+)
-		ld	h,(ft+)
+		ld	hl,(ft+)
 		sub	ft,bdev_Read+2
 		exg	ft,bc
 
@@ -305,8 +299,7 @@ BlockDeviceGet:
 
 		; is Read function pointer NULL?
 
-		ld	e,(ft+)
-		ld	d,(ft+)
+		ld	de,(ft+)
 		tst	de
 		j/eq	.fail
 

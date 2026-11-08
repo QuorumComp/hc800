@@ -474,19 +474,10 @@ dirRead:
 		add	bc,udir_StartCluster-dir_Length
 		add	de,DIRENT_CLUSTER_LOW-DIRENT_LENGTH
 		ld	ft,(de)
-		ld	(bc),t
-		add	bc,1
-		exg	f,t
-		ld	(bc),t
-		exg	f,t
-		add	bc,1
+		ld	(bc+),ft
 		add	de,DIRENT_CLUSTER_HIGH-DIRENT_CLUSTER_LOW
 		ld	ft,(de)
-		ld	(bc),t
-		add	bc,1
-		exg	f,t
-		ld	(bc),t
-		exg	f,t
+		ld	(bc+),ft
 
 		popa
 		ld	f,FLAGS_EQ

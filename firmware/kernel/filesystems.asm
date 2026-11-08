@@ -127,8 +127,7 @@ FileInitialize:
 .no_uart
 		; set first volume as current
 		ld	ft,volumes
-		ld	e,(ft+)
-		ld	d,(ft+)
+		ld	de,(ft+)
 		ld	b,1
 		tst	de
 		ld/eq	b,0	; if no volumes, set string length to 0
@@ -1163,12 +1162,7 @@ getVolumeFromPath:
 		;MDebugPrint <"getVolumeFromPath find volume\n">
 
 .check_volume_loop
-		ld	t,(hl)
-		exg	f,t
-		add	hl,1
-		ld	t,(hl)
-		exg	f,t
-		add	hl,1
+		ld	ft,(hl+)
 
 		push	ft/hl
 		jal	checkvolumeMatch
@@ -1187,8 +1181,7 @@ getVolumeFromPath:
 		j	(hl)
 
 .current_fs	ld	ft,PathCurrentFs
-		ld	c,(ft+)
-		ld	b,(ft+)
+		ld	bc,(ft+)
 
 		; no current filesystem (no volumes mounted) -> not available
 		tst	bc
