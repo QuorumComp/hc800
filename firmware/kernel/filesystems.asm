@@ -277,11 +277,8 @@ FileOpen:
 		ld	(ft+),d
 
 		; get open function
-		add	de,fs_Open+1
-		ld	t,(de)
-		add	de,-1
-		exg	f,t
-		ld	t,(de)
+		add	de,fs_Open
+		ld	ft,(de)
 		ld	hl,ft	; hl = open file fn pointer
 		sub	de,fs_Open	; de = pointer to filesystem structure again
 
@@ -404,11 +401,8 @@ FileRead:
 		ld	b,(ft)
 
 		; get read function
-		add	bc,fs_Read+1
-		ld	t,(bc)
-		add	bc,-1
-		exg	f,t
-		ld	t,(bc)
+		add	bc,fs_Read
+		ld	ft,(bc)
 		ld	hl,ft
 
 		pop	ft/bc

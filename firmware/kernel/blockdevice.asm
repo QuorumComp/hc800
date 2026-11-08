@@ -287,11 +287,7 @@ BlockDeviceGet:
 		ld	b,0
 		add	bc,blockDevicePointers
 
-		lco	t,(bc)
-		add	bc,1
-		exg	f,t
-		lco	t,(bc)
-		exg	f,t
+		lco	ft,(bc+)
 		ld	bc,ft
 
 		;MDebugRegisters
