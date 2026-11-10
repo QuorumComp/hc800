@@ -396,28 +396,27 @@ TestDiv:
 
 ; --
 ; -- TestDivEdge
-; --   The divisions the drivers above cannot ask for, plus the ones the old
-; --   loop got wrong.  That loop tested "the divisor fits" as the sign bit of a
-; --   wrapped 32-bit difference - a borrow only while the operands agree in bit
-; --   31 - and shifted a 32-bit remainder field, dropping its carry.  Operands
-; --   in the top half of the range hit that from plain C; a dividend above 32
-; --   bits needs a program writing Z by hand, which is what this routine is.
-; --   The two cases with no arithmetic answer are here too, and so is the
-; --   status byte, whose carry lane is readiness and whose zero and overflow
-; --   lanes are the two error bits.
+; --   The divisions the drivers above cannot ask for.  A dividend wider than 32 bits is
+; --   out of the machine now, so what is left to reach by hand is the two cases with no
+; --   arithmetic answer and the one division whose two readings disagree: the same
+; --   operands, taken once from the unsigned ports and once from the signed ones, give
+; --   different numbers and different status bytes.  The signed overflow is here too, and
+; --   so is what it publishes - the two's complement wrap, flagged rather than zeroed.
 ; --
-; --   Reading a result register destroys it, so each line reads once, and the
-; --   bytes come out least significant first because that is the order the
-; --   device pops them; the expectation strings are written in that order.
+; --   Reading a lane does not disturb anything on this device, so a line can print the
+; --   status byte and then the results without re-running the operation.  The bytes come
+; --   out least significant first, because lane 0 is the least significant byte of a
+; --   value; the expectation strings are written in that order.
 
 TestDivEdge:
 		pusha
 
-		MPrintString <"$1DEADBEEF / $F0000000 expect status 01 q 01 00 00 00 r EF BE AD EE: ">
+		MPrintString <"$DEADBEEF / $F0000000 expect status 01 q 00 00 00 00 r EF BE AD DE: ">
 		ld	bc,.case_high
 		jal	EdgeDiv
 		MNewLine
 
+		; The plain C shape (`u32 / u32` in the top half): the old loop had this wrong.
 		MPrintString <"$FFFFFFFF / $FFFFFFFF expect status 01 q 01 00 00 00 r 00 00 00 00: ">
 		ld	bc,.case_equal
 		jal	EdgeDiv
@@ -428,8 +427,16 @@ TestDivEdge:
 		jal	EdgeDiv
 		MNewLine
 
-		MPrintString <"$100000001 / 1 expect status 09 q 00 00 00 00 r 00 00 00 00: ">
-		ld	bc,.case_overflow
+		; INT32_MIN / -1 read unsigned: an ordinary division, defined and unflagged.
+		MPrintString <"$80000000 / -1 unsigned expect status 01 q 00 00 00 00 r 00 00 00 80: ">
+		ld	bc,.case_overflow_raw
+		jal	EdgeDiv
+		MNewLine
+
+		; The same operands read signed: no quotient fits the signed range, the status
+		; byte says so, and the value published is the wrap a software divider lands on.
+		MPrintString <"$80000000 / -1 signed expect status 09 q 00 00 00 80 r 00 00 00 00: ">
+		ld	bc,.case_overflow_signed
 		jal	EdgeDiv
 		MNewLine
 
@@ -445,37 +452,36 @@ TestDivEdge:
 		popa
 		j	(hl)
 
-.case_high	DB	$00,$00,$00,$01,$DE,$AD,$BE,$EF
-		DB	$F0,$00,$00,$00
-		DB	MATH_OP_UNSIGNED_DIV
+; Each line: divisor (4, least significant first), dividend (4, least significant
+; first), then the offsets of the status byte and of the two result ports to read.
 
-	; The plain C shape (`u32 / u32` in the top half): the old loop had this wrong.
-.case_equal	DB	$00,$00,$00,$00,$FF,$FF,$FF,$FF
-		DB	$FF,$FF,$FF,$FF
-		DB	MATH_OP_UNSIGNED_DIV
+.case_high	DB	$00,$00,$00,$F0,$EF,$AD,$BE,$DE
+		DB	IO_MATH_STATUS,IO_MATH_QUOTIENT,IO_MATH_REMAINDER
 
-.case_zero	DB	$00,$00,$00,$00,$DE,$AD,$BE,$EF
-		DB	$00,$00,$00,$00
-		DB	MATH_OP_UNSIGNED_DIV
+.case_equal	DB	$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
+		DB	IO_MATH_STATUS,IO_MATH_QUOTIENT,IO_MATH_REMAINDER
 
-.case_overflow	DB	$00,$00,$00,$01,$00,$00,$00,$01
-		DB	$00,$00,$00,$01
-		DB	MATH_OP_UNSIGNED_DIV
+.case_zero	DB	$00,$00,$00,$00,$EF,$AD,$BE,$DE
+		DB	IO_MATH_STATUS,IO_MATH_QUOTIENT,IO_MATH_REMAINDER
 
-.case_signed	DB	$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
-		DB	$80,$00,$00,$00
-		DB	MATH_OP_SIGNED_DIV
+.case_overflow_raw	DB	$FF,$FF,$FF,$FF,$00,$00,$00,$80
+		DB	IO_MATH_STATUS,IO_MATH_QUOTIENT,IO_MATH_REMAINDER
+
+.case_overflow_signed	DB	$FF,$FF,$FF,$FF,$00,$00,$00,$80
+		DB	IO_MATH_STATUS_SIGNED,IO_MATH_QUOTIENT_SIGNED,IO_MATH_REMAINDER_SIGNED
+
+.case_signed	DB	$00,$00,$00,$80,$FF,$FF,$FF,$FF
+		DB	IO_MATH_STATUS_SIGNED,IO_MATH_QUOTIENT_SIGNED,IO_MATH_REMAINDER_SIGNED
 
 
 ; --
 ; -- EdgeDiv
-; --   One MATH coprocessor division, driven straight from a table so that the
-; --   dividend can be wider than the 32 bits the drivers pass.  Prints the
-; --   status byte, then four quotient bytes and four remainder bytes.
+; --   One MATH coprocessor division, driven straight from a table so that the cases the
+; --   drivers cannot ask for are still asked.  Prints the status byte of the family whose
+; --   result ports the line names, then four quotient bytes and four remainder bytes.
 ; --
 ; -- Inputs:
-; --   hl - 13 bytes: dividend (8, most significant first), divisor (4, most
-; --        significant first), operation (1)
+; --   bc - 11 bytes, as the table above describes them
 ; --
 		SECTION	"EdgeDiv",CODE
 EdgeDiv:
@@ -483,34 +489,29 @@ EdgeDiv:
 
 		ld	d,IO_MATH_BASE
 
-		; Z: the 64-bit dividend, most significant byte first.  DJ counts in F,
-		; which is safe here: nothing in the loop writes the flags.
-		ld	e,IO_MATH_Z
-		ld	f,8
-.edgeZ:		ld	t,(bc)
-		lio	(de),t
+		; X: the divisor, lane 0 first.  DJ counts in F, which is safe here: only
+		; CMP writes the flags implicitly, and nothing in the loop is CMP.
+		ld	e,IO_MATH_X
+		ld	f,4
+.edgeX:		ld	t,(bc)
+		lio	(de+),t
 		add	bc,1
-		dj	f,.edgeZ
+		dj	f,.edgeX
 
-		; Y: the 32-bit divisor.
-		ld	e,IO_MATH_Y
+		; Y: the dividend.  The lane walk leaves DE at the next group, and the last
+		; write of this one is what starts the run.
 		ld	f,4
 .edgeY:		ld	t,(bc)
-		lio	(de),t
+		lio	(de+),t
 		add	bc,1
 		dj	f,.edgeY
 
-		; The operation write starts the run, and re-latches the two error
-		; bits from the operands that were just written.
+		; Poll rather than guess: a run is 32 cycles.  LD F,T puts the byte on the
+		; condition lanes, the carry lane is readiness, so the loop spins while the
+		; carry is clear.  Writing F leaves T alone, so the status byte is still
+		; there to print.
 		ld	t,(bc)
-		ld	e,IO_MATH_OPERATION
-		lio	(de),t
-
-		; Poll rather than guess: a run is 32 cycles.  LD F,T puts the byte on
-		; the condition lanes, the carry lane is readiness, so the loop spins
-		; while the carry is clear.  Writing F leaves T alone, so the status byte
-		; is still there to print.
-		ld	e,IO_MATH_STATUS
+		ld	e,t
 .edgePoll:	lio	t,(de)
 		ld	f,t
 		j/cc	.edgePoll
@@ -518,27 +519,29 @@ EdgeDiv:
 		jal	StreamHexByteOut
 
 		MPrintString <" q">
-		ld	d,IO_MATH_BASE
-		ld	e,IO_MATH_X
-		lio	t,(de)
+		add	bc,1
+		ld	t,(bc)
+		ld	e,t
+		lio	t,(de+)
 		jal	StreamHexByteOut
-		lio	t,(de)
+		lio	t,(de+)
 		jal	StreamHexByteOut
-		lio	t,(de)
+		lio	t,(de+)
 		jal	StreamHexByteOut
-		lio	t,(de)
+		lio	t,(de+)
 		jal	StreamHexByteOut
 
 		MPrintString <" r">
-		ld	d,IO_MATH_BASE
-		ld	e,IO_MATH_Y
-		lio	t,(de)
+		add	bc,1
+		ld	t,(bc)
+		ld	e,t
+		lio	t,(de+)
 		jal	StreamHexByteOut
-		lio	t,(de)
+		lio	t,(de+)
 		jal	StreamHexByteOut
-		lio	t,(de)
+		lio	t,(de+)
 		jal	StreamHexByteOut
-		lio	t,(de)
+		lio	t,(de+)
 		jal	StreamHexByteOut
 
 		popa
