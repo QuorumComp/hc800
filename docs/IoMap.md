@@ -4,7 +4,7 @@
 |---------|------|------------|
 | $00xx   | 16   | Interrupt controller |
 | $010x   | 16   | MMU        |
-| $020x   | 16   | MATH coprocessor |
+| $02xx   | 64   | MATH coprocessor |
 | $030x   | 16   | Keyboard   |
 | $040x   | 16   | UART       |
 | $05xx   | 256  | Display controller |
@@ -71,47 +71,74 @@ The system banks are in effect when handling interrupts and the SYS instruction.
 
 ## MATH coprocessor
 
-A 32x32 -> 64 multiplier and a 64/32 -> 32 divider. Both are
-iterative and take 32 cycles per operation, so software starts one and then polls the
-status byte.
+A 32x32 -> 32 multiplier and two 32/32 -> 32 dividers, one per reading of the operands.
+All three are iterative and take 32 cycles per run, with no data dependent early out, so
+software starts a run and polls a status byte.
 
-| Address | Content                                                       |
-|---------|---------------------------------------------------------------|
-| $00     | Status (read)                                                  |
-| $01     | Operation (write starts it)                                    |
-| $02     | X - operand 1 / quotient                                       |
-| $03     | Y - operand 2 and divisor / remainder                          |
-| $04     | Z - 64 bit operand / product                                   |
-| $05-$07 | unused                                                         |
+Operands and results live in a file of byte lanes rather than in shift registers. Lane 0 of
+every value is its least significant byte, so a value is written or read one byte at a time
+in either order and the addresses simply step. Reads destroy nothing, so a result may be read
+twice, and read out of order.
 
-Only the low three address bits select a register, so the second half of the window
-($0208-$020F) mirrors the first.
+| Address   | Access | Content                                       |
+|-----------|--------|-----------------------------------------------|
+| $0200     | R      | Status for the unsigned ports                 |
+| $0201     | R      | Status for the signed ports, same layout      |
+| $0202-$03 | R      | Spare, read 0                                 |
+| $0204-$07 | RW     | X - operand 1, and the divisor                |
+| $0208-$0B | RW     | Y - operand 2, and the dividend               |
+| $020C-$0F | R      | Spare, read 0                                 |
+| $0210-$13 | R      | X * Y                                         |
+| $0214-$17 | R      | Spare, read 0                                 |
+| $0218-$1B | R      | Unsigned Y / X, quotient                      |
+| $021C-$1F | R      | Unsigned Y / X, remainder                     |
+| $0220-$23 | R      | Signed Y / X, quotient                        |
+| $0224-$27 | R      | Signed Y / X, remainder                       |
+| $0228-$3F | R      | Spare, read 0                                 |
 
-X, Y and Z are byte windows rather than flat registers. Each **write** shifts one byte in
-at the bottom, so a value is written **most significant byte first**. Each **read** pops
-the bottom byte and shifts the register down, filling with zeros, so a result is read
-**least significant byte first** - and reading it destroys the bytes still to come, so a
-driver reads a result once.
+### Starting a run
+
+There is no operation register and no trigger write: **any write to an input lane**
+($0204-$020B) starts the device. It clears readiness and the error bits and restarts all
+three units from the lane contents as of that write, so a write in the middle of a run is a
+restart rather than a corruption. The invariant software relies on is that the results
+correspond to the lanes as of the most recent write. Reading never strobes.
+
+A 32 bit operand is four accesses, sixteen bus cycles, so polling is genuinely required; a
+result is four accesses too, so one poll before the first result byte covers the whole
+readback. All five result ports and both status bytes become valid on the same cycle.
+
+### Two readings
+
+Signedness is which result port a program reads. For the multiply that costs nothing: the
+low half of a product is the same whichever way the operands are read, so one run answers
+both readings and there is one product port. For the divide it costs a second divider,
+because signed division negates its operands *before* the loop rather than its result
+afterwards - `-2 / -1` is `2 r 0` signed and `0 r 0xFFFFFFFE` unsigned, which is a different
+quotient and remainder, not a negated one. So the device runs one multiplier and two dividers
+off one sequencer: the lanes as written go to the unsigned ports, their magnitudes and
+corrected signs go to the signed ones.
+
+Division takes the magnitudes and corrects the signs afterwards: the quotient is negative
+when the operand signs differ and the remainder follows the dividend, which is the truncating
+convention C uses.
 
 ### Status
+
 | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
 |---|---|---|---|---|---|---|---|
 |reserved, read 0|||||Quotient overflow|always 0|Divide by zero|Ready|
 
-Writing the operation clears bit 0 and starts the run; it also re-latches bits 3 and 1 from
-the operands just written, so they describe the operation the results belong to rather than
-whatever the operand registers hold afterwards. They are only ever set by a division. Bit 2
-is wired to nothing on purpose: putting the status byte in `F` puts these bits on the
-condition lanes, and while bit 2 reads zero, "no error" is a single `j/gt`.
+The low nibble lands on the condition lanes a program tests after putting the byte in `F`:
+bit 0 is the carry lane (the results are ready), bit 1 the zero lane (the divisor was zero),
+bit 3 the overflow lane. Bit 2 - the negative lane - is wired to nothing and has to stay
+that way, because "neither error flag" is a single branch (`j/gt`) only while N reads zero.
 
-The two error bits mark the two cases that have no arithmetic answer, and both force the
-quotient **and** the remainder to zero:
-
-* **Divide by zero** (bit 1) - the divisor is zero.
-* **Quotient overflow** (bit 3) - the quotient does not fit 32 bits, which is decided from
-  the operands as they are latched: high word of the dividend >= divisor.
-
-A zero divisor does not also raise the overflow bit; each bit means exactly one thing.
+`$0200` describes the unsigned ports and `$0201` the signed ones, since the two readings
+disagree about when the answer is undefined. Both have the layout above, so the poll and the
+one branch error check are identical whichever direction a program is using. The error bits
+describe the division every strobe runs, whether or not the reader is about to use its
+results: a program reading a product ignores them.
 
 Polling for readiness, with the error bits tested in one branch:
 
@@ -124,19 +151,44 @@ Polling for readiness, with the error bits tested in one branch:
 		j/le	.error		; zero or overflow set
 ```
 
-### Operations
-| Value | Operation |
-|-------|-----------|
-| 0     | Signed multiplication, z = x * y   |
-| 1     | Unsigned multiplication, z = x * y |
-| 2     | Signed division, x (quotient) y (remainder) = z / y |
-| 3     | Unsigned division, x (quotient) y (remainder) = z / y |
+Streaming a value through the lanes steps the pointer by two per cell, low byte first:
 
-Division takes the magnitudes and corrects the signs afterwards: the quotient is negative
-when the operand signs differ and the remainder follows the dividend, which is the
-truncating convention C uses. Note that this makes INT32_MIN the largest magnitude a signed
-divisor has (2^31), and that negating a magnitude quotient of 2^31 wraps rather than
-trapping.
+```
+		ld	de,IO_MATH_BASE+IO_MATH_Y
+		lio	(de+),t		; low cell
+		exg	f,t
+		lio	(de+),t		; high cell - this write starts the run
+		exg	f,t
+```
+
+### The cases with no answer
+
+There are exactly two, and they are decided from the operands as they are latched:
+
+* **Divide by zero** (bit 1, both status bytes) - the divisor is zero. All five result
+  ports answer zero, which is what lets the read path be wires.
+* **Quotient overflow** (bit 3, signed status byte only) - `INT32_MIN / -1`, whose magnitude
+  quotient is 2^31 and so fits as `-2^31` but not as `+2^31`. What the signed ports publish
+  is the two's complement wrap, `0x80000000`, the answer every software divider gives; C
+  leaves that quotient undefined, so the machine is free to publish a number and the status
+  bit is how a program that cares finds out.
+
+The unsigned family has no overflow at all - a 32 bit unsigned dividend always leaves a
+quotient that fits - so that bit is wired to nothing, and that is a property of the width
+rather than a simplification. A zero divisor does not also raise the overflow bit: each bit
+means exactly one thing.
+
+### Why this machine is 32 bits
+
+The device used to be a 64 bit machine: a 64 bit dividend arriving in a third lane, and
+64 bit products on two ports. It cost 831 LUT against 560 for this one on the board's FPGA,
+and none of the extra width was reachable - the compiler replicates the dividend's sign byte
+before every division, so a genuine 64/32 divide was never emitted; a truncating multiply
+reads at most four bytes of the product; wider results are a software expansion over several
+32 bit device multiplies. This is a deliberate loss: a true 64/32 divide and a 64 bit product
+are now impossible, in hand written assembly included. What the narrowing buys beyond the
+271 LUT is that the undefined cases nearly vanish, and that the models, the firmware helpers
+and the compiler's divide path all get shorter.
 
 ## Keyboard
 | Address | Content |
