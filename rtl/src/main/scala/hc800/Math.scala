@@ -199,13 +199,18 @@ case class Math() extends Component {
 
 	private val divideZero     = divideZeroReg
 	private val overflowSigned = overflowSignedReg
-	private val invalidSigned  = divideZero || overflowSigned
 
 	// ---------------------------------------------------------------------- results
 	//
 	// Captured together, one cycle after the last iteration, and held until the next run replaces
-	// them.  The undefined cases are forced to zero here rather than at the read ports, which is
-	// what lets the read path be wires: the capture does it with the registers' own enables.
+	// them.  The zero divisor is forced to zero here rather than at the read ports, which is what
+	// lets the read path be wires: the capture does it with the registers' own enables.
+	//
+	// The signed overflow is NOT forced: the divider's magnitude quotient for `INT32_MIN / -1` is
+	// 2^31, and the sign rule below negates it to itself, so what comes out is the two's-complement
+	// wrap - the answer every software divider gives, this project's own fallback included.  C
+	// leaves that quotient undefined, so the machine is free to publish a number, and publishing
+	// the conventional one costs nothing; the status bit is how a program that cares finds out.
 	private val product            = Reg(Bits(32 bits)) init (0)
 	private val quotientRaw        = Reg(Bits(32 bits)) init (0)
 	private val remainderRaw       = Reg(Bits(32 bits)) init (0)
@@ -216,15 +221,15 @@ case class Math() extends Component {
 		product            := multiplier.io.result.asBits
 		quotientRaw        := divideZero ? B(0, 32 bits) | rawDivider.io.quotient.asBits
 		remainderRaw       := divideZero ? B(0, 32 bits) | rawDivider.io.remainder.asBits
-		quotientMagnitude  := invalidSigned ? B(0, 32 bits) | magnitudeDivider.io.quotient.asBits
-		remainderMagnitude := invalidSigned ? B(0, 32 bits) | magnitudeDivider.io.remainder.asBits
+		quotientMagnitude  := divideZero ? B(0, 32 bits) | magnitudeDivider.io.quotient.asBits
+		remainderMagnitude := divideZero ? B(0, 32 bits) | magnitudeDivider.io.remainder.asBits
 	}
 
 	/*
 	 * Sign correction on the signed ports, the truncating convention C uses: the quotient is
-	 * negative when the operand signs differ, and the remainder follows the dividend.  Zero
-	 * negates to zero, so the undefined cases - forced to zero as they are captured - survive this
-	 * stage untouched.
+	 * negative when the operand signs differ, and the remainder follows the dividend.  Zero negates
+	 * to zero, so the zero divisor - forced to zero as it is captured - survives this stage
+	 * untouched, and the one overflowing quotient negates to itself, which is the wrap.
 	 */
 	private val negateQuotient  = signY ^ signX
 	private val negateRemainder = signY
@@ -238,8 +243,10 @@ case class Math() extends Component {
 	/*
 	 * Laid out so that the low nibble lands on the condition lanes a program tests after putting
 	 * the byte in F: bit 0 is the carry lane (the results are ready), bit 1 the zero lane (the
-	 * divisor was zero), bit 3 the overflow lane (the quotient did not fit the signed range, so
-	 * neither signed result is defined).  Bit 2 - the negative lane - is wired to nothing, and has
+	 * divisor was zero), bit 3 the overflow lane (the quotient did not fit the signed range, which
+	 * is why the signed pair is the pair whose answer C leaves undefined - the values published are
+	 * the wrap, and a program that needs to know asks here).  Bit 2 - the negative lane - is wired
+	 * to nothing, and has
 	 * to stay that way: "neither error flag" is a single branch (`j/gt`) only while N reads zero.
 	 * `$0200` describes the unsigned ports, `$0201` the signed ones.
 	 *

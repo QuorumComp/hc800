@@ -57,12 +57,13 @@ class MathDeviceTest extends munit.FunSuite {
 		 * The signed reading: magnitudes, then the truncating convention - quotient negative when
 		 * the signs differ, remainder following the dividend.  Exactly one case has no answer, and
 		 * it is the one whose magnitude quotient is 2^31: fine as `-2^31`, and not representable as
-		 * `+2^31`.
+		 * `+2^31`.  It is flagged rather than zeroed, and negating 2^31 gives 2^31 back, so the
+		 * published value is the two's-complement wrap the hardware produces by doing nothing
+		 * special.
 		 */
 		val signedOverflow = !divideZero && dividend == BigInt("80000000", 16) && divisor == Mask32
 		private val (quotientMagnitude, remainderMagnitude) =
-			if (signedOverflow) (BigInt(0), BigInt(0))
-			else divide(magnitude32(dividend), magnitude32(divisor))
+			divide(magnitude32(dividend), magnitude32(divisor))
 		private val signsDiffer = (dividend > Mask32 / 2) != (divisor > Mask32 / 2)
 
 		private val qSigned = if (signsDiffer) -quotientMagnitude else quotientMagnitude
@@ -240,7 +241,7 @@ class MathDeviceTest extends munit.FunSuite {
 			s"-1 / INT32_MIN -> q=${signedCase.quotientSigned} r=${signedCase.remainderSigned}, want q=0 r=$Mask32")
 	}
 
-	test("the undefined cases report themselves and clear both results") {
+	test("a zero divisor reports itself and clears both results") {
 		Seq(BigInt(0), BigInt("1234", 16), Mask32, BigInt("80000000", 16)).foreach { dividend =>
 			val op = operate(BigInt(0), dividend)
 			assert(op.statusRaw == (Ready | DivideZero), s"zero divisor raw status -> ${op.statusRaw}")
@@ -249,14 +250,23 @@ class MathDeviceTest extends munit.FunSuite {
 			assert(op.quotientRaw == 0 && op.remainderRaw == 0 &&
 				op.quotientSigned == 0 && op.remainderSigned == 0, s"zero divisor left results: $op")
 		}
+	}
 
-		// INT32_MIN / -1 clears both signed results and says why, and leaves the unsigned pair
-		// defined: the two families are answers to different questions.
+	/**
+	 * The one division with no signed answer, and what the machine does about it: it says so in the
+	 * signed status byte and publishes the two's-complement wrap, because that is what the divider's
+	 * own magnitude and sign rule give, and it is what every software divider - this project's
+	 * fallback included - lands on.  C leaves the value undefined, so the flag is the whole story
+	 * and the wrap costs no hardware.  The unsigned pair is a different question and stays defined:
+	 * `0 r 0x80000000`.
+	 */
+	test("the signed overflow reports itself and publishes the wrap") {
 		val overflow = operate(Mask32, BigInt("80000000", 16))
 		assert((overflow.statusSigned & Overflow) != 0,
 			s"INT32_MIN / -1 did not overflow signed: ${overflow.statusSigned}")
-		assert(overflow.quotientSigned == 0 && overflow.remainderSigned == 0,
-			"the signed overflow left results behind")
+		assert(overflow.quotientSigned == BigInt("80000000", 16) && overflow.remainderSigned == 0,
+			s"INT32_MIN / -1 -> q=${overflow.quotientSigned} r=${overflow.remainderSigned}, " +
+				"want q=0x80000000 r=0")
 		assert((overflow.statusRaw & Overflow) == 0,
 			s"the raw family reported an overflow it cannot have: ${overflow.statusRaw}")
 		assert(overflow.quotientRaw == BigInt(0) && overflow.remainderRaw == BigInt("80000000", 16),
