@@ -97,7 +97,7 @@ class HC800(board: Int, vendor: Vendor.Value)(implicit lpmComponents: rc800.lpm.
 		val chargen    = M"00001000--------------"
 		val intCtrl    = M"010000000000000000----"
 		val mmu        = M"010000000000010000----"
-		val math       = M"010000000000100000----"
+		val math       = M"0100000000001000------"
 		val keyboard   = M"010000000000110000----"
 		val uart       = M"010000000001000000----"
 		val graphics   = M"01000000000101--------"

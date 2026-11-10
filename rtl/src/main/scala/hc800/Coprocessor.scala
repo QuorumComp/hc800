@@ -5,23 +5,37 @@ import spinal.lib._
 import spinal.lib.fsm._
 
 
+/*
+ * An old experiment, not connected to anything: four multipliers whose products are summed.
+ * It grew a counter of its own when the multiplier unit stopped carrying one, since the unit
+ * is now a datapath the caller iterates rather than a machine that runs itself - and note
+ * that it always ignored the unit's `ready`, so the sum was only ever correct if somebody
+ * waited thirty-two cycles by hand.  `done` says when that is.
+ */
 class DotProduct extends Component {
 	val io = new Bundle {
 		val restart  = in  Bool()
+		val done     = out Bool()
 		val operand1 = in  (Vec(SInt(16 bits), 4))
 		val operand2 = in  (Vec(SInt(16 bits), 4))
 		val result   = out (SInt(32 bits))
 	}
 
-	private val multipliers = Vector(new MultiplierUnit32x32(),new MultiplierUnit32x32(),new MultiplierUnit32x32(),new MultiplierUnit32x32())
+	private val counter = Reg(UInt(6 bits)) init (U(32))
+	when (io.restart) { counter := 1 }.elsewhen (!counter(5)) { counter := counter + 1 }
+
+	private val multipliers = Vector.fill(4)(new MultiplierUnit32x32())
 
 	for (i <- 0 to 3) {
-		multipliers(i).io.operand1 <> io.operand1(i).asBits
-		multipliers(i).io.operand2 <> io.operand2(i).asBits
-		multipliers(i).io.restart  <> io.restart
-		multipliers(i).io.signed   <> True
+		multipliers(i).io.load     := io.restart
+		multipliers(i).io.iterate  := !counter(5)
+		// The unit is a 32-bit machine; the operands are widened the way they were when the
+		// unit took Bits, which is zero-padded rather than sign-extended.
+		multipliers(i).io.operand1 := io.operand1(i).asBits.asUInt.resized
+		multipliers(i).io.operand2 := io.operand2(i).asBits.asUInt.resized
 	}
 
+	io.done   := counter(5)
 	io.result := multipliers.map(v => v.io.result.asSInt).reduce((v1, v2) => v1 + v2)
 }
 
