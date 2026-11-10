@@ -27,6 +27,12 @@ udir_SIZEOF	RB	0
 UartInitialize:
 		push	bc/de/hl
 
+		; The boot ROM hands over after its own request/response exchange, so
+		; the tail of that reply can still be in the receive buffer; read as
+		; the head of the next answer it shifts the framing and the session
+		; desynchronises. Stale by definition here, so drain before asking.
+		jal	UartDrainReceive
+
 		jal	ComIdentify
 		j/ne	.exit
 
