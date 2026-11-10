@@ -328,17 +328,36 @@ class MathDeviceTest extends munit.FunSuite {
 		}
 	}
 
-	test("spare lanes read zero") {
+	test("every lane the map does not use reads zero, and only those") {
+		/*
+		 * Swept over the whole window rather than down a list of lanes someone typed, and with
+		 * operands and a product whose bytes are all nonzero: an alias from a value into the
+		 * spare half of its block - which the read path did for two of the five ports - cannot
+		 * hide behind a zero the way the list version of this test let it.
+		 */
+		val operands = BigInt("01010101", 16)
+		val used = (Seq(Math.StatusRaw, Math.StatusSigned) ++
+			(Seq(Math.X, Math.Y, Math.Product, Math.QuotientRaw, Math.RemainderRaw,
+				Math.QuotientSigned, Math.RemainderSigned).flatMap(base => Seq(base, base + 1, base + 2, base + 3)))).toSet
+
 		compiled.doSim { (dut: hc800.Math) =>
 			dut.clockDomain.forkStimulus(period = 10)
 			dut.io.enable #= false
 			dut.io.write  #= false
 
-			writeValue(dut, Math.X, Mask32, 4)
+			writeValue(dut, Math.X, operands, 4)
+			writeValue(dut, Math.Y, operands, 4)
 			poll(dut, Math.StatusRaw, "spare lanes")
-			Seq(0x02, 0x03, 0x0C, 0x0D, 0x0E, 0x0F, 0x14, 0x17, 0x28, 0x2F, 0x30, 0x3F).foreach {
-				lane => assert(read(dut, lane) == 0, s"spare lane $$02${lane.toHexString} read nonzero")
-			}
+
+			// If these read zero the sweep below is not proving anything about aliases.
+			assert(readValue(dut, Math.X, 4) == operands, "X did not read back")
+			assert(readValue(dut, Math.Y, 4) == operands, "Y did not read back")
+			assert(readValue(dut, Math.Product, 4) == ((operands * operands) & Mask32), "no product")
+			assert(readValue(dut, Math.QuotientRaw, 4) == BigInt(1), "no quotient")
+
+			for (lane <- 0 until 0x40 if !used.contains(lane))
+				assert(read(dut, lane) == 0,
+				       s"$$02${lane.toHexString} is not in the map and read nonzero")
 		}
 	}
 

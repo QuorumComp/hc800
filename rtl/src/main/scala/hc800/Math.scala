@@ -292,9 +292,9 @@ case class Math() extends Component {
 		// The two status bytes and the spares below X, which shares the block with them.
 		readByte := byteLane(2) ? byteOfHalf(xLane) | statusByte
 	}.elsewhen(block === 1) {
-		readByte := byteOfHalf(yLane)
+		readByte := byteLane(2) ? B(0, 8 bits) | byteOfHalf(yLane)
 	}.elsewhen(block === 2) {
-		readByte := byteOfHalf(product)
+		readByte := byteLane(2) ? B(0, 8 bits) | byteOfHalf(product)
 	}.elsewhen(block === 3) {
 		readByte := byteLane(2) ? byteOfHalf(remainderRaw.asBits) | byteOfHalf(quotientRaw.asBits)
 	}.elsewhen(block === 4) {
