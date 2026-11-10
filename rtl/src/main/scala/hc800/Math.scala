@@ -13,8 +13,8 @@ case class Math() extends Component {
 	private val registerY = Reg(Bits(32 bits))
 	private val registerZ = Reg(Bits(64 bits))
 
-	private val ready     = Reg(Bool())
-	private val restart   = Reg(Bool())
+	private val ready     = Reg(Bool()) init(True)
+	private val restart   = Reg(Bool()) init(False)
 	private val operation = Reg(Operation())
 
 	private val multiplier = new MultiplierUnit32x32()
@@ -28,6 +28,28 @@ case class Math() extends Component {
 	divider.io.signed   <> (operation === Operation.signedDivision)
 	divider.io.dividend <> registerZ
 	divider.io.divisor  <> registerY
+
+	/*
+	 * The status byte, laid out so that its low bits land on the condition lanes a program
+	 * tests after putting it in F: bit 0 is the carry lane (the results are ready), bit 1
+	 * the zero lane (the divisor was zero), bit 3 the overflow lane (the quotient did not
+	 * fit 32 bits, so neither result is defined).  Bit 2 - the negative lane - is wired to
+	 * nothing, and has to stay that way: "neither error flag" is a single branch (`j/gt`)
+	 * only while N reads zero.
+	 *
+	 * Both error bits come straight from the divider, which latches them from its operands
+	 * on the cycle it loads and holds them until the next operation, so they describe the
+	 * division the results belong to rather than whatever the operand registers hold now.
+	 * They are gated on the current operation, because the units share a restart: a
+	 * multiply reloads the divider too, and its operands as a dividend would be nonsense.
+	 */
+	private val dividing       = (operation === Operation.signedDivision) | (operation === Operation.unsignedDivision)
+	private val divideZero     = dividing ? divider.io.divideZero | False
+	private val quotientOverflow = dividing ? divider.io.overflow | False
+
+	private val statusByte = (B"0000" ## quotientOverflow.asBits ## False.asBits ##
+		divideZero.asBits ## ready.asBits).asBits
+	assert(!statusByte(2), "the status byte's negative lane must read 0")
 
 	restart := False
 	def startOperation(): Unit = {
@@ -59,7 +81,7 @@ case class Math() extends Component {
 	when (io.enable) {
 		dataOut := address.mux (
 			(Register.operation -> operation.asBits.resize(8 bits)),
-			(Register.status    -> ready.asBits.resize(8 bits)),
+			(Register.status    -> statusByte),
 			(Register.x         -> registerX(7 downto 0)),
 			(Register.y         -> registerY(7 downto 0)),
 			(Register.z         -> registerZ(7 downto 0))

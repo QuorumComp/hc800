@@ -4,7 +4,7 @@
 |---------|------|------------|
 | $00xx   | 16   | Interrupt controller |
 | $010x   | 16   | MMU        |
-| $020x   | 16   | Multiplier |
+| $020x   | 16   | MATH coprocessor |
 | $030x   | 16   | Keyboard   |
 | $040x   | 16   | UART       |
 | $05xx   | 256  | Display controller |
@@ -69,14 +69,60 @@ The system banks are in effect when handling interrupts and the SYS instruction.
 | 3     | 1 x 64 KiB  | 3 |
 
 
-## Multiplier
-| Address | Size | Content                 |
-|---------|------|-------------------------|
-| $00     | 1    | Operation               |
-| $01     | 1    | Status                  |
-| $02     | 4    | 32 bit value #1 (x)     |
-| $04     | 4    | 32 bit value #2 (y)     |
-| $06     | 8    | 64 bit value #1 (z)     |
+## MATH coprocessor
+
+A 32x32 -> 64 multiplier and a 64/32 -> 32 divider. Both are
+iterative and take 32 cycles per operation, so software starts one and then polls the
+status byte.
+
+| Address | Content                                                       |
+|---------|---------------------------------------------------------------|
+| $00     | Status (read)                                                  |
+| $01     | Operation (write starts it)                                    |
+| $02     | X - operand 1 / quotient                                       |
+| $03     | Y - operand 2 and divisor / remainder                          |
+| $04     | Z - 64 bit operand / product                                   |
+| $05-$07 | unused                                                         |
+
+Only the low three address bits select a register, so the second half of the window
+($0208-$020F) mirrors the first.
+
+X, Y and Z are byte windows rather than flat registers. Each **write** shifts one byte in
+at the bottom, so a value is written **most significant byte first**. Each **read** pops
+the bottom byte and shifts the register down, filling with zeros, so a result is read
+**least significant byte first** - and reading it destroys the bytes still to come, so a
+driver reads a result once.
+
+### Status
+| 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+|---|---|---|---|---|---|---|---|
+|reserved, read 0|||||Quotient overflow|always 0|Divide by zero|Ready|
+
+Writing the operation clears bit 0 and starts the run; it also re-latches bits 3 and 1 from
+the operands just written, so they describe the operation the results belong to rather than
+whatever the operand registers hold afterwards. They are only ever set by a division. Bit 2
+is wired to nothing on purpose: putting the status byte in `F` puts these bits on the
+condition lanes, and while bit 2 reads zero, "no error" is a single `j/gt`.
+
+The two error bits mark the two cases that have no arithmetic answer, and both force the
+quotient **and** the remainder to zero:
+
+* **Divide by zero** (bit 1) - the divisor is zero.
+* **Quotient overflow** (bit 3) - the quotient does not fit 32 bits, which is decided from
+  the operands as they are latched: high word of the dividend >= divisor.
+
+A zero divisor does not also raise the overflow bit; each bit means exactly one thing.
+
+Polling for readiness, with the error bits tested in one branch:
+
+```
+		ld	d,IO_MATH_BASE
+		ld	e,IO_MATH_STATUS
+.poll:	lio	t,(de)
+		ld	f,t
+		j/cc	.poll		; carry lane = ready
+		j/le	.error		; zero or overflow set
+```
 
 ### Operations
 | Value | Operation |
@@ -85,6 +131,12 @@ The system banks are in effect when handling interrupts and the SYS instruction.
 | 1     | Unsigned multiplication, z = x * y |
 | 2     | Signed division, x (quotient) y (remainder) = z / y |
 | 3     | Unsigned division, x (quotient) y (remainder) = z / y |
+
+Division takes the magnitudes and corrects the signs afterwards: the quotient is negative
+when the operand signs differ and the remainder follows the dividend, which is the
+truncating convention C uses. Note that this makes INT32_MIN the largest magnitude a signed
+divisor has (2^31), and that negating a magnitude quotient of 2^31 wraps rather than
+trapping.
 
 ## Keyboard
 | Address | Content |

@@ -1,4 +1,5 @@
 		INCLUDE	"lowlevel/math.i"
+		INCLUDE	"lowlevel/hc800.i"
 		INCLUDE	"lowlevel/rc800.i"
 
 		INCLUDE	"stdlib/stream.i"
@@ -21,6 +22,7 @@ Entry::
 		jal	TestSub
 		jal	TestMul
 		jal	TestDiv
+		jal	TestDivEdge
 
 		sys	KExit
 
@@ -387,6 +389,157 @@ TestDiv:
 		jal	StreamHexWordOut
 		pop	ft
 		MNewLine
+
+		popa
+		j	(hl)
+
+
+; --
+; -- TestDivEdge
+; --   The divisions the drivers above cannot ask for, plus the ones the old
+; --   loop got wrong.  That loop tested "the divisor fits" as the sign bit of a
+; --   wrapped 32-bit difference - a borrow only while the operands agree in bit
+; --   31 - and shifted a 32-bit remainder field, dropping its carry.  Operands
+; --   in the top half of the range hit that from plain C; a dividend above 32
+; --   bits needs a program writing Z by hand, which is what this routine is.
+; --   The two cases with no arithmetic answer are here too, and so is the
+; --   status byte, whose carry lane is readiness and whose zero and overflow
+; --   lanes are the two error bits.
+; --
+; --   Reading a result register destroys it, so each line reads once, and the
+; --   bytes come out least significant first because that is the order the
+; --   device pops them; the expectation strings are written in that order.
+
+TestDivEdge:
+		pusha
+
+		MPrintString <"$1DEADBEEF / $F0000000 expect status 01 q 01 00 00 00 r EF BE AD EE: ">
+		ld	bc,.case_high
+		jal	EdgeDiv
+		MNewLine
+
+		MPrintString <"$FFFFFFFF / $FFFFFFFF expect status 01 q 01 00 00 00 r 00 00 00 00: ">
+		ld	bc,.case_equal
+		jal	EdgeDiv
+		MNewLine
+
+		MPrintString <"$DEADBEEF / 0 expect status 03 q 00 00 00 00 r 00 00 00 00: ">
+		ld	bc,.case_zero
+		jal	EdgeDiv
+		MNewLine
+
+		MPrintString <"$100000001 / 1 expect status 09 q 00 00 00 00 r 00 00 00 00: ">
+		ld	bc,.case_overflow
+		jal	EdgeDiv
+		MNewLine
+
+		; Sign convention: magnitudes, then the quotient negated when the
+		; operand signs differ and the remainder following the dividend.
+		; INT32_MIN is the largest magnitude a signed divisor has.
+
+		MPrintString <"-1 / $80000000 expect status 01 q 00 00 00 00 r FF FF FF FF: ">
+		ld	bc,.case_signed
+		jal	EdgeDiv
+		MNewLine
+
+		popa
+		j	(hl)
+
+.case_high	DB	$00,$00,$00,$01,$DE,$AD,$BE,$EF
+		DB	$F0,$00,$00,$00
+		DB	MATH_OP_UNSIGNED_DIV
+
+	; The plain C shape (`u32 / u32` in the top half): the old loop had this wrong.
+.case_equal	DB	$00,$00,$00,$00,$FF,$FF,$FF,$FF
+		DB	$FF,$FF,$FF,$FF
+		DB	MATH_OP_UNSIGNED_DIV
+
+.case_zero	DB	$00,$00,$00,$00,$DE,$AD,$BE,$EF
+		DB	$00,$00,$00,$00
+		DB	MATH_OP_UNSIGNED_DIV
+
+.case_overflow	DB	$00,$00,$00,$01,$00,$00,$00,$01
+		DB	$00,$00,$00,$01
+		DB	MATH_OP_UNSIGNED_DIV
+
+.case_signed	DB	$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
+		DB	$80,$00,$00,$00
+		DB	MATH_OP_SIGNED_DIV
+
+
+; --
+; -- EdgeDiv
+; --   One MATH coprocessor division, driven straight from a table so that the
+; --   dividend can be wider than the 32 bits the drivers pass.  Prints the
+; --   status byte, then four quotient bytes and four remainder bytes.
+; --
+; -- Inputs:
+; --   hl - 13 bytes: dividend (8, most significant first), divisor (4, most
+; --        significant first), operation (1)
+; --
+		SECTION	"EdgeDiv",CODE
+EdgeDiv:
+		pusha
+
+		ld	d,IO_MATH_BASE
+
+		; Z: the 64-bit dividend, most significant byte first.  DJ counts in F,
+		; which is safe here: nothing in the loop writes the flags.
+		ld	e,IO_MATH_Z
+		ld	f,8
+.edgeZ:		ld	t,(bc)
+		lio	(de),t
+		add	bc,1
+		dj	f,.edgeZ
+
+		; Y: the 32-bit divisor.
+		ld	e,IO_MATH_Y
+		ld	f,4
+.edgeY:		ld	t,(bc)
+		lio	(de),t
+		add	bc,1
+		dj	f,.edgeY
+
+		; The operation write starts the run, and re-latches the two error
+		; bits from the operands that were just written.
+		ld	t,(bc)
+		ld	e,IO_MATH_OPERATION
+		lio	(de),t
+
+		; Poll rather than guess: a run is 32 cycles.  LD F,T puts the byte on
+		; the condition lanes, the carry lane is readiness, so the loop spins
+		; while the carry is clear.  Writing F leaves T alone, so the status byte
+		; is still there to print.
+		ld	e,IO_MATH_STATUS
+.edgePoll:	lio	t,(de)
+		ld	f,t
+		j/cc	.edgePoll
+
+		jal	StreamHexByteOut
+
+		MPrintString <" q">
+		ld	d,IO_MATH_BASE
+		ld	e,IO_MATH_X
+		lio	t,(de)
+		jal	StreamHexByteOut
+		lio	t,(de)
+		jal	StreamHexByteOut
+		lio	t,(de)
+		jal	StreamHexByteOut
+		lio	t,(de)
+		jal	StreamHexByteOut
+
+		MPrintString <" r">
+		ld	d,IO_MATH_BASE
+		ld	e,IO_MATH_Y
+		lio	t,(de)
+		jal	StreamHexByteOut
+		lio	t,(de)
+		jal	StreamHexByteOut
+		lio	t,(de)
+		jal	StreamHexByteOut
+		lio	t,(de)
+		jal	StreamHexByteOut
 
 		popa
 		j	(hl)
