@@ -128,11 +128,16 @@ FailEntry:
 		; on the BC register stack first: the attribute call
 		; claims BC, and every routine below is pusha/popa, so
 		; nothing else needs saving across them.
+		; BC is a (mask, bits) pair for the attribute byte: the
+		; colour select is its HIGH nibble, so pair 4/5 (the
+		; black/red entries InitializePalette just loaded) is
+		; 4<<4 - a bare $04 would set the bold bit and leave
+		; pair 0, which is the default brown-on-brown.
 		push	bc
 		jal	InitializePalette
 		jal	TextInitialize
-		ld	b,$F0
-		ld	c,$04
+		ld	b,$F0|$04		; colour nibble + bold ($04)
+		ld	c,4<<4
 		jal	TextSetAttributes
 		jal	TextClearScreen
 		pop	bc			; message pointer back
