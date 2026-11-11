@@ -46,11 +46,10 @@ ComDumpMemory:
 		add	d,1
 		add	e,1
 
-.loop		ld	t,(bc)
+.loop		ld	t,(bc+)
 		jal	ComPrintHexByte
 		ld	t,' '
 		jal	ComPrintChar
-		add	bc,1
 		dj	e,.loop		
 		dj	d,.loop		
 
@@ -195,15 +194,13 @@ ComSendLoadFileString:
 		ld	t,COMMAND_LOAD_FILE
 		jal	ComSendCommand
 
-		ld	t,(bc)
-		add	bc,1
+		ld	t,(bc+)
 		ld	f,0
 		jal	UartWordOutSync		; filename length
 
 		ld	f,t
-.write_string	ld	t,(bc)
+.write_string	ld	t,(bc+)
 		jal	UartByteOutSync
-		add	bc,1
 		dj	f,.write_string
 
 		ld	ft,0
@@ -274,8 +271,7 @@ ComSendDataString:
 		pusha
 
 		ld	f,0
-		ld	t,(bc)
-		add	bc,1
+		ld	t,(bc+)
 
 		jal	UartWordOutSync		; filename length
 
@@ -308,8 +304,7 @@ ComReadDataString:
 		exg	bc,de
 
 		ld	t,e
-		ld	(bc),t
-		add	bc,1
+		ld	(bc+),t
 
 		jal	UartMemoryInSync
 
@@ -475,8 +470,7 @@ comReadFile:
 
 .loop		jal	UartByteInSync
 		j/ne	.timeout_pop
-		ld	(de),t
-		add	de,1
+		ld	(de+),t
 		sub	bc,1
 		tst	bc
 		j/nz	.loop
