@@ -720,17 +720,14 @@ printLineLengths:
 		ld	f,0
 		rs	ft,4
 		jal	DigitToAscii
-		ld	(de),t
-		add	de,1
+		ld	(de+),t
 		ld	t,0
-		ld	(de),t
-		add	de,1
+		ld	(de+),t
 		pop	ft
 
 		and	t,$F
 		jal	DigitToAscii
-		ld	(de),t
-		add	de,1
+		ld	(de+),t
 		ld	t,0
 		ld	(de),t
 		add	d,1
@@ -1060,8 +1057,7 @@ scrollLinesLengthsDown:
 		ld	f,t
 		add	f,1
 
-.loop		ld	t,(bc)
-		add	bc,1
+.loop		ld	t,(bc+)
 		ld	(bc),t
 		sub	bc,2
 		dj	f,.loop
@@ -1096,10 +1092,8 @@ scrollLinesLengthsUp:
 		neg	t
 		ld	f,t
 
-.loop		ld	t,(de)
-		ld	(bc),t
-		add	bc,1
-		add	de,1
+.loop		ld	t,(de+)
+		ld	(bc+),t
 .enter		dj	f,.loop
 
 		ld	t,$00
