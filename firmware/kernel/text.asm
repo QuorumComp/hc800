@@ -174,8 +174,7 @@ TextSetWideChar:
 
 		; de = attributes address
 
-		ld	(de),t
-		add	de,1
+		ld	(de+),t
 		ld	bc,VideoCursor+csr_Attribute
 		ld	t,(bc)
 		or	t,f
@@ -246,8 +245,7 @@ TextDeleteCharacter:
 		ld	ft,VideoCursor+csr_Attribute
 		ld	t,(ft)
 		sub	bc,2
-		ld	(bc),t
-		add	bc,1
+		ld	(bc+),t
 		ld	t,0
 		ld	(bc),t
 
@@ -290,8 +288,7 @@ TextInsertEmptyCharacter:
 		ld	t,(ft)
 
 		add	bc,1
-		ld	(bc),t
-		add	bc,1
+		ld	(bc+),t
 		ld	t,0
 		ld	(bc),t
 
@@ -326,10 +323,8 @@ TextScrollLinesDown:
 		j	.loop_entry
 
 .loop		ld	f,CHARS_PER_LINE*2
-.attr_loop	ld	t,(de)
-		add	de,1
-		ld	(hl),t
-		add	hl,1
+.attr_loop	ld	t,(de+)
+		ld	(hl+),t
 		dj	f,.attr_loop
 
 		sub	d,1
@@ -345,11 +340,9 @@ TextScrollLinesDown:
 
 		ld	f,CHARS_PER_LINE
 .clear_loop	ld	t,e
-		ld	(hl),t
-		add	hl,1
+		ld	(hl+),t
 		ld	t,d
-		ld	(hl),t
-		add	hl,1
+		ld	(hl+),t
 		dj	f,.clear_loop
 
 .exit		popa
@@ -388,10 +381,8 @@ TextScrollLinesUp:
 		add	d,1
 
 .loop		ld	f,CHARS_PER_LINE*2
-.attr_loop	ld	t,(de)
-		add	de,1
-		ld	(hl),t
-		add	hl,1
+.attr_loop	ld	t,(de+)
+		ld	(hl+),t
 		dj	f,.attr_loop
 
 		add	d,1
@@ -402,8 +393,7 @@ TextScrollLinesUp:
 
 		ld	t,0
 		ld	f,CHARS_PER_LINE*2
-.clear_loop	ld	(hl),t
-		add	hl,1
+.clear_loop	ld	(hl+),t
 		dj	f,.clear_loop
 
 .exit		popa
@@ -457,8 +447,7 @@ TextSetCharacterAt:
 		ld	bc,ft
 
 		ld	t,e
-		ld	(bc),t
-		add	bc,1
+		ld	(bc+),t
 
 		ld	ft,VideoCursor+csr_Attribute
 		ld	t,(ft)
@@ -481,9 +470,8 @@ TextGetCursor:
 		push	bc/de/hl
 
 		ld	bc,VideoCursor+csr_X
-		ld	t,(bc)
+		ld	t,(bc+)
 		exg	f,t
-		add	bc,1
 		ld	t,(bc)
 
 		pop	bc/de/hl
@@ -504,8 +492,7 @@ TextSetCursor:
 		ld	de,VideoCursor+csr_X
 
 		ld	t,b
-		ld	(de),t
-		add	de,1
+		ld	(de+),t
 
 		ld	t,c
 		ld	(de),t
