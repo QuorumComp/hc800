@@ -493,27 +493,26 @@ EdgeDiv:
 		ld	d,IO_MATH_BASE
 
 		; X: the divisor, lane 0 first.  DJ counts in F, which is safe here: only
-		; CMP writes the flags implicitly, and nothing in the loop is CMP.
+		; CMP and TST write the flags implicitly and nothing in the loop is either -
+		; a stepped load moves the pointer, not the condition codes.
 		ld	e,IO_MATH_X
 		ld	f,4
-.edgeX:		ld	t,(bc)
+.edgeX:		ld	t,(bc+)
 		lio	(de+),t
-		add	bc,1
 		dj	f,.edgeX
 
 		; Y: the dividend.  The lane walk leaves DE at the next group, and the last
 		; write of this one is what starts the run.
 		ld	f,4
-.edgeY:		ld	t,(bc)
+.edgeY:		ld	t,(bc+)
 		lio	(de+),t
-		add	bc,1
 		dj	f,.edgeY
 
 		; Poll rather than guess: a run is 32 cycles.  LD F,T puts the byte on the
 		; condition lanes, the carry lane is readiness, so the loop spins while the
 		; carry is clear.  Writing F leaves T alone, so the status byte is still
 		; there to print.
-		ld	t,(bc)
+		ld	t,(bc+)
 		ld	e,t
 .edgePoll:	lio	t,(de)
 		ld	f,t
@@ -522,8 +521,7 @@ EdgeDiv:
 		jal	StreamHexByteOut
 
 		MPrintString <" q">
-		add	bc,1
-		ld	t,(bc)
+		ld	t,(bc+)
 		ld	e,t
 		lio	t,(de+)
 		jal	StreamHexByteOut
@@ -535,7 +533,6 @@ EdgeDiv:
 		jal	StreamHexByteOut
 
 		MPrintString <" r">
-		add	bc,1
 		ld	t,(bc)
 		ld	e,t
 		lio	t,(de+)
