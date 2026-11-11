@@ -57,8 +57,8 @@ TextMoveCursor:
 
 		; wrap to previous line and move up
 		add	de,csr_Y-csr_X
-		ld	t,(de)
-		sub	de,1
+		ld	t,(de+)
+		sub	de,2
 		cmp	t,0
 		j/z	.move_y
 		ld	t,CHARS_PER_LINE-1
@@ -69,12 +69,12 @@ TextMoveCursor:
 		j/ltu	.move_y
 
 		add	de,1
-		ld	t,(de)
-		sub	de,1
+		ld	t,(de+)
+		sub	de,2
 		cmp	t,LINES_ON_SCREEN-1
 		j/ne	.x_wrap
 		ld	t,CHARS_PER_LINE-1
-		ld	(de),t
+		ld	(de+),t
 		j	.move_y
 
 .x_wrap		ld	t,0
@@ -95,7 +95,7 @@ TextMoveCursor:
 		j/lt	.done
 
 		ld	t,LINES_ON_SCREEN-1
-		ld	(de),t
+		ld	(de+),t
 
 .done		popa
 		j	(hl)
@@ -125,7 +125,7 @@ TextClearScreen:
 
 		ld	t,0
 		ld	(bc+),t	;csr_X; BC steps to csr_Y (the gap is one)
-		ld	(bc),t	;csr_Y
+		ld	(bc+),t	;csr_Y
 
 		popa
 		j	(hl)
@@ -149,7 +149,7 @@ TextSetAttributes:
 		ld	t,(de)
 		and	t,b
 		or	t,c
-		ld	(de),t
+		ld	(de+),t
 
 		popa
 		j	(hl)
@@ -173,9 +173,9 @@ TextSetWideChar:
 
 		ld	(de+),t
 		ld	bc,VideoCursor+csr_Attribute
-		ld	t,(bc)
+		ld	t,(bc+)
 		or	t,f
-		ld	(de),t
+		ld	(de+),t
 
 		popa
 		j	(hl)
@@ -244,7 +244,7 @@ TextDeleteCharacter:
 		sub	bc,2
 		ld	(bc+),t
 		ld	t,0
-		ld	(bc),t
+		ld	(bc+),t
 
 		popa
 		j	(hl)
@@ -287,7 +287,7 @@ TextInsertEmptyCharacter:
 		add	bc,1
 		ld	(bc+),t
 		ld	t,0
-		ld	(bc),t
+		ld	(bc+),t
 
 		popa
 		j	(hl)
@@ -331,7 +331,7 @@ TextScrollLinesDown:
 .loop_entry	dj	b,.loop
 
 		ld	de,VideoCursor+csr_Attribute
-		ld	t,(de)
+		ld	t,(de+)
 		ld	d,t
 		ld	e,0
 
@@ -415,11 +415,11 @@ TextGetCharacterAt:
 		ld	bc,ft
 
 		add	bc,1
-		ld	t,(bc)
-		sub	bc,1
+		ld	t,(bc+)
+		sub	bc,2
 		and	t,$01
 		exg	f,t
-		ld	t,(bc)
+		ld	t,(bc+)
 		
 		pop	bc/de/hl
 		j	(hl)
@@ -449,7 +449,7 @@ TextSetCharacterAt:
 		ld	ft,VideoCursor+csr_Attribute
 		ld	t,(ft)
 		or	t,d
-		ld	(bc),t
+		ld	(bc+),t
 		
 		popa
 		j	(hl)
@@ -468,7 +468,7 @@ TextGetCursor:
 
 		ld	bc,VideoCursor+csr_X
 		ld	f,(bc+)
-		ld	t,(bc)
+		ld	t,(bc+)
 
 		pop	bc/de/hl
 		j	(hl)
@@ -491,7 +491,7 @@ TextSetCursor:
 		ld	(de+),t
 
 		ld	t,c
-		ld	(de),t
+		ld	(de+),t
 
 		popa
 		j	(hl)
@@ -523,7 +523,7 @@ TextSetAttributesAtCursor:
 		
 		and	t,b
 		or	t,c
-		ld	(de),t
+		ld	(de+),t
 
 		popa
 		j	(hl)
@@ -571,7 +571,7 @@ textGetCursorAttributePointer:
 		add	t,f
 		exg	f,t
 		add	bc,csr_X-csr_Y
-		ld	t,(bc)
+		ld	t,(bc+)
 		add	t,t
 
 		pop	bc

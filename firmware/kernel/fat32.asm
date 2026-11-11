@@ -176,12 +176,12 @@ fillFsStruct:
 		ld	t,(bc)
 		ld	f,0
 		jal	MathLog2_16
-		ld	(de),t
+		ld	(de+),t
 
 		; get root directory cluster
 
 		add	bc,BPB_ROOT_CLUSTER-BPB_SECTORS_PER_CLUSTER
-		add	de,fat32_RootCluster-fat32_ClusterToSector
+		add	de,fat32_RootCluster-fat32_ClusterToSector-1
 		jal	.copy4
 
 		; get FAT base cluster
@@ -250,7 +250,7 @@ fillFsStruct:
 		ld	t,(de)
 		ld	f,t
 		sub	de,1
-		ld	t,(de)
+		ld	t,(de+)
 		ld	bc,ft
 		pop	ft
 
@@ -411,8 +411,8 @@ dirRead:
 		ld	(bc),t
 .not_dir
 		sub	bc,dir_Flags
-		ld	t,(de)
-		sub	de,DIRENT_ATTR
+		ld	t,(de+)
+		sub	de,DIRENT_ATTR+1
 		and	t,ATTR_HIDDEN|ATTR_LABEL
 		cmp	t,0
 		j/eq	.attr_ok
@@ -455,9 +455,9 @@ dirRead:
 		pop	bc
 		sub	ft,bc
 		add	bc,-1
-		ld	(bc),t	; name length; stepped store, pair rewound
+		ld	(bc+),t	; name length; stepped store, pair rewound
 
-		add	bc,dir_Length-dir_Filename
+		add	bc,dir_Length-dir_Filename-1
 		add	de,DIRENT_LENGTH-DIRENT_ATTR
 
 		MPush32 ft,(de)
@@ -566,7 +566,7 @@ fileOpen:
 		ld	t,ERROR_SUCCESS
 		ld	(bc+),t	; error
 		ld	t,0
-		ld	(bc),t	; flags
+		ld	(bc+),t	; flags
 
 		add	de,udir_StartCluster-dir_Length
 		MLoad32	ft,(de)
@@ -1065,8 +1065,8 @@ readNextFileSector:
 		ld	l,(ft)	; l = sector index
 
 		add	bc,fat32_ClusterToSector
-		ld	t,(bc)
-		sub	bc,fat32_ClusterToSector
+		ld	t,(bc+)
+		sub	bc,fat32_ClusterToSector+1
 		ld	h,t	; h = cluster to sector
 		ld	ft,1
 		ls	ft,h	; ft = sectors per cluster

@@ -374,7 +374,7 @@ tokenizeCommandLine:
 		pop	bc
 
 .arguments_done	ld	t,0
-		ld	(bc),t
+		ld	(bc+),t
 
 		popa
 		j	(hl)

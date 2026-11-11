@@ -24,7 +24,7 @@ ScreenInitialize:
 
 		ld	t,0
 		ld	bc,isInsert
-		ld	(bc),t
+		ld	(bc+),t
 
 		popa
 		j	(hl)
@@ -42,7 +42,7 @@ ScreenEditLine:
 		ld	t,(bc)
 		push	ft
 		ld	t,1
-		ld	(bc),t
+		ld	(bc+),t
 
 		jal	restartCursor
 .loop		jal	handleKeyboardInput
@@ -58,13 +58,13 @@ ScreenEditLine:
 		j/z	.is_insert
 
 		ld	t,0
-		ld	(bc),t
+		ld	(bc+),t
 
 .is_insert	jal	keyReturn
 
 		pop	ft
 		ld	bc,isInsert
-		ld	(bc),t
+		ld	(bc+),t
 
 		popa
 		j	(hl)
@@ -148,8 +148,8 @@ copyAcceptedLine:
 ; --   de - attribute pointer, next character
 ; --    t - character
 .getNextCharacter:
-		ld	t,(de)
-		add	de,2
+		ld	t,(de+)
+		add	de,1
 		cmp	e,CHARS_PER_LINE*2
 		j/leu	.done
 		ld	e,0
@@ -421,7 +421,7 @@ scrollScreenDown:
 		jal	TextScrollLinesDown
 		jal	scrollLinesLengthsDown
 		ld	bc,lineLengths
-		ld	(bc),t
+		ld	(bc+),t
 
 		popa
 		j	(hl)
@@ -508,7 +508,7 @@ keyHome:	push	ft/bc/hl
 		ld	bc,VideoCursor+csr_X
 		ld	t,0
 		ld	(bc+),t	;csr_X; BC steps to csr_Y (the gap is one)
-		ld	(bc),t	;csr_Y
+		ld	(bc+),t	;csr_Y
 		j	.done
 
 .line_home	; move to beginning of virtual line
@@ -727,7 +727,7 @@ printLineLengths:
 		jal	DigitToAscii
 		ld	(de+),t
 		ld	t,0
-		ld	(de),t
+		ld	(de+),t
 		add	d,1
 		ld	e,0
 
@@ -819,7 +819,7 @@ insertCharacterAtVirtualCursorPos:
 		push	bc
 		ld	b,0
 		add	bc,lineLengths
-		ld	t,(bc)
+		ld	t,(bc+)
 		pop	bc
 
 		cmp	t,CHARS_PER_LINE
@@ -975,7 +975,7 @@ setLineLength:
 		j/geu	.no_insert
 
 		ld	t,d
-		ld	(bc),t
+		ld	(bc+),t
 
 .no_insert	pop	bc/de/hl
 		j	(hl)
@@ -1061,8 +1061,7 @@ scrollLinesLengthsDown:
 		dj	f,.loop
 
 .skip		ld	t,$FF
-		add	bc,1
-		ld	(bc),t
+		ld	(bc+),t
 
 		popa
 		j	(hl)
@@ -1150,7 +1149,7 @@ blinkCursor:
 		pusha
 
 		ld	bc,blinkCount
-		ld	t,(bc)
+		ld	t,(bc+)
 		ls	ft,2
 		ext
 		ld	t,f
@@ -1165,7 +1164,7 @@ blinkCursor:
 restartCursor:
 		ld	bc,blinkCount
 		ld	t,$30
-		ld	(bc),t
+		ld	(bc+),t
 		j	(hl)
 
 
@@ -1173,9 +1172,9 @@ ScreenVBlank:
 		pusha
 
 		ld	bc,blinkCount
-		ld	t,(bc)
+		ld	t,(bc+)
 		add	t,1
-		ld	(bc),t
+		ld	(bc+),t
 
 		popa
 		j	(hl)

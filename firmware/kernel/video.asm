@@ -23,7 +23,7 @@ VideoIsVBlankEdge:
 		cmp	t,0
 		not	f
 		ld	t,0
-		ld	(bc),t
+		ld	(bc+),t
 
 		pop	bc/hl
 		j	(hl)
@@ -35,7 +35,7 @@ VBlankHandler:
 
 		ld	bc,isVBlank
 		ld	t,$FF
-		ld	(bc),t
+		ld	(bc+),t
 
 		jal	ScreenVBlank
 		jal	KeyboardVBlank

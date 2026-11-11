@@ -75,7 +75,7 @@ SysGetBlockDevice::
 		reti
 
 .fail		ld	t,0
-		ld	(de),t	; clear bdinf_Valid
+		ld	(de+),t	; clear bdinf_Valid
 
 		popa
 		ld	f,FLAGS_NE

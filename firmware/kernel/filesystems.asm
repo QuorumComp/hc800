@@ -169,10 +169,10 @@ FileInitialize:
 		ld	hl,totalvolumes
 		ld	t,(hl)
 		add	t,'0'
-		ld	(de),t
+		ld	(de+),t
 
 		add	t,1-'0'
-		ld	(hl),t
+		ld	(hl+),t
 
 		pop	ft/de/hl
 		j	(hl)
@@ -882,13 +882,12 @@ normalizePathComponents:
 
 		; it's 2 chars, maybe parent (..)
 
-		ld	t,(bc)
+		ld	t,(bc+)
 		cmp	t,'.'
 		j/ne	.not_parent
 
-		add	bc,1
-		ld	t,(bc)
-		sub	bc,1
+		ld	t,(bc+)
+		sub	bc,2
 		cmp	t,'.'
 		j/ne	.not_parent
 

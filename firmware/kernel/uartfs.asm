@@ -114,7 +114,7 @@ uartOpen:
 
 .timeout	ld	t,ERROR_TIMEOUT
 .done		add	bc,file_Error
-		ld	(bc),t
+		ld	(bc+),t
 		cmp	t,ERROR_SUCCESS
 
 		pop	bc/de/hl
@@ -219,13 +219,13 @@ uartRead:
 
 		add	bc,file_Error
 		ld	t,ERROR_SUCCESS
-		ld	(bc),t
+		ld	(bc+),t
 
 		ld	ft,de
 		j	.exit
 
 .error		add	bc,file_Error
-		ld	(bc),t
+		ld	(bc+),t
 		ld	ft,0
 
 .exit		pop	bc/de/hl

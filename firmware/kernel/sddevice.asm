@@ -45,7 +45,7 @@ SdDeviceMake:
 		MDebugPrint <"Card present\n">
 
 		add	de,SdType-SdSelect
-		ld	t,(de)
+		ld	t,(de+)
 		add	bc,sddev_Type-sddev_Select
 		ld	(bc),t
 

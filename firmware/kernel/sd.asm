@@ -94,7 +94,7 @@ REPLY_ERRORS		EQU	REPLY_ILLEGAL_COMMAND|REPLY_CRC_ERROR|REPLY_ERASE_SEQ_ERROR|RE
 ; -- Select the current card and the fast SPI clock (3.375 MHz).
 SELECT:		MACRO
 		ld	bc,SdSelect
-		ld	t,(bc)
+		ld	t,(bc+)
 		or	t,IO_SEL_FAST_CLOCK
 		ld	b,IO_SDCARD_BASE
 		ld	c,IO_SD_SELECT
@@ -104,7 +104,7 @@ SELECT:		MACRO
 ; -- Select the current card and the slow SPI clock (211 kHz).
 SELECT_SLOW:	MACRO
 		ld	bc,SdSelect
-		ld	t,(bc)
+		ld	t,(bc+)
 		or	t,IO_SEL_SLOW_CLOCK
 		ld	b,IO_SDCARD_BASE
 		ld	c,IO_SD_SELECT
@@ -511,7 +511,7 @@ SdInit:		push	bc/de/hl
 .fail		ld	t,SDTYPE_NONE
 		MDebugPrint <"SdInit - no card\n">
 .store		ld	bc,SdType
-		ld	(bc),t
+		ld	(bc+),t
 
 		cmp	t,SDTYPE_NONE
 		not	f		; invert eq/ne

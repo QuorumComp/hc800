@@ -70,7 +70,7 @@ Main:
 
 		MPrintString " RAM  : "
 		ld	de,totalBanks
-		ld	t,(de)
+		ld	t,(de+)
 		ld	f,0
 		ls	ft,4
 		jal	StreamDecimalWordOut
