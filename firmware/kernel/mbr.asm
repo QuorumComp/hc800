@@ -148,15 +148,14 @@ MakeMbrPartitionDevice:
 		ld	ft,de
 		add	bc,mbrdev_Underlying
 		ld	(bc+),t
-		exg	f,t
-		ld	(bc),t
+		ld	(bc+),f
 		swap	de	; restore partition pointer
 
 		; bc has now been popped
 
 		; copy offset to structure
 
-		add	bc,mbrdev_Offset-(mbrdev_Underlying+1)
+		add	bc,mbrdev_Offset-(mbrdev_Underlying+2)
 		add	de,part_StartLBA-part_Type
 		ld	f,4
 .offset_loop	ld	t,(de+)
@@ -273,11 +272,9 @@ mbrRead:
 		; de - pointer to destination
 
 		push	ft
-		add	bc,mbrdev_Underlying+1
-		ld	t,(bc)
-		sub	bc,1
-		exg	f,t
-		ld	t,(bc)
+		add	bc,mbrdev_Underlying
+		ld	t,(bc+)
+		ld	f,(bc+)
 		ld	bc,ft
 		pop	ft
 

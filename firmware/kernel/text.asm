@@ -112,8 +112,7 @@ TextClearScreen:
 		push	bc
 
 		add	bc,csr_Attribute-csr_X
-		ld	t,(bc)
-		exg	f,t
+		ld	f,(bc+)
 		ld	t,0
 
 		ld	bc,ATTRIBUTES_BASE
@@ -470,8 +469,7 @@ TextGetCursor:
 		push	bc/de/hl
 
 		ld	bc,VideoCursor+csr_X
-		ld	t,(bc+)
-		exg	f,t
+		ld	f,(bc+)
 		ld	t,(bc)
 
 		pop	bc/de/hl

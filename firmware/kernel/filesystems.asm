@@ -34,8 +34,7 @@ SysGetVolume::
 		ld	f,t
 
 		ld	de,totalvolumes
-		ld	t,(de)
-		exg	f,t
+		ld	f,(de+)
 
 		MDebugPrint <"- 1\n">
 
