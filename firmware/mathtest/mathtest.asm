@@ -454,14 +454,17 @@ TestDivEdge:
 
 ; Each line: divisor (4, least significant first), dividend (4, least significant
 ; first), then the offsets of the status byte and of the two result ports to read.
+; The dividends are $DEADBEEF, whose bytes least-significant-first are EF,BE,AD,DE
+; - writing them in reading order swaps the middle two and makes the case print a
+; remainder that does not match its own banner.
 
-.case_high	DB	$00,$00,$00,$F0,$EF,$AD,$BE,$DE
+.case_high	DB	$00,$00,$00,$F0,$EF,$BE,$AD,$DE
 		DB	IO_MATH_STATUS,IO_MATH_QUOTIENT,IO_MATH_REMAINDER
 
 .case_equal	DB	$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
 		DB	IO_MATH_STATUS,IO_MATH_QUOTIENT,IO_MATH_REMAINDER
 
-.case_zero	DB	$00,$00,$00,$00,$EF,$AD,$BE,$DE
+.case_zero	DB	$00,$00,$00,$00,$EF,$BE,$AD,$DE
 		DB	IO_MATH_STATUS,IO_MATH_QUOTIENT,IO_MATH_REMAINDER
 
 .case_overflow_raw	DB	$FF,$FF,$FF,$FF,$00,$00,$00,$80
