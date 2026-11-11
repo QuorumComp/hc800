@@ -67,8 +67,7 @@ Entry::
 
 .key_left
 		ld	bc,scrollX
-		ld	t,(bc)
-		add	bc,1
+		ld	t,(bc+)
 		exg	f,t
 		ld	t,(bc)
 		exg	f,t
@@ -77,8 +76,7 @@ Entry::
 
 .key_right
 		ld	bc,scrollX
-		ld	t,(bc)
-		add	bc,1
+		ld	t,(bc+)
 		exg	f,t
 		ld	t,(bc)
 		exg	f,t
@@ -104,8 +102,7 @@ Entry::
 
 .key_up
 		ld	bc,scrollY
-		ld	t,(bc)
-		add	bc,1
+		ld	t,(bc+)
 		exg	f,t
 		ld	t,(bc)
 		exg	f,t
@@ -114,8 +111,7 @@ Entry::
 
 .key_down
 		ld	bc,scrollY
-		ld	t,(bc)
-		add	bc,1
+		ld	t,(bc+)
 		exg	f,t
 		ld	t,(bc)
 		exg	f,t
