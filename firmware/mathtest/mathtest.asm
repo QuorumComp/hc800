@@ -700,6 +700,61 @@ TestShift:
 		pop	ft
 		pop	ft
 
+		; The wide shifts: at 16 and above the answer is one word of the input
+		; moved to the far end with the other end zeroed - a right shift keeps
+		; the high word, a left shift keeps the low one.  A value under 65536
+		; cannot tell a routine that does that from one that quietly drops a
+		; word, so these operands have both halves busy, and 31 is the largest
+		; shift the 32-bit shape has an answer for.
+
+		MPush32	ft,$0001ABCD
+		ld	b,16
+		jal	MathShiftRight_32
+		MPrintString "0x0001ABCD >> 16 = (expect 00000001) "
+		jal	StreamHexLongOut
+		MNewLine
+		pop	ft
+
+		MPush32	ft,$FFFF0000
+		ld	b,17
+		jal	MathShiftRight_32
+		MPrintString "0xFFFF0000 >> 17 = (expect 00007FFF) "
+		jal	StreamHexLongOut
+		MNewLine
+		pop	ft
+
+		MPush32	ft,$FFFFFFFF
+		ld	b,31
+		jal	MathShiftRight_32
+		MPrintString "0xFFFFFFFF >> 31 = (expect 00000001) "
+		jal	StreamHexLongOut
+		MNewLine
+		pop	ft
+
+		MPush32	ft,$0000FFFF
+		ld	b,16
+		jal	MathShiftLeft_32
+		MPrintString "0x0000FFFF << 16 = (expect FFFF0000) "
+		jal	StreamHexLongOut
+		MNewLine
+		pop	ft
+
+		MPush32	ft,$FFFFFFFF
+		ld	b,17
+		jal	MathShiftLeft_32
+		MPrintString "0xFFFFFFFF << 17 = (expect FFFE0000) "
+		jal	StreamHexLongOut
+		MNewLine
+		pop	ft
+
+		MPush32	ft,$12345679
+		ld	b,31
+		jal	MathShiftLeft_32
+		MPrintString "0x12345679 << 31 = (expect 80000000) "
+		jal	StreamHexLongOut
+		MNewLine
+		pop	ft
+
 		popa
 		j	(hl)
 
