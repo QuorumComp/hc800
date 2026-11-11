@@ -152,8 +152,7 @@ CheckKernel:
 		ld	bc,$4000
 		MLDLoop	de,$4000
 		ld	ft,0
-.checksum	ld	t,(bc)
-		add	bc,1
+.checksum	ld	t,(bc+)
 		add	t,f
 		ld	f,t
 		dj	e,.checksum

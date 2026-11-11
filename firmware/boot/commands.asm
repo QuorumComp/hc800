@@ -148,15 +148,13 @@ ComSendLoadFileString:
 		ld	t,COMMAND_LOAD_FILE
 		jal	comSendCommand
 
-		ld	t,(bc)
-		add	bc,1
+		ld	t,(bc+)
 		ld	f,0
 		jal	UartWordOutSync		; filename length
 
 		ld	f,t
-.write_string	ld	t,(bc)
+.write_string	ld	t,(bc+)
 		jal	UartByteOutSync
-		add	bc,1
 		dj	f,.write_string
 
 		ld	ft,0
@@ -226,8 +224,7 @@ comReadFile:
 
 .loop		jal	UartByteInSync
 		j/ne	.timeout_pop
-		ld	(de),t
-		add	de,1
+		ld	(de+),t
 		sub	bc,1
 		tst	bc
 		j/nz	.loop

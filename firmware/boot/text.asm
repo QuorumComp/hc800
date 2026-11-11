@@ -220,8 +220,7 @@ textSetWideChar:
 
 		; de = attributes address
 
-		ld	(de),t
-		add	de,1
+		ld	(de+),t
 		ld	t,0
 		ld	(de),t
 
