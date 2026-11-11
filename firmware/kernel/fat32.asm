@@ -434,7 +434,8 @@ dirRead:
 .copy_name	ld	t,(de+)
 		ld	(bc+),t
 		dj	f,.copy_name
-.find_space_1	ld	t,(-bc)
+.find_space_1	add	bc,-1
+		ld	t,(bc)	; stepped load, pair rewound: BC lands on the byte
 		cmp	t,' '
 		j/eq	.find_space_1
 		add	bc,1
@@ -444,7 +445,8 @@ dirRead:
 .copy_extension	ld	t,(de+)
 		ld	(bc+),t
 		dj	f,.copy_extension
-.find_space_2	ld	t,(-bc)
+.find_space_2	add	bc,-1
+		ld	t,(bc)	; stepped load, pair rewound: BC lands on the byte
 		cmp	t,' '
 		j/eq	.find_space_2
 		cmp	t,'.'
@@ -452,7 +454,8 @@ dirRead:
 		ld	ft,bc
 		pop	bc
 		sub	ft,bc
-		ld	(-bc),t	; name length
+		add	bc,-1
+		ld	(bc),t	; name length; stepped store, pair rewound
 
 		add	bc,dir_Length-dir_Filename
 		add	de,DIRENT_LENGTH-DIRENT_ATTR

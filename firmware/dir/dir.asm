@@ -38,7 +38,7 @@ Entry::
 		ld	bc,dirInfo+dir_Error
 		ld	t,(bc)
 		sys	KPrintError
-		j	.done
+		jal	.done	; the loop below outgrew a byte jump; HL is dead here
 
 .print_dir	ld	bc,dirInfo+dir_Flags
 		ld	t,(bc)
@@ -72,7 +72,7 @@ Entry::
 
 		ld	ft,dirInfo
 		sys	KReadDirectory
-		j/eq	.print_dir
+		jal/eq	.print_dir	; loop body exceeds a byte jump; HL is dead across the edge
 
 .done
 		ld	ft,dirInfo
