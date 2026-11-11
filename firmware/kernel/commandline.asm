@@ -26,18 +26,15 @@ SysGetCommandLine:
 		ld	de,lastCommandLine
 
 .string		ld	t,(de)
-		ld	(bc),t
+		ld	(bc+),t
 		cmp	t,0
 		j/eq	.done
 
-		add	bc,1
 		add	de,1
 
 		ld	f,t
-.char		ld	t,(de)
-		ld	(bc),t
-		add	bc,1
-		add	de,1
+.char		ld	t,(de+)
+		ld	(bc+),t
 		dj	f,.char
 		j	.string
 
@@ -341,8 +338,7 @@ readHeader:
 tokenizeCommandLine:
 		pusha
 
-		ld	t,(de)
-		add	de,1
+		ld	t,(de+)
 		ld	l,t		; l = string length
 
 		cmp	l,0
@@ -356,15 +352,13 @@ tokenizeCommandLine:
 
 .skipped_spaces	push	bc
 		ld	t,0
-		ld	(bc),t
-		add	bc,1
+		ld	(bc+),t
 
 .copy_chars	ld	t,(de)
 		cmp	t,' '
 		j/eq	.set_length
 		add	de,1
-		ld	(bc),t
-		add	bc,1
+		ld	(bc+),t
 		dj	l,.copy_chars
 
 .set_length	ld	ft,bc
