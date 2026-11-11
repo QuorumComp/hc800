@@ -59,14 +59,13 @@ TextNewline:	pusha
 		ld	bc,videoCursor+csr_X
 
 		ld	t,0
-		ld	(bc),t
+		ld	(bc+),t
 		
-		add	bc,csr_Y-csr_X
 		ld	t,(bc)
 		add	t,1
 		cmp	t,LINES_ON_SCREEN
 		ld/geu	t,0
-		ld	(bc),t
+		ld	(bc+),t
 
 		popa
 		j	(hl)
@@ -109,7 +108,7 @@ TextMoveCursorBack:
 		j/z	.skip
 
 		sub	t,1
-		ld	(de),t
+		ld	(de+),t
 
 .skip		popa
 		j	(hl)
@@ -128,7 +127,7 @@ TextMoveCursorForward:
 		j/geu	.skip
 
 		add	t,1
-		ld	(de),t
+		ld	(de+),t
 
 .skip		popa
 		j	(hl)
@@ -150,10 +149,9 @@ TextClearScreen:
 
 		ld	bc,videoCursor+csr_X
 		ld	t,0
-		ld	(bc),t	;csr_X
+		ld	(bc+),t	;csr_X
 
-		add	bc,csr_Y-csr_X
-		ld	(bc),t	;csr_Y
+		ld	(bc+),t	;csr_Y
 
 		popa
 		j	(hl)
@@ -191,12 +189,12 @@ textGetCursorAttributePointer:
 		push	bc
 
 		ld	bc,videoCursor+csr_Y
-		ld	t,(bc)
+		ld	t,(bc+)
 		ld	f,ATTRIBUTES_BASE>>8
 		add	t,f
 		exg	f,t
-		add	bc,csr_X-csr_Y
-		ld	t,(bc)
+		add	bc,csr_X-csr_Y-1
+		ld	t,(bc+)
 		add	t,t
 
 		pop	bc
@@ -222,7 +220,7 @@ textSetWideChar:
 
 		ld	(de+),t
 		ld	t,0
-		ld	(de),t
+		ld	(de+),t
 
 		popa
 		j	(hl)

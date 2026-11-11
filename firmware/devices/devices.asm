@@ -89,10 +89,8 @@ listRootDirectory:
 		ld	de,fat32+fs_RootCluster
 		ld	bc,sectorNumber
 		REPT 4
-		ld	t,(de)
-		ld	(bc),t
-		add	de,1
-		add	bc,1
+		ld	t,(de+)
+		ld	(bc+),t
 		ENDR
 		ld	bc,sectorNumber
 		ld	de,fat32
@@ -131,13 +129,12 @@ printFile:
 		pusha
 
 		add	bc,$0B
-		ld	t,(bc)
+		ld	t,(bc+)
 		cmp	t,$0F
 		j/eq	.exit
-		sub	bc,$0B
+		sub	bc,$0B+1
 
-		ld	t,(bc)
-		add	bc,1
+		ld	t,(bc+)
 
 		cmp	t,0
 		j/eq	.exit
@@ -149,8 +146,7 @@ printFile:
 
 		ld	f,8
 .name		sys	KCharacterOut
-		ld	t,(bc)
-		add	bc,1
+		ld	t,(bc+)
 		dj	f,.name
 
 		push	ft
@@ -160,8 +156,7 @@ printFile:
 
 		ld	f,3
 .ext		sys	KCharacterOut
-		ld	t,(bc)
-		add	bc,1
+		ld	t,(bc+)
 		dj	f,.ext
 
 		MNewLine
@@ -197,8 +192,7 @@ printFat32:
 		pusha
 		ld	bc,fat32+fs_ClusterToSector
 		ld	e,fs_Fat32_SIZEOF-fs_ClusterToSector
-.loop		ld	t,(bc)
-		add	bc,1
+.loop		ld	t,(bc+)
 		jal	StreamHexByteOut
 		dj	e,.loop
 		MNewLine
@@ -211,10 +205,8 @@ printRootSector:
 		ld	de,fat32+fs_RootCluster
 		ld	bc,sectorNumber
 		REPT 4
-		ld	t,(de)
-		ld	(bc),t
-		add	de,1
-		add	bc,1
+		ld	t,(de+)
+		ld	(bc+),t
 		ENDR
 		ld	bc,sectorNumber
 		ld	de,fat32
@@ -226,13 +218,10 @@ printRootSector:
 printVBR:	pusha
 		ld	bc,sectorNumber
 		ld	t,0
-		ld	(bc),t
-		add	bc,1
-		ld	(bc),t
-		add	bc,1
-		ld	(bc),t
-		add	bc,1
-		ld	(bc),t
+		ld	(bc+),t
+		ld	(bc+),t
+		ld	(bc+),t
+		ld	(bc+),t
 		jal	printSector
 		popa
 		j	(hl)
@@ -242,9 +231,9 @@ printSector:	pusha
 
 		ld	bc,sectorNumber+3
 		ld	f,4
-.print_long	ld	t,(bc)
+.print_long	ld	t,(bc+)
 		jal	StreamHexByteOut
-		sub	bc,1
+		sub	bc,2
 		dj	f,.print_long
 		MNewLine
 
@@ -266,8 +255,8 @@ printSector:	pusha
 printBc:	push	hl
 		ld	d,4
 		add	bc,3
-.loop		ld	t,(bc)
-		sub	bc,1
+.loop		ld	t,(bc+)
+		sub	bc,2
 		jal	StreamHexByteOut
 		dj	d,.loop
 		MNewLine

@@ -87,16 +87,16 @@ TakePair:	MACRO
 SetExp:	MACRO	; msb, b1, b0, lsb
 		ld	hl,Exp+3
 		ld	t,\1
-		ld	(hl),t
+		ld	(hl+),t
 		ld	hl,Exp+2
 		ld	t,\2
-		ld	(hl),t
+		ld	(hl+),t
 		ld	hl,Exp+1
 		ld	t,\3
-		ld	(hl),t
+		ld	(hl+),t
 		ld	hl,Exp+0
 		ld	t,\4
-		ld	(hl),t
+		ld	(hl+),t
 		ENDM
 
 ; -- DropCell: the helpers that answer with two pairs leave the deeper one two cells down,
@@ -110,7 +110,7 @@ DropCell:	MACRO
 Entry::
 		ld	hl,Fails
 		ld	t,0
-		ld	(hl),t			; failure count; BC/DE/HL belong to the helpers
+		ld	(hl+),t			; failure count; BC/DE/HL belong to the helpers
 
 		; -- multiply: 32 x 16, 16 x 16 in both readings, 32 x 32 in both readings
 
@@ -303,10 +303,10 @@ Entry::
 		; -- verdict: the failure count as two hex digits, then the exit port
 
 		ld	hl,Fails
-		ld	t,(hl)
+		ld	t,(hl+)
 		jal	Puthex
 		ld	hl,Fails
-		ld	t,(hl)
+		ld	t,(hl+)
 		ld	de,$FF01
 		lio	(de),t
 .halt		j	.halt
@@ -321,16 +321,16 @@ Entry::
 ; --
 ValBytes:	MACRO
 		ld	hl,Val+3
-		ld	t,(hl)
+		ld	t,(hl+)
 		jal	Puthex
 		ld	hl,Val+2
-		ld	t,(hl)
+		ld	t,(hl+)
 		jal	Puthex
 		ld	hl,Val+1
-		ld	t,(hl)
+		ld	t,(hl+)
 		jal	Puthex
 		ld	hl,Val+0
-		ld	t,(hl)
+		ld	t,(hl+)
 		jal	Puthex
 		ENDM
 
@@ -340,31 +340,31 @@ Report:
 		push	hl			; the return, across the reads below
 		ValBytes
 		ld	hl,Exp+3			; the comparison walks the same order
-		ld	t,(hl)
+		ld	t,(hl+)
 		ld	d,t			; the expectation byte, then the value
 		ld	hl,Val+3
-		ld	t,(hl)
+		ld	t,(hl+)
 		cmp	t,d
 		j/ne	.bad
 		ld	hl,Exp+2
-		ld	t,(hl)
+		ld	t,(hl+)
 		ld	d,t
 		ld	hl,Val+2
-		ld	t,(hl)
+		ld	t,(hl+)
 		cmp	t,d
 		j/ne	.bad
 		ld	hl,Exp+1
-		ld	t,(hl)
+		ld	t,(hl+)
 		ld	d,t
 		ld	hl,Val+1
-		ld	t,(hl)
+		ld	t,(hl+)
 		cmp	t,d
 		j/ne	.bad
 		ld	hl,Exp+0
-		ld	t,(hl)
+		ld	t,(hl+)
 		ld	d,t
 		ld	hl,Val+0
-		ld	t,(hl)
+		ld	t,(hl+)
 		cmp	t,d
 		j/ne	.bad
 		ld	t,'K'

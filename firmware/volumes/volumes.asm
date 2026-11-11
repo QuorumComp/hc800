@@ -54,7 +54,7 @@ printVolume:
 
 		; add spaces
 
-		ld	t,(bc)
+		ld	t,(bc+)
 		sub	t,17
 		neg	t	; 17 - label length
 		ld	d,t
@@ -64,8 +64,8 @@ printVolume:
 
 		; print block device name, if block device
 
-		add	bc,volinf_BlockDevice-volinf_Label
-		ld	t,(bc)
+		add	bc,volinf_BlockDevice-volinf_Label-1
+		ld	t,(bc+)
 		cmp	t,$FF
 		j/eq	.done
 

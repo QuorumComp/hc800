@@ -17,10 +17,9 @@ Entry::
 
 		; find first argument, skip executable name
 		ld	bc,path
-		ld	t,(bc)
+		ld	t,(bc+)
 		ld	f,0
 		add	ft,bc
-		add	ft,1
 		ld	bc,ft
 
 		ld	t,(bc)
@@ -36,12 +35,12 @@ Entry::
 		j/eq	.print_dir
 
 		ld	bc,dirInfo+dir_Error
-		ld	t,(bc)
+		ld	t,(bc+)
 		sys	KPrintError
 		jal	.done	; the loop below outgrew a byte jump; HL is dead here
 
 .print_dir	ld	bc,dirInfo+dir_Flags
-		ld	t,(bc)
+		ld	t,(bc+)
 		and	t,DFLAG_DIR
 		cmp	t,0
 		j/eq	.not_dir

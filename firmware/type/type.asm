@@ -12,10 +12,9 @@ Entry::
 
 		; find first argument, skip executable name
 		ld	bc,path
-		ld	t,(bc)
+		ld	t,(bc+)
 		ld	f,0
 		add	ft,bc
-		add	ft,1
 		ld	bc,ft
 
 		ld	t,(bc)
