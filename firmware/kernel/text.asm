@@ -124,9 +124,7 @@ TextClearScreen:
 		pop	bc
 
 		ld	t,0
-		ld	(bc),t	;csr_X
-
-		add	bc,csr_Y-csr_X
+		ld	(bc+),t	;csr_X; BC steps to csr_Y (the gap is one)
 		ld	(bc),t	;csr_Y
 
 		popa

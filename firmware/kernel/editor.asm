@@ -507,9 +507,8 @@ keyHome:	push	ft/bc/hl
 		; move to top of screen when X = 0
 		ld	bc,VideoCursor+csr_X
 		ld	t,0
-		ld	(bc),t
-		add	bc,csr_Y-csr_X
-		ld	(bc),t
+		ld	(bc+),t	;csr_X; BC steps to csr_Y (the gap is one)
+		ld	(bc),t	;csr_Y
 		j	.done
 
 .line_home	; move to beginning of virtual line
@@ -651,8 +650,7 @@ keyReturn:	pusha
 
 		ld	bc,VideoCursor+csr_X
 		ld	t,0
-		ld	(bc),t
-		add	bc,csr_Y-csr_X
+		ld	(bc+),t	;csr_X; BC steps to csr_Y (the gap is one)
 		ld	t,(bc)
 
 		ld	de,ft

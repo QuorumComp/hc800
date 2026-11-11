@@ -426,15 +426,17 @@ SdReadSingleBlock:
 		; shift, so the body must outlast one byte time. Fast clock: 4 bus
 		; clocks/bit = 32 bus clocks/byte. CPU: 4 CPU clocks (8 bus clocks)
 		; per instruction, so a byte is exactly four instructions. These five
-		; instructions are 40 bus clocks: one instruction of margin.
+		; instructions are 40 bus clocks: one instruction of margin. The store
+		; steps DE itself; a nop stands in for the increment it saves, because
+		; the length of the body is the whole point of the loop.
 		; Do not shorten this loop, and do not use it at the slow clock,
 		; where a byte is 64 instructions long.
 		
  		MLDLoop	hl,BLOCKLEN
 .read_loop
 		lio	t,(bc)
-		ld	(de),t
-		add	de,1
+		ld	(de+),t
+		nop
 		nop
 		dj	l,.read_loop
 		dj	h,.read_loop
