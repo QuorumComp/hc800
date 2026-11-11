@@ -222,8 +222,7 @@ setupAsciiRepeat:
 		ld/nz	t,0
 
 		ld	hl,KeyRepeat
-		ld	(hl),t
-		add	hl,1
+		ld	(hl+),t
 		ld	t,REPEAT_INITIAL
 		ld	(hl),t
 

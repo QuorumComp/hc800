@@ -65,9 +65,8 @@ SysGetBlockDevice::
 
 		ld	f,5
 .copy_name	lco	t,(de)
-		ld	(bc),t
+		ld	(bc+),t
 		add	de,1
-		add	bc,1
 		dj	f,.copy_name
 
 		popa

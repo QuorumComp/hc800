@@ -134,8 +134,7 @@ internalMmuSetConfigData:
 		lio	(bc),t
 
 		ld	c,IO_MMU_CONFIGURATION
-.loop		ld	t,(de)
-		add	de,1
+.loop		ld	t,(de+)
 		lio	(bc),t
 		add	c,1
 		dj	f,.loop
