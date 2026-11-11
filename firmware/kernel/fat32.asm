@@ -128,9 +128,8 @@ fillFsStruct:
 		ld	hl,.template
 		ld	f,fs_PRIVATE-fs_Open
 .copy_template	lco	t,(hl)
-		ld	(de),t
+		ld	(de+),t
 		add	hl,1
-		add	de,1
 		dj	f,.copy_template
 
 		; copy volume label (length-prefixed string)
@@ -212,10 +211,8 @@ fillFsStruct:
 		j	.copy_loop
 .copy4		pusha
 		ld	f,4
-.copy_loop	ld	t,(bc)
-		ld	(de),t
-		add	bc,1
-		add	de,1
+.copy_loop	ld	t,(bc+)
+		ld	(de+),t
 		dj	f,.copy_loop
 		popa
 		j	(hl)
@@ -754,11 +751,10 @@ checkFat32:	push	bc/de/hl
 		MDebugPrint <"checkFat32\n">
 
 		add	de,BS_BOOT_RECORD_SIG
-		ld	t,(de)
+		ld	t,(de+)
 		cmp	t,$55
 		j/ne	.exit
 
-		add	de,1
 		ld	t,(de)
 		cmp	t,$AA
 		j/ne	.exit

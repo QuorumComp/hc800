@@ -40,9 +40,8 @@ UartInitialize:
 		ld	de,.fs
 		ld	f,.fs_end-.fs
 .copy		lco	t,(de)
-		ld	(bc),t
+		ld	(bc+),t
 		add	de,1
-		add	bc,1
 		dj	f,.copy
 
 		ld	f,FLAGS_EQ

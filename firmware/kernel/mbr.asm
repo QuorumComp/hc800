@@ -94,10 +94,9 @@ MakeMbrPartitionDevice:
 		;MDebugPrint <"  - check signature\n">
 
 		add	de,510
-		ld	t,(de)
+		ld	t,(de+)
 		cmp	t,$55
 		j/ne	.fail_popa
-		add	de,1
 		ld	t,(de)
 		cmp	t,$AA
 		j/ne	.fail_popa
@@ -148,9 +147,8 @@ MakeMbrPartitionDevice:
 		swap	de	; get underlying device pointer
 		ld	ft,de
 		add	bc,mbrdev_Underlying
-		ld	(bc),t
+		ld	(bc+),t
 		exg	f,t
-		add	bc,1
 		ld	(bc),t
 		swap	de	; restore partition pointer
 
@@ -161,20 +159,16 @@ MakeMbrPartitionDevice:
 		add	bc,mbrdev_Offset-(mbrdev_Underlying+1)
 		add	de,part_StartLBA-part_Type
 		ld	f,4
-.offset_loop	ld	t,(de)
-		ld	(bc),t
-		add	de,1
-		add	bc,1
+.offset_loop	ld	t,(de+)
+		ld	(bc+),t
 		dj	f,.offset_loop
 
 		; copy size to structure
 		add	bc,mbrdev_Sectors-(mbrdev_Offset+4)
 		add	de,part_Sectors-(part_StartLBA+4)
 		ld	f,4
-.size_loop	ld	t,(de)
-		ld	(bc),t
-		add	de,1
-		add	bc,1
+.size_loop	ld	t,(de+)
+		ld	(bc+),t
 		dj	f,.size_loop
 
 		; copy function pointers to structure
@@ -183,9 +177,8 @@ MakeMbrPartitionDevice:
 		ld	de,.template
 		ld	f,.templateEnd-.template
 .template_loop	lco	t,(de)
-		ld	(bc),t
+		ld	(bc+),t
 		add	de,1
-		add	bc,1
 		dj	f,.template_loop
 
 		sub	bc,bdev_Read+.templateEnd-.template

@@ -59,10 +59,8 @@ SysGetVolume::
 		MDebugPrint <"- 2\n">
 
 		ld	f,fs_CommonSize
-.copy_names	ld	t,(de)
-		ld	(bc),t
-		add	de,1
-		add	bc,1
+.copy_names	ld	t,(de+)
+		ld	(bc+),t
 		dj	f,.copy_names
 
 		ld	f,FLAGS_EQ
@@ -165,11 +163,9 @@ FileInitialize:
 
 		add	de,fs_Volume
 		ld	t,2
-		ld	(de),t
-		add	de,1
+		ld	(de+),t
 		ld	t,'v'
-		ld	(de),t
-		add	de,1
+		ld	(de+),t
 
 		ld	hl,totalvolumes
 		ld	t,(hl)
@@ -205,8 +201,7 @@ mountFat:
 
 		ld	ft,bc
 		add	de,fs_BlockDevice-fs_DeviceId
-		ld	(de),t
-		add	de,1
+		ld	(de+),t
 		ld	t,f
 		ld	(de),t
 
@@ -774,8 +769,7 @@ PathAppendChars:
 PathAppend:
 		pusha
 
-		ld	t,(bc)
-		add	bc,1
+		ld	t,(bc+)
 		ld	d,t
 
 		pop	ft
@@ -1001,8 +995,7 @@ getComponentsFromPath:
 		pop	ft
 
 		ld	de,ft	; de = source pointer
-		ld	t,(de)
-		add	de,1
+		ld	t,(de+)
 		ld	h,0
 		ld	l,t	; hl = source len
 		
@@ -1114,9 +1107,8 @@ getVolumeFromPath:
 
 		ld	bc,ft
 
-		ld	t,(bc)
+		ld	t,(bc+)
 		ld	e,t	; e = remaining chars
-		add	bc,1
 
 		cmp	e,0
 		j/eq	.current_fs
