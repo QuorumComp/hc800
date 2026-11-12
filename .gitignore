@@ -111,6 +111,7 @@ firmware/bios/bios.bin
 firmware/boot/boot.bin
 firmware/devices/devices
 firmware/dir/dir
+firmware/ftstep/ftstep
 firmware/gfxtest/gfxtest
 firmware/jurgen/jurgen
 firmware/hd.img

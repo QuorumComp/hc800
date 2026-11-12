@@ -9,6 +9,7 @@ TARGETS = \
 	ascii/ascii \
 	devices/devices \
 	dir/dir \
+	ftstep/ftstep \
 	gfxtest/gfxtest \
 	mathtest/mathtest \
 	reset/reset \
