@@ -161,10 +161,11 @@ updateMatrix:
 		ld	bc,KeyboardMatrix
 		add	ft,bc
 		ld	bc,ft
-		ld	t,(bc)
+		ld	t,(bc+)	; stepped load; store below rewinds BC (popa restores it)
 		and	t,e
 		or	t,l
-		ld	(bc),t
+		sub	bc,1
+		ld	(bc+),t
 
 		popa
 		j	(hl)
@@ -179,15 +180,16 @@ repeatKey:
 		push	hl
 
 		ld	hl,KeyRepeat+key_Counter
-		ld	t,(hl)
+		ld	t,(hl+)	; stepped load; store below rewinds HL (popped after)
 		cmp	t,0
 		j/nz	.no_repeat
 
 		ld	t,REPEAT_SUB
-		ld	(hl),t
-
 		sub	hl,1
-		ld	t,(hl)
+		ld	(hl+),t
+
+		sub	hl,2
+		ld	t,(hl+)	; HL is restored by the pop below
 		j	.repeat
 
 .no_repeat	ld	t,0

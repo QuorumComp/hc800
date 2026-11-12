@@ -97,10 +97,10 @@ MakeMbrPartitionDevice:
 		ld	t,(de+)
 		cmp	t,$55
 		j/ne	.fail_popa
-		ld	t,(de)
+		ld	t,(de+)	; stepped load, DE lands one above: rewound by the next add
 		cmp	t,$AA
 		j/ne	.fail_popa
-		add	de,mbr_Partition0-511
+		add	de,mbr_Partition0-511-1
 
 		;MDebugPrint <"  - mbr signature ok\n">
 
@@ -115,7 +115,7 @@ MakeMbrPartitionDevice:
 
 		; check status
 
-		ld	t,(de)
+		ld	t,(de+)	; stepped load, DE lands one above: rewound by the next add
 		and	t,$7F
 		cmp	t,0
 		j/ne	.fail_pop_bc_to_hl
@@ -128,7 +128,7 @@ MakeMbrPartitionDevice:
 		; layer probes the partition contents, so non-FAT partitions
 		; (e.g. Linux swap) are still available as block devices.
 
-		add	de,part_Type
+		add	de,part_Type-1
 		ld	t,(de)
 		cmp	t,TYPE_EMPTY
 		j/eq	.fail_pop_bc_to_hl

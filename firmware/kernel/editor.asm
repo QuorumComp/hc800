@@ -521,9 +521,10 @@ keyHome:	push	ft/bc/hl
 		j/ltu	.done
 
 		add	hl,csr_Y-csr_X
-		ld	t,(hl)
+		ld	t,(hl+)	; stepped load; store below rewinds HL (it is popped after)
 		sub	t,1
-		ld	(hl),t
+		sub	hl,1
+		ld	(hl+),t
 
 .done		jal	restartCursor
 
@@ -628,7 +629,7 @@ keyReturn:	pusha
 		ld	f,0
 		ld	bc,lineLengths
 		add	ft,bc
-		ld	t,(bc)
+		ld	t,(bc+)	; BC is redefined below
 
 		ld	c,1
 
@@ -651,12 +652,12 @@ keyReturn:	pusha
 		ld	bc,VideoCursor+csr_X
 		ld	t,0
 		ld	(bc+),t	;csr_X; BC steps to csr_Y (the gap is one)
-		ld	t,(bc)
+		ld	t,(bc+)	; BC is redefined below
 
 		ld	de,ft
 
 		ld	bc,isInsert
-		ld	t,(bc)
+		ld	t,(bc+)	; BC is dead after this check (popa restores it)
 		cmp	t,0
 		j/z	.no_insert
 
@@ -712,7 +713,7 @@ printLineLengths:
 		ld	de,$C000
 		ld	l,LINES_ON_SCREEN
 .loop		push	hl
-		ld	t,(bc)
+		ld	t,(bc+)	; stepped load replaces the old add bc,1
 
 		push	ft
 		ld	f,0
@@ -731,7 +732,6 @@ printLineLengths:
 		add	d,1
 		ld	e,0
 
-		add	bc,1
 		pop	hl
 		dj	l,.loop
 
@@ -932,12 +932,13 @@ decreaseLineLength:
 		ld	f,0
 		add	ft,bc
 		ld	bc,ft
-		ld	t,(bc)
+		ld	t,(bc+)	; stepped load; store below rewinds BC (popped after)
 		cmp	t,d
 		j/leu	.done	; line length is less than cursor pos, do nothing
 
 		sub	t,1
-		ld	(bc),t
+		sub	bc,1
+		ld	(bc+),t
 
 		cmp	t,CHARS_PER_LINE-1
 		j/ne	.done

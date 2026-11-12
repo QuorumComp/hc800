@@ -233,10 +233,10 @@ TextDeleteCharacter:
 		add	t,t
 		ld	f,t			; f = bytes to copy
 
-.loop		ld	t,(bc)
-		sub	bc,2
-		ld	(bc),t
-		add	bc,3
+.loop		ld	t,(bc+)	; stepped load; the store lands one below the read byte
+		sub	bc,3
+		ld	(bc+),t
+		add	bc,2
 		dj	f,.loop
 
 		ld	ft,VideoCursor+csr_Attribute
@@ -275,8 +275,8 @@ TextInsertEmptyCharacter:
 		add	t,t
 		ld	f,t
 
-.loop		ld	t,(bc)
-		add	bc,2
+.loop		ld	t,(bc+)	; stepped load; the gap to the store is one below the old add
+		add	bc,1
 		ld	(bc),t
 		sub	bc,3
 		dj	f,.loop
@@ -566,11 +566,11 @@ textGetCursorAttributePointer:
 		push	bc
 
 		ld	bc,VideoCursor+csr_Y
-		ld	t,(bc)
+		ld	t,(bc+)	; stepped load, BC lands one above: rewound by the next add
 		ld	f,ATTRIBUTES_BASE>>8
 		add	t,f
 		exg	f,t
-		add	bc,csr_X-csr_Y
+		add	bc,csr_X-csr_Y-1
 		ld	t,(bc+)
 		add	t,t
 

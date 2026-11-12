@@ -25,12 +25,10 @@ SysGetCommandLine:
 		ld	bc,ft
 		ld	de,lastCommandLine
 
-.string		ld	t,(de)
+.string		ld	t,(de+)	; stepped load replaces the old add de,1
 		ld	(bc+),t
 		cmp	t,0
 		j/eq	.done
-
-		add	de,1
 
 		ld	f,t
 .char		ld	t,(de+)
@@ -294,7 +292,7 @@ readHunkMmu:
 		jal	FileRead
 		j/ne	.error
 
-		ld	t,(de)
+		ld	t,(de)		; DE must stay: MmuSetConfigData reads the config through it
 		or	t,MMU_CFG_SYS_HARVARD
 		ld	(de),t
 
@@ -343,24 +341,25 @@ tokenizeCommandLine:
 
 		cmp	l,0
 		j/eq	.arguments_done
-.skip_spaces	ld	t,(de)
+.skip_spaces	ld	t,(de+)	; stepped load replaces the old add de,1
 		cmp	t,' '
 		j/ne	.skipped_spaces
-		add	de,1
 		dj	l,.skip_spaces
 		j	.arguments_done
 
-.skipped_spaces	push	bc
+.skipped_spaces	sub	de,1	; undo the step: the copy loop starts at the first char
+		push	bc
 		ld	t,0
 		ld	(bc+),t
 
-.copy_chars	ld	t,(de)
+.copy_chars	ld	t,(de+)	; stepped load replaces the old add de,1
 		cmp	t,' '
-		j/eq	.set_length
-		add	de,1
+		j/eq	.set_gap
 		ld	(bc+),t
 		dj	l,.copy_chars
+		j	.set_length
 
+.set_gap	sub	l,1	; the gap's first space costs a count, as the old re-read did
 .set_length	ld	ft,bc
 		swap	bc
 		sub	ft,bc

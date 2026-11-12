@@ -503,7 +503,7 @@ FileReadByte:
 		ld	de,readBuffer
 		jal	FileRead
 
-		ld	t,(de)
+		ld	t,(de+)	; DE is restored by the pop below
 
 		pop	bc/de/hl
 		j	(hl)
@@ -1014,7 +1014,7 @@ getComponentsFromPath:
 		j	(hl)
 
 .not_absolute
-		ld	t,(de)
+		; T still holds the first character (re-read of the absolute check)
 		cmp	t,':'
 		j/eq	.volume
 
@@ -1111,11 +1111,10 @@ getVolumeFromPath:
 		cmp	e,0
 		j/eq	.current_fs
 
-		ld	t,(bc)
+		ld	t,(bc+)	; stepped load replaces the old add bc,1
 		cmp	t,':'
 		j/ne	.current_fs
 
-		add	bc,1
 		sub	e,1
 
 		; MDebugPrint <"getVolumeFromPath determine volume name length\n">
@@ -1211,19 +1210,18 @@ checkvolumeMatch:
 		ld	e,2
 
 .check_string
-		ld	t,(hl)
+		ld	t,(hl+)	; stepped load; the +1 walk into the candidate name is folded in
 		cmp	t,d
 		j/ne	.skip
 
 		push	hl
-		add	hl,1
 		ld	ft,hl
 		;MDebugMemory hl,16
 		jal	MemoryCompareN
 		pop	hl
 		j/eq	.found
 
-.skip		add	hl,fs_Volume
+.skip		add	hl,fs_Volume-1
 		dj	e,.check_string
 
 		ld	t,FLAGS_NE

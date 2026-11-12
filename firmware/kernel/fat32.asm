@@ -173,14 +173,14 @@ fillFsStruct:
 
 		add	bc,BPB_SECTORS_PER_CLUSTER-BS_LABEL
 		add	de,fat32_ClusterToSector-fs_Label
-		ld	t,(bc)
+		ld	t,(bc+)	; stepped load, BC lands one above: rewound by the next add
 		ld	f,0
 		jal	MathLog2_16
 		ld	(de+),t
 
 		; get root directory cluster
 
-		add	bc,BPB_ROOT_CLUSTER-BPB_SECTORS_PER_CLUSTER
+		add	bc,BPB_ROOT_CLUSTER-BPB_SECTORS_PER_CLUSTER-1
 		add	de,fat32_RootCluster-fat32_ClusterToSector-1
 		jal	.copy4
 
@@ -236,21 +236,19 @@ fillFsStruct:
 		ld	de,ft
 
 		add	de,BPB_TOTAL_FAT_SECTORS
-		ld	t,(de)
+		ld	t,(de+)	; stepped load, DE lands one above: rewound by the next add
 		ld	f,0
 		ld	bc,ft
 
-		add	de,BPB_FAT_SIZE32-BPB_TOTAL_FAT_SECTORS
+		add	de,BPB_FAT_SIZE32-BPB_TOTAL_FAT_SECTORS-1
 		MLoad32	ft,(de)
 
 		jal	MathMultiplyUnsigned_32x16_p32
 
 		push	ft
 		add	de,BPB_FAT_BASE+1-BPB_FAT_SIZE32
-		ld	t,(de)
-		ld	f,t
-		sub	de,1
-		ld	t,(de+)
+		sub	de,1		; 16-bit LE load of BPB_FAT_BASE (DE is dead after)
+		ld	ft,(de)
 		ld	bc,ft
 		pop	ft
 
@@ -377,7 +375,7 @@ dirRead:
 
 		; check entry, read again if not valid entry
 
-		ld	t,(de)
+		ld	t,(de+)	; stepped load, DE lands one above the entry
 		cmp	t,0
 		j/ne	.not_end
 
@@ -393,7 +391,7 @@ dirRead:
 		MStackFree 32
 		j	(hl)
 
-.not_end	ld	t,(de)
+.not_end	; T still holds the first character (DE is one above the entry)
 		cmp	t,$E5
 		j/eq	.skip_file
 
@@ -402,8 +400,9 @@ dirRead:
 		add	bc,dir_Flags
 		ld	(bc),t
 
-		add	de,DIRENT_ATTR
-		ld	t,(de)
+		add	de,DIRENT_ATTR-1	; DE sits one above the entry base
+		ld	t,(de+)	; stepped load lands on the attribute byte
+		push	ft			; keep ATTR: the and below clobbers T
 		and	t,ATTR_DIRECTORY
 		cmp	t,0
 		j/eq	.not_dir
@@ -411,8 +410,8 @@ dirRead:
 		ld	(bc),t
 .not_dir
 		sub	bc,dir_Flags
-		ld	t,(de+)
-		sub	de,DIRENT_ATTR+1
+		pop	ft			; T = ATTR again
+		sub	de,DIRENT_ATTR+1	; DE (at ATTR+1) back to the entry base
 		and	t,ATTR_HIDDEN|ATTR_LABEL
 		cmp	t,0
 		j/eq	.attr_ok
@@ -758,27 +757,26 @@ checkFat32:	push	bc/de/hl
 		cmp	t,$55
 		j/ne	.exit
 
-		ld	t,(de)
+		ld	t,(de+)	; stepped load, DE lands one above: rewound by the next add
 		cmp	t,$AA
 		j/ne	.exit
 
-		add	de,BS_BOOT_SIG32-(BS_BOOT_RECORD_SIG+1)
-		ld	t,(de)
+		add	de,BS_BOOT_SIG32-(BS_BOOT_RECORD_SIG+1)-1
+		ld	t,(de+)	; stepped load, DE lands one above: rewound by the next add
 		cmp	t,FAT32_BOOT_SIG
 		j/ne	.exit
 
 		MDebugPrint <"checkFat32 - magic ok\n">
 
-		add	de,BS_FSTYPE32-BS_BOOT_SIG32
+		add	de,BS_FSTYPE32-BS_BOOT_SIG32-1
 		ld	bc,.signature
 		ld	l,8
 .sigloop	lco	t,(bc)
 		ld	h,t
-		ld	t,(de)
+		ld	t,(de+)	; stepped load replaces the old add de,1
 		cmp	t,h
 		j/ne	.exit
 		add	bc,1
-		add	de,1
 		dj	l,.sigloop
 
 .exit		pop	bc/de/hl
@@ -812,12 +810,12 @@ clusterToSector:
 		; load cluster-to-sector 
 		push	ft
 		add	de,fat32_ClusterToSector
-		ld	t,(de)
+		ld	t,(de+)	; stepped load, DE lands one above: rewound by the next add
 		ld	b,t
 		pop	ft
 		jal	MathShiftLeft_32
 
-		add	de,fat32_DataBase-fat32_ClusterToSector
+		add	de,fat32_DataBase-fat32_ClusterToSector-1
 		MLoad32	bc,(de)
 		jal	MathAdd_32_32
 		pop	bc
@@ -910,12 +908,12 @@ findFileInCluster
 
 		push	ft
 		add	de,fat32_ClusterToSector
-		ld	t,(de)
+		ld	t,(de+)	; stepped load, DE lands one above: rewound by the next sub
 		ld	l,t
 		ld	ft,1
 		ls	ft,l
 		ld	l,t	; l - sectors per cluster
-		sub	de,fat32_ClusterToSector
+		sub	de,fat32_ClusterToSector+1
 		pop	ft
 
 .sector_loop	MPush32	ft
@@ -1117,11 +1115,11 @@ readNextFileSector:
 
 		add	de,ufile_SectorIndex-ufile_Cluster
 		push	ft
-		ld	t,(de)
+		ld	t,(de)		; read-modify-write of the sector index: DE must stay
 		ld	f,0
 		ld	bc,ft
 		add	t,1
-		ld	(de),t	; inc sector index
+		ld	(de),t		; inc sector index
 		pop	ft
 		push	bc
 		ld	bc,0
