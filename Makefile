@@ -94,37 +94,63 @@ $(DEC_STAMP): $(RTL_SRCS)
 # sources, firmware images, or font data are newer than the artifacts
 # (the artifacts are prerequisites of the stamp, so deleting any of them
 # also forces regeneration).
+#
+# The generated outputs keep their old mtimes when sbt reproduces them
+# byte-identically (for example a comment-only Scala edit): the Vivado
+# stages below consume those mtimes, so a regeneration that changed
+# nothing must not look like a change.
 $(RTL_STAMP): $(DEC_STAMP) $(RTL_SRCS) $(FW_BINS) $(DATA_BINS) $(GEN_V) $(GEN_BINS)
-	cd rtl && sbt "runMain hc800.HC800TopLevel"
 	mkdir -p "$(abspath $(BD)/build)"
+	outputs=($(abspath $(GEN_V)) $(abspath $(GEN_BINS)))
+	snap="$$(mktemp -d)"
+	for f in "$${outputs[@]}"; do
+		[ -e "$$f" ] && cp -p "$$f" "$$snap/$$(basename "$$f")"
+	done
+	cd rtl && sbt "runMain hc800.HC800TopLevel"
+	changed=0
+	for f in "$${outputs[@]}"; do
+		b="$$(basename "$$f")"
+		if [ -e "$$snap/$$b" ]; then cmp -s "$$snap/$$b" "$$f" || changed=1; else changed=1; fi
+	done
+	if [ "$$changed" = 0 ]; then
+		for f in "$${outputs[@]}"; do
+			b="$$(basename "$$f")"
+			[ -e "$$snap/$$b" ] && cp -p "$$snap/$$b" "$$f"
+		done
+	fi
+	rm -rf "$$snap"
 	touch "$(abspath $@)"
 rtl: $(RTL_STAMP)
 
 # Firmware, then RTL generation.
 build: rtl
 
-# Vivado synthesis only. The stamp records the board rev.
-#
-# $(FW_BINS) is listed first on purpose: make checks freshness once, at the
-# start of the run, using current mtimes. The memory bins in $(VIV_IN) are
-# *regenerated* by the rtl stage later in the same run, so at the start their
-# mtime is stale and would make this stamp look up to date. Depending directly
-# on the firmware images forces a rebuild whenever the firmware changes.
+# Vivado synthesis and bitstream. The stamps run in a *second* make pass:
+# the rtl stage regenerates the board Verilog and memory images mid-run,
+# and make decides freshness for a run's targets at its start, so a
+# same-pass dependency would silently skip Vivado after an RTL-only or
+# decoder-only change. The sub-make sees the regenerated artifacts and
+# runs. $(FW_BINS) is kept as a prerequisite as well: it makes a firmware
+# change gate the stage even when the generated images land under names
+# the wildcard would otherwise miss.
 $(SYN_STAMP): $(FW_BINS) $(VIV_IN) $(DCP)
 	source "$(vivado_env)"
 	cd "$(BD)"
 	MEGA65_REV="$(rev)" JOBS="$(jobs)" BITSTREAM=0 vivado -mode batch -nojournal -nolog -source build.tcl
 	touch "$(abspath $@)"
-synth: rtl $(SYN_STAMP)
+
+synth: rtl
+	$(MAKE) --no-print-directory "$(SYN_STAMP)"
 
 # Full bitstream: synth -> place -> route -> write_bitstream.
-# $(FW_BINS) first for the same reason as $(SYN_STAMP) above.
 $(BIT_STAMP): $(FW_BINS) $(VIV_IN) $(BIT)
 	source "$(vivado_env)"
 	cd "$(BD)"
 	MEGA65_REV="$(rev)" JOBS="$(jobs)" vivado -mode batch -nojournal -nolog -source build.tcl
 	touch "$(abspath $@)"
-bitstream: rtl $(BIT_STAMP)
+
+bitstream: rtl
+	$(MAKE) --no-print-directory "$(BIT_STAMP)"
 
 # Blast the built bitstream into the MEGA65's FPGA via JTAG (openFPGALoader).
 # Volatile SRAM load: the design runs until the next power cycle, which
