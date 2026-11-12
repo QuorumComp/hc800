@@ -155,14 +155,13 @@ setSdVariables:
 		MDebugPrint <"sddev_Select address ">		
 		MDebugHexWord ft
 		MDebugNewLine
-		ld	b,(ft)
-		add	ft,sddev_Type-sddev_Select
-		ld	c,(ft)
+		ld	b,(ft+)
+		ld	c,(ft+)
 
 		ld	ft,SdSelect
-		ld	(ft),b
+		ld	(ft+),b
 		ld	ft,SdType
-		ld	(ft),c
+		ld	(ft+),c
 
 		popa
 		j	(hl)

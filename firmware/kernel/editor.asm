@@ -87,7 +87,7 @@ copyAcceptedLine:
 
 		ld	f,0
 		add	ft,lineLengths
-		ld	h,(ft)
+		ld	h,(ft+)
 
 		; h - line length
 
@@ -668,7 +668,7 @@ keyReturn:	pusha
 		ld	bc,lineLengths
 		add	ft,bc
 		ld	b,0
-		ld	(ft),b
+		ld	(ft+),b
 
 .no_insert	popa	
 		j	(hl)

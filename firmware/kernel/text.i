@@ -4,14 +4,13 @@ FLASH:		MACRO
 		pusha
 		ld	d,255
 		ld	ft,$8000
-		ld	c,(ft)
-		add	ft,1
-		ld	b,(ft)
+		ld	c,(ft+)		; the pair ascends: FT ends one past it
+		ld	b,(ft+)
+		sub	ft,2		; back to the low byte, where each pass starts
 .loop\@		add	bc,1
-		ld	(ft),b
-		sub	ft,1
-		ld	(ft),c
-		add	ft,1
+		ld	(ft+),c
+		ld	(ft+),b
+		sub	ft,2		; same address every pass, as before
 		dj	d,.loop\@
 		popa
 		ENDM

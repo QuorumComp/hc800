@@ -1060,7 +1060,7 @@ readNextFileSector:
 
 		; read sector
 		add	ft,ufile_SectorIndex
-		ld	l,(ft)	; l = sector index
+		ld	l,(ft+)
 
 		add	bc,fat32_ClusterToSector
 		ld	t,(bc+)
@@ -1093,7 +1093,7 @@ readNextFileSector:
 		push	ft
 		add	ft,ufile_SectorIndex
 		ld	b,0
-		ld	(ft),b	; sector index = 0
+		ld	(ft+),b	; sector index = 0
 
 		popa
 		j	readNextFileSector

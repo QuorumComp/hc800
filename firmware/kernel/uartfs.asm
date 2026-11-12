@@ -292,9 +292,8 @@ uartOpenDir:
 		; clear file index
 		add	ft,udir_Index
 		ld	b,0
-		ld	(ft),b
-		add	ft,1
-		ld	(ft),b
+		ld	(ft+),b
+		ld	(ft+),b
 
 		pop	de
 		ld	ft,de
@@ -330,19 +329,18 @@ uartReadDir:
 
 		ld	d,ERROR_SUCCESS
 		add	ft,dir_Error
-		ld	(ft),d
+		ld	(ft+),d
 
-		; fetch index
-		add	ft,udir_Index+1-dir_Error
-		ld	d,(ft)
-		sub	ft,1
-		ld	e,(ft)
+		; fetch index; the error store above stepped one byte, hence the -1
+		add	ft,udir_Index+1-dir_Error-1
+		ld	e,(ft+)		; low byte first: the pair ascends
+		ld	d,(ft+)		; high byte
+		sub	ft,2		; back to the low byte, where the store pair starts
 
 		; increment index and store
 		add	de,1
-		ld	(ft),e
-		add	ft,1
-		ld	(ft),d
+		ld	(ft+),e
+		ld	(ft+),d
 		sub	de,1
 
 		; send read dir command
@@ -375,12 +373,12 @@ uartReadDir:
 		ld	b,t
 		pop	ft
 		add	ft,dir_Flags
-		ld	(ft),b
+		ld	(ft+),b
 
 		; file length
 
 		ld	bc,ft
-		add	bc,dir_Length-dir_Flags
+		add	bc,dir_Length-dir_Flags-1	; the store above stepped onto dir_Length
 		ld	de,4
 		jal	UartMemoryInSync
 
@@ -392,7 +390,7 @@ uartReadDir:
 		ld	b,t
 		pop	ft
 		add	ft,dir_Error
-		ld	(ft),b
+		ld	(ft+),b
 		ld	f,FLAGS_NE
 		j	.exit
 

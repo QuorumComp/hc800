@@ -404,7 +404,7 @@ SdReadSingleBlock:
 
 		ld	ft,SdType
 		push	de
-		ld	d,(ft)
+		ld	d,(ft+)
 		pop	ft		; FT popped
 		jal	sdSendBlockNumber
 		pop	de

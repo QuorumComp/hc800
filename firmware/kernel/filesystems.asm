@@ -48,9 +48,8 @@ SysGetVolume::
 		MDebugHexWord ft
 		MDebugNewLine
 
-		ld	e,(ft)
-		add	ft,1
-		ld	d,(ft)
+		ld	e,(ft+)
+		ld	d,(ft+)
 
 		MDebugHexWord de
 		MDebugNewLine
@@ -140,7 +139,7 @@ FileInitialize:
 		ld	ft,PathCurrentPath
 		ld	(ft+),b
 		ld	b,'/'
-		ld	(ft),b
+		ld	(ft+),b
 
 		popa
 		j	(hl)
@@ -152,10 +151,8 @@ FileInitialize:
 		; store pointer in table
 
 		exg	ft,bc
-		ld	(ft),e
-		add	ft,1
-		ld	(ft),d
-		add	ft,1
+		ld	(ft+),e
+		ld	(ft+),d
 		exg	ft,bc
 
 		; create volume name
@@ -308,16 +305,14 @@ FileClose:
 		MDebugPrint <"FileClose\n">
 
 		; get volume
-		ld	c,(ft)
-		add	ft,1
-		ld	b,(ft)
+		ld	c,(ft+)
+		ld	b,(ft+)
 
 		; get close function
 		ld	ft,bc
 		add	ft,fs_Close
-		ld	l,(ft)
-		add	ft,1
-		ld	h,(ft)
+		ld	l,(ft+)
+		ld	h,(ft+)
 
 		pop	ft
 		jal	(hl)
@@ -390,9 +385,8 @@ FileRead:
 
 		; get volume
 		ld	ft,bc
-		ld	c,(ft)
-		add	ft,1
-		ld	b,(ft)
+		ld	c,(ft+)
+		ld	b,(ft+)
 
 		; get read function
 		add	bc,fs_Read
@@ -546,7 +540,7 @@ DirectoryOpen:
 		add	ft,dir_Error
 
 		ld	b,ERROR_NOT_AVAILABLE
-		ld	(ft),b
+		ld	(ft+),b
 
 		ld	f,FLAGS_NE
 		j	.exit
@@ -563,16 +557,14 @@ DirectoryOpen:
 		;MDebugMemory ft,16
 
 		; set volume pointer in directory struct
-		ld	(ft),e
-		add	ft,1
-		ld	(ft),d
+		ld	(ft+),e
+		ld	(ft+),d
 
 		; get open function
 		ld	ft,de
 		add	ft,fs_OpenDir
-		ld	l,(ft)
-		add	ft,1
-		ld	h,(ft)
+		ld	l,(ft+)
+		ld	h,(ft+)
 
 		pop	ft
 		MDebugMemory bc,16
@@ -604,16 +596,14 @@ DirectoryRead:
 		MDebugMemory ft,16
 
 		; bc <- volume (file system structure )
-		ld	c,(ft)
-		add	ft,1
-		ld	b,(ft)
+		ld	c,(ft+)
+		ld	b,(ft+)
 
 		; get read function
 		ld	ft,bc
 		add	ft,fs_ReadDir
-		ld	l,(ft)
-		add	ft,1
-		ld	h,(ft)
+		ld	l,(ft+)
+		ld	h,(ft+)
 
 		pop	ft
 		;MDebugRegisters
@@ -637,16 +627,14 @@ DirectoryClose:
 		MDebugMemory ft,16
 
 		; bc <- volume (file system structure )
-		ld	c,(ft)
-		add	ft,1
-		ld	b,(ft)
+		ld	c,(ft+)
+		ld	b,(ft+)
 
 		; get read function
 		ld	ft,bc
 		add	ft,fs_CloseDir
-		ld	l,(ft)
-		add	ft,1
-		ld	h,(ft)
+		ld	l,(ft+)
+		ld	h,(ft+)
 
 		pop	ft
 		;MDebugRegisters
@@ -681,7 +669,7 @@ PathRemoveComponent:
 
 		;MDebugRegisters
 
-		ld	b,(ft)
+		ld	b,(ft+)
 		cmp	b,'/'
 		j/ne	.no_remove
 
@@ -713,7 +701,7 @@ PathRemoveComponent:
 		ld	(de),t
 		add	ft,de
 		ld	b,'/'
-		ld	(ft),b
+		ld	(ft+),b
 
 .done		popa
 		;MDebugPrint <"PathRemoveComponent exit\n">
@@ -733,11 +721,12 @@ PathRemoveComponent:
 PathAppendChars:
 		pusha
 
-		ld	e,(ft)
+		ld	e,(ft+)
+	sub	ft,1		; undo the step above: the pointer is still wanted
 		ld	d,0
 		add	ft,de
 
-		ld	e,(ft)
+		ld	e,(ft+)
 		cmp	e,'/'
 		j/eq	.append
 
@@ -845,8 +834,7 @@ normalizePathComponents:
 		ld	(bc),t
 		pop	ft
 
-		ld	e,(ft)	; e = length of source
-		add	ft,1	; ft = first slash of path component
+		ld	e,(ft+)	; e = length of source, ft = first slash of path component
 
 .next		add	ft,1	; skip slash
 		sub	e,1
@@ -1139,7 +1127,7 @@ getVolumeFromPath:
 
 		ld	d,t
 		ld	ft,totalvolumes
-		ld	e,(ft)	; e = total volumes
+		ld	e,(ft+)	; e = total volumes
 		ld	hl,volumes
 
 		;MDebugPrint <"getVolumeFromPath find volume\n">

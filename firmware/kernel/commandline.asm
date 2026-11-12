@@ -149,7 +149,8 @@ readExecutable:
 		exg	ft,de
 		exg	ft,bc	; bc = commandline
 		ld	ft,SearchPath
-		ld	e,(ft)
+		ld	e,(ft+)
+		sub	ft,1		; keep the pointer: it becomes the destination below
 		push	de	; save search path length
 		ld	de,ft
 
@@ -163,7 +164,7 @@ readExecutable:
 		push	ft
 		ld	ft,de
 		pop	de
-		ld	(ft),e
+		ld	(ft+),e
 		pop	ft
 
 		j/ne	.error

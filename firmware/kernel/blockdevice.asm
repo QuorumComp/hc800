@@ -112,12 +112,12 @@ BlockDeviceInit:
 		ld	ft,bc
 		add	bc,BYTES_PER_SECTOR
 		ld	(ft+),c
-		ld	(ft),b
+		ld	(ft+),b
 		dj	l,.sector_heap_loop
 		ld	ft,bc
 		ld	c,0
 		ld	(ft+),c
-		ld	(ft),c
+		ld	(ft+),c
 
 		MDebugPrint <"Init sda\n">
 
@@ -251,9 +251,8 @@ BlockDeviceSize:
 
 		push	ft
 		add	ft,bdev_Size
-		ld	l,(ft)
-		add	ft,1
-		ld	h,(ft)
+		ld	l,(ft+)
+		ld	h,(ft+)
 
 		pop	ft
 

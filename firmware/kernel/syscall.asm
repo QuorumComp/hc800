@@ -135,7 +135,7 @@ getKernelVersion:
 		ld	b,VERSION_MINOR
 		ld	(ft+),b
 		ld	b,VERSION_REVISION
-		ld	(ft),b
+		ld	(ft+),b
 
 		popa
 		reti
