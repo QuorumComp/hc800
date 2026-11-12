@@ -1173,9 +1173,9 @@ ScreenVBlank:
 		pusha
 
 		ld	bc,blinkCount
-		ld	t,(bc+)
-		add	t,1
-		ld	(bc+),t
+		ld	t,(bc)		; read-modify-write of the counter: must stay plain,
+		add	t,1		; the stepped pair clobbered the byte above it (2026-11-12)
+		ld	(bc),t
 
 		popa
 		j	(hl)
