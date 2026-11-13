@@ -28,12 +28,13 @@
 ; Register discipline inherited from ftstep, the machine being right and the
 ; program being wrong:
 ;
-;  * Every compare goes through Check, which parks the walk cursor on the FT
-;    stack first: CMP writes F - the flag byte, the high half of FT.
-;  * The tests run inline as macros, not as JAL subroutines: JAL stores the
-;    return address in HL, and the counter lives in HL.  Where HL is the walk
-;    cursor instead, a failure's add shifts the cursor once and the rest of
-;    the walk cascades - still non-zero, which is the whole contract.
+;  * Every compare goes through Check, which counts failures by leaking one
+;    FT register-stack slot: the FT stack depth at the end IS the tally, so
+;    no general pair needs to stay free for it - HL itself walks as a cursor
+;    in one test, and CMP writes F, the flag byte, the high half of FT.
+;  * The tests run inline as macros, not as JAL subroutines: JAL overwrites
+;    the HL cursor some tests ride.  Where a failed cursor check applies,
+;    the leak happens the same way Check does it.
 ;  * The counter is staged through memory before the final print: the print
 ;    macros are pusha/popa-wrapped and eat every register.
 ;
@@ -67,10 +68,9 @@ LioLoad:	MACRO	;reg,idx
 Check:	MACRO	;reg,expected - count one failure unless reg = expected
 		push	ft		; CMP rewrites both halves of FT: F directly, T by synthesis
 		cmp	\1,\2
-		j/eq	.ck\@
-		add	hl,1
-.ck\@		pop	ft
-		ENDM
+		j/ne	.ck\@		; failure: LEAK the slot - the FT stack depth is the tally
+		pop	ft
+.ck\@		ENDM
 
 		SECTION	"Code",CODE
 
@@ -115,8 +115,8 @@ TestLcoWalk:	MACRO
 		Check	t,$10
 		ld	ft,LcoTable+16	; the cursor ended exactly past the table
 		cmp	ft,bc
-		j/eq	.w1
-		add	hl,1
+		j/eq	.w1		; pass skips the leak: failed cursor lands push a slot
+		push	ft
 .w1
 		ld	de,LcoTable	; the DE cell walks its own pair
 		LcoStep	de,2
@@ -130,7 +130,7 @@ TestLcoWalk:	MACRO
 		ld	ft,LcoTable+4
 		cmp	ft,de
 		j/eq	.w2
-		add	hl,1
+		push	ft		; failed cursor end: leak a tally slot
 .w2
 		ld	hl,LcoTable+8	; the HL cell starts mid-table: the pair moves, not the offset
 		LcoStep	hl,3
@@ -144,7 +144,7 @@ TestLcoWalk:	MACRO
 		ld	ft,LcoTable+12
 		cmp	ft,hl
 		j/eq	.w3
-		add	hl,1
+		push	ft		; failed cursor end: leak a tally slot
 .w3
 		ENDM
 
@@ -170,7 +170,7 @@ TestLioWalk:	MACRO
 		ld	ft,$0515	; the store walk ended one past the window
 		cmp	ft,bc
 		j/eq	.i1
-		add	hl,1
+		push	ft		; failed cursor end: leak a tally slot
 .i1
 		ld	bc,$0511	; the RAM sentinel survived: the stores went to the device
 		ld	t,(bc)
@@ -188,7 +188,7 @@ TestLioWalk:	MACRO
 		ld	ft,$0515	; and so did the load walk
 		cmp	ft,bc
 		j/eq	.i2
-		add	hl,1
+		push	ft		; failed cursor end: leak a tally slot
 .i2
 		ld	b,$05	; zero the window back out: the console must be
 		ld	c,$11	; pristine no matter what happens next - in the
@@ -220,7 +220,7 @@ TestPlainContract:	MACRO
 		ld	ft,$0511
 		cmp	ft,bc
 		j/eq	.p1
-		add	hl,1
+		push	ft		; failed cursor end: leak a tally slot
 .p1
 		ld	b,$05
 		ld	c,$11
@@ -236,7 +236,7 @@ TestPlainContract:	MACRO
 		ld	ft,LcoTable
 		cmp	ft,bc
 		j/eq	.p2
-		add	hl,1
+		push	ft		; failed cursor end: leak a tally slot
 .p2
 		ENDM
 
@@ -287,18 +287,29 @@ TestHubHome:	MACRO
 		ENDM
 
 Entry::
-		ld	hl,0		; failure counter: every failed check adds one here
 		TestLcoWalk
 		TestLioWalk
 		TestPlainContract
 		TestFtExceptions
 		TestHubHome
 
+		; The counter lives in the FT register stack: every failed check
+		; leaves one leaked PUSH behind, so the depth is the count.  HL
+		; cannot hold the sum across TestLcoWalk - the HL cell's own walk
+		; makes HL the cursor - and the four stacks are independent, so
+		; the leak counts even while BC, DE or HL ride pointers.
+		ld	c,RC8_SP_FT
+		lcr	t,(c)		; T = FT stack pointer ($FF - depth)
+		ld	l,t
+		ld	h,0
+		ld	ft,$00FF
+		sub	ft,hl		; FT = failures = $FF - SP
+
 		ld	de,Counter	; stage the counter: the print below eats every register.
-		ld	t,l		; Stores carry only hub bytes through a general pair, and
-		ld	(de+),t		; none through FT at all - so the counter rides T via DE.
-		ld	t,h
+		ld	(de+),t		; low byte first (T is the low half of FT), high via EXG
+		exg	t,f
 		ld	(de+),t
+		exg	t,f
 		MPrintString <"lcostep failures expect $0000 = $">
 		ld	ft,Counter	; reload the staged counter through FT
 		DB	$2F			; ld l,(ft+) - stepped hub loads may name any byte register
