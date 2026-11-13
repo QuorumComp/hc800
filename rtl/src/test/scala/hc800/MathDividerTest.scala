@@ -8,23 +8,20 @@ import spinal.core.sim._
  *
  * The unit is a restoring divider: 32 iterations of "shift the [remainder : quotient] field left,
  * subtract the divisor when it fits".  The field needs one bit more than the divisor while it
- * shifts, and the loop used to do everything in 32 bits, which cost it in two ways.  The "it fits"
- * test was the sign bit of a wrapped 32-bit difference rather than a borrow, so it lied whenever
- * the partial remainder and the divisor differed in bit 31; and the shift kept 31 bits of the
- * remainder, dropping the carry out of the field.  Carrying one extra bit fixes both at once: with
- * the field one bit wider, the sign bit of the difference *is* the borrow.
+ * shifts: with the field one bit wider the sign bit of the difference *is* the borrow, and the
+ * shift keeps every bit of the remainder.  A loop that stays inside 32 bits loses both at once -
+ * its "it fits" test is the sign bit of a wrapped difference, lying whenever the partial
+ * remainder and the divisor differ in bit 31, and its shift drops the carry out of the field.
  *
- * That was reachable from plain C, and common: measured against the old unit in simulation, 194 of
- * 400 random `u32 / u32` divides came out wrong, `0xFFFFFFFF / 0xFFFFFFFF` among them.  What saved
- * the existing tests was small operands - a dividend below 65536 never went wrong in 400 tries,
- * because the remainder has to grow into bit 31 to lose anything.  The sweep below is biased into
- * that region deliberately, and the divisor is kept above 2^31 often enough to walk a remainder
- * through the bit too.
+ * Losing the bit needs large operands: a dividend below 65536 never grows the remainder into
+ * bit 31, so small-operand tests pass on a loop that is wrong.  The sweep below is therefore
+ * biased into the top half of the range deliberately, and the divisor is kept above 2^31 often
+ * enough to walk a remainder through the bit too.
  *
- * The dividend used to be 64 bits and is 32 now, which is why the vectors are too: with a 32-bit
- * unsigned dividend the quotient always fits, so there is no overflow case left for the datapath
- * to be asked about.  A zero divisor is the only undefined division in the machine, and it is
- * decided by the device, which also forces both results to zero.
+ * The vectors are 32-bit because the datapath is: with a 32-bit unsigned dividend the quotient
+ * always fits, so there is no overflow case left for the datapath to be asked about.  A zero
+ * divisor is the only undefined division in the machine, and it is decided by the device, which
+ * also forces both results to zero.
  *
  * The unit is fed whatever the device chooses: the bit patterns as written for the unsigned ports,
  * and the magnitudes for the signed ones.  So both readings of the same operand pair are exercised

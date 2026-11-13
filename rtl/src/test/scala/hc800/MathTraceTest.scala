@@ -36,7 +36,7 @@ class MathTraceTest extends munit.FunSuite {
 	// --------------------------------------------------------------------- the traffic
 	//
 	// Directed vectors first - the cases where the two readings of one operand pair disagree,
-	// the two undefined cases, the region where the divider used to lose a bit, and accesses to
+	// the two undefined cases, the region where a lost bit shows itself, and accesses to
 	// everything that is not a result port - then a random sweep over the whole window.
 
 	private val vectors: List[(BigInt, BigInt)] = List(

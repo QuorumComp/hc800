@@ -19,12 +19,11 @@ import spinal.lib._
  * - a remainder that survives a subtraction is below the divisor again - so the register stays 32
  * bits and the bit lives in the path.
  *
- * The dividend used to be 64 bits, with the high half arriving in its own lane.  It is 32 now,
- * which removes that lane from the device, the 64-bit magnitude negate in front of this unit's
- * second instance, and - the part that is not about area - the case where the quotient does not
- * fit.  A 32-bit unsigned dividend divided by a 32-bit divisor always fits, so the only undefined
- * division left in the machine is a zero divisor, decided by the device.  The alternative
- * arithmetic was priced rather than assumed: a non-restoring loop needs no "does it fit" compare
+ * The dividend is 32 bits: the high half has no lane of its own, there is no 64-bit
+ * magnitude negate in front of this unit, and no case where the quotient does not fit
+ * either - a 32-bit unsigned dividend divided by a 32-bit divisor always fits, so the
+ * only undefined division left in the machine is a zero divisor, decided by the device.
+ * The alternative arithmetic was priced rather than assumed: a non-restoring loop needs no "does it fit" compare
  * and no select between two candidate remainders, but it does need an adder that inverts its
  * operand by sign every cycle, and that came out 38 LUT *dearer* per instance on the board's FPGA
  * than the loop above, which computes its difference unconditionally anyway and merely selects.

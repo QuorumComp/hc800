@@ -1172,7 +1172,7 @@ ScreenVBlank:
 
 		ld	bc,blinkCount
 		ld	t,(bc)		; read-modify-write of the counter: must stay plain,
-		add	t,1		; the stepped pair clobbered the byte above it (2026-11-12)
+		add	t,1		; the stepped pair clobbers the byte above it
 		ld	(bc),t
 
 		popa

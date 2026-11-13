@@ -7,16 +7,14 @@ import spinal.core.sim._
  * Checks the MATH coprocessor's 32x32 -> 32 multiplier datapath against an exact reference.
  *
  * The unit is a shift-add machine: 32 iterations of "shift the accumulator left, add the
- * multiplicand when the multiplier's next bit is set", which is exact modulo 2^32 and returns the
- * low half of the product.  It replaced a machine that entered the multiplicand at the top of a
- * 64-bit accumulator; the low half came out of both the same way, and this file is what makes
- * that claim rather than leaving it to the argument.  The bits are consumed from the top down, so
+ * multiplicand when the multiplier's next bit is set", which is exact modulo 2^32 and
+ * returns the low half of the product.  The bits are consumed from the top down, so
  * the cycle the unit loads on consumes the operand's most significant bit itself, and the sweep
  * puts weight on operands with that bit set.
  *
  * The reference is a plain unsigned multiply of the bits given.  That is not a shortcut: the low
  * half of a product does not depend on whether the operands are read as signed or unsigned, which
- * is why the device has one multiplier and one product port where it used to have two of each.
+ * is why one multiplier and one product port cover both readings.
  */
 class MathMultiplierTest extends munit.FunSuite {
 

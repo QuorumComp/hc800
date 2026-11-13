@@ -22,8 +22,8 @@ import spinal.core.sim._
  *     signed quotient overflow, bit 2 hardwired 0 so that "neither error flag" is one branch.
  *
  * The arithmetic is checked against a model of the contract written here, on directed vectors and
- * on a sweep biased into the top half of the range - the region where the divider used to lose a
- * bit and where the two readings of the same operands part company.
+ * on a sweep biased into the top half of the range - the region where a lost bit shows
+ * itself and where the two readings of the same operands part company.
  */
 class MathDeviceTest extends munit.FunSuite {
 
@@ -275,7 +275,7 @@ class MathDeviceTest extends munit.FunSuite {
 
 	/**
 	 * The reason there are two status bytes even though only one case can ever differ: a driver
-	 * must not be told its defined answer is undefined.  The converse case no longer exists - with
+	 * must not be told its defined answer is undefined.  The converse case cannot happen - with
 	 * a 32-bit dividend the unsigned quotient always fits - which is what the raw byte's wired-zero
 	 * overflow bit is saying.
 	 */
@@ -525,7 +525,7 @@ class MathDeviceTest extends munit.FunSuite {
 
 	// --------------------------------------------------------------------------------- sweep
 	/** Directed cases first, then a sweep biased where the two readings of the operands part
-	 *  company and where the divider used to lose its bit. */
+	 *  company and where a lost bit would show itself. */
 	test("a sweep of the whole map agrees with the contract") {
 		val random = new scala.util.Random(0xD1C1ABE)
 		def biased32: BigInt =

@@ -57,8 +57,7 @@ import spinal.lib._
  * extra unit nothing and doubles the latency, and it was rejected for two reasons beyond that:
  * nothing is ever half-published (all five result ports and both status bytes become valid on the
  * same cycle, which is what the poll and the three models have to agree about), and there is no
- * boundary between two phases for a sequencer to miss - the first draft's two bugs were both in
- * exactly that machinery.
+ * boundary between two phases for a sequencer to miss.
  *
  * The two readings also disagree about when the answer is undefined, which is why there are two
  * status bytes: `-2^31 / -1` overflows as a signed divide and not as an unsigned one.  Each byte
@@ -67,18 +66,17 @@ import spinal.lib._
  *
  * ------------------------------------------------------------------ why this machine is 32 bits
  *
- * The device used to be a 64-bit machine: a 64-bit dividend arriving in a third lane, and 64-bit
- * products on two ports.  It cost 831 LUT against 560 for this one, measured on the board's FPGA,
- * and none of it was reachable.  The compiler replicates the dividend's sign byte into the high
- * half before every division, so a genuine 64/32 divide was never emitted and `s64 / s32` is a
- * fatal error; a truncating multiply reads at most four bytes of the product, and results wider
- * than 32 bits are a software expansion over several 32-bit device multiplies, which is what the
- * emitter says in its own comment.  The firmware's helpers are all 32-bit too, and the 32/32
- * divide helper's only use for the high half was writing zeros into it.
+ * The reachable width is 32: the compiler replicates the dividend's sign byte into the high
+ * half before every division, so a genuine 64/32 divide cannot be emitted and `s64 / s32`
+ * is a fatal error; a truncating multiply reads at most four bytes of the product, and
+ * results wider than 32 bits are a software expansion over several 32-bit device
+ * multiplies, which is what the emitter says in its own comment.  The firmware's helpers
+ * are all 32-bit too.  A 64-bit shape measured 831 LUT against 560 for this one on the
+ * board's FPGA, and none of its width was reachable.
  *
- * This is a deliberate loss and not an oversight: a true 64/32 divide and a 64-bit product are now
- * impossible, in hand-written assembly included.  What the narrowing buys beyond the 271 LUT is
- * that the undefined cases nearly vanish - with a 32-bit unsigned dividend the quotient always
+ * This is a deliberate loss and not an oversight: a true 64/32 divide and a 64-bit product
+ * are impossible, in hand-written assembly included.  What the narrowing buys beyond the
+ * area is that the undefined cases nearly vanish - with a 32-bit unsigned dividend the quotient always
  * fits, so the raw overflow bit is wired to zero and the signed one is the single case above - and
  * that the models, the firmware helpers and the compiler's divide path all get shorter, since the
  * sign-replication and four writes into a high-half lane disappear from each of them.

@@ -6,11 +6,11 @@ import spinal.lib.fsm._
 
 
 /*
- * An old experiment, not connected to anything: four multipliers whose products are summed.
- * It grew a counter of its own when the multiplier unit stopped carrying one, since the unit
- * is now a datapath the caller iterates rather than a machine that runs itself - and note
- * that it always ignored the unit's `ready`, so the sum was only ever correct if somebody
- * waited thirty-two cycles by hand.  `done` says when that is.
+ * An experiment, not connected to anything: four multipliers whose products are summed.
+ * It carries a counter of its own because the multiplier unit is a datapath the caller
+ * iterates rather than a machine that runs itself - and note that it always ignored the
+ * unit's `ready`, so the sum was only ever correct if somebody waited thirty-two cycles
+ * by hand.  `done` says when that is.
  */
 class DotProduct extends Component {
 	val io = new Bundle {
