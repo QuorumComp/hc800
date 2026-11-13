@@ -11,6 +11,7 @@ TARGETS = \
 	dir/dir \
 	ftstep/ftstep \
 	gfxtest/gfxtest \
+	lcostep/lcostep \
 	mathtest/mathtest \
 	reset/reset \
 	type/type \
