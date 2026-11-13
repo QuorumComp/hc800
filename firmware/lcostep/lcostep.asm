@@ -1,29 +1,22 @@
-; lcostep - stepping probe for the code and I/O byte rows (lco-step, 2026-11-13).
+; lcostep - stepping probe for the code and I/O byte rows (lco-step).
 ;
 ; Walks a code-space table through the three native stepped LCO cells, walks
 ; the video plane-0 scroll window through the stepped LIO cells in both
 ; directions (the registers read back what they were written, so the walk is
 ; pinned by device state, not just by the pointer), pins the synthesized-
 ; plain contract with explicit walk-backs, checks the two FT exception cells
-; that must not step, checks the hub loads at their new home $28/$29, and
-; finishes by executing $08: on the new core that cell is deliberately
-; illegal, so the kernel's illegal-instruction fail screen is the terminal
-; pass marker.  On the old core $08 is the interim LD F,(FT), so it exits
-; clean - and the stepped cells behave like the pre-swap accesses they were,
-; so the failure counter comes up non-zero.
+; that must not step, checks the hub loads at $28/$29, and finishes by
+; executing $08: that cell is deliberately illegal, so the kernel's
+; illegal-instruction fail screen is the terminal pass marker.
 ;
 ; The counter line must print $0000; then the fail screen.  An ordinary image
 ; program, so the same source builds and runs identically on emulator and
-; board.  The control run on the pre-swap model traps one test earlier - at
-; $28, illegal until the swap lands - so there the fail screen arrives before
-; any counter line; both screens name their faulting address.
+; board.  Both fail screens name their faulting address.
 ;
 ; All lco-step cells are hand-encoded DB bytes, like ftstep's FINAL mode:
-; the assembler still synthesizes the stepped spellings as access-plus-ADD
-; (which double-steps on the new core), and the plain spellings retire in
-; unit C4.  The raw bytes pin $0D-$0F code loads, $31-$33 I/O stores,
-; $35-$37 I/O loads, the $0C/$34 exceptions, the $28/$29 hub loads and the
-; illegal $08 without trusting the assembler at all.
+; the raw bytes pin $0D-$0F code loads, $31-$33 I/O stores, $35-$37 I/O
+; loads, the $0C/$34 exceptions, the $28/$29 hub loads and the illegal $08
+; without trusting the assembler at all.
 ;
 ; Register discipline inherited from ftstep, the machine being right and the
 ; program being wrong:
@@ -51,7 +44,7 @@
 		INCLUDE	"stdlib/string.i"
 		INCLUDE	"stdlib/syscall.i"
 
-; The native cells, by their post-swap encodings.  reg is the pair named by
+; The native cells by their encodings.  reg is the pair named by
 ; the opcode's r16 field: 1=BC 2=DE 3=HL.
 LcoStep:	MACRO	;reg,idx
 		DB	$0C+(\2)		; lco t,(r16+): load a code byte, step the pair
@@ -200,10 +193,10 @@ TestLioWalk:	MACRO
 		ENDM
 
 ; The synthesized-plain contract by hand: stepped access plus SUB R16,1 is
-; the old plain access - the byte comes from the address the pair held, the
+; the plain access - the byte comes from the address the pair held, the
 ; pair ends where it started, and a second read sees the same byte again.
-; This is exactly what the assembler will emit for the plain spellings after
-; C4, so the probe pins the contract both spaces.
+; This is what the assembler emits for the plain spellings, so the probe
+; pins the contract in both spaces.
 TestPlainContract:	MACRO
 		ld	b,$05
 		ld	c,$11
@@ -271,11 +264,9 @@ TestFtExceptions:	MACRO
 		Check	t,$09		; rewrites the pointer's low half with its own value,
 		ENDM			; and the cursor's fate is pinned in RTL simulation.
 
-; The hub loads at their new home: $28 = LD F,(FT), $29 = LD T,(FT), the
-; r=0/r=1 exception cells of the stepped hub load row.  F's trip through EXG
-; makes it comparable - CMP writes the byte under test.  On the old core
-; these cells are the deliberately-illegal FT column and trap instead, which
-; the control run shows as a fail screen one step earlier than this build's.
+; The hub loads: $28 = LD F,(FT), $29 = LD T,(FT), the r=0/r=1 exception
+; cells of the stepped hub load row.  F's trip through EXG makes it
+; comparable - CMP writes the byte under test.
 TestHubHome:	MACRO
 		ld	ft,HubBytes
 		DB	$28			; ld f,(ft) -> F = $EF
@@ -318,13 +309,10 @@ Entry::
 		jal	StreamHexWordOut
 		MNewLine
 
-		; The terminal witness: $08 is the vacated interim hub load and
-		; must trap to the kernel's illegal-instruction vector, painting
-		; the red fail screen over this line.  The key gate keeps the
-		; counter readable until the operator is ready for the screen.
-		; On the old core the same byte is LD F,(FT) - harmless - and the
-		; program exits clean; the control run there traps one test earlier
-		; already, at $28, which is illegal until the swap lands.
+		; The terminal witness: $08 is deliberately illegal and must trap
+		; to the kernel's illegal-instruction vector, painting the red
+		; fail screen over this line.  The key gate keeps the counter
+		; readable until the operator is ready for the screen.
 		MPrintString <"press any key for the $08 trap test">
 .wait_key	sys	KCharacterIn
 		j/z	.wait_key

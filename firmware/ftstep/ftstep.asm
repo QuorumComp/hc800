@@ -11,15 +11,11 @@
 ; failure counter must print $0000.  An ordinary image program, so the
 ; same source builds and runs identically on the emulator and the board.
 ;
-; Two encoding worlds, one source - now one world.  The switch below
-; used to select motorrc8's interim synthesis (plain access + ADD FT,1,
-; hub loads at $28/$29, EI/DI at $08/$09) for the control run on the old
-; model.  The assembler has since learned the final encodings: the plain
-; source spellings now assemble to the same single-byte natives this
-; file hand-encodes, and the default and FINAL builds are byte-identical
-; (verified 2026-11-12).  FINAL=1 stays as an independent witness: the
-; DB bytes pin $22-$27 stores, $2A-$2F loads, $08/$09 hub loads and
-; $61/$69 DI/EI without trusting the assembler.
+; One source, two encoders.  The assembler spells these accesses natively,
+; so the default build emits exactly the bytes the FINAL=1 branch
+; hand-encodes (byte-identical, verified 2026-11-13).  FINAL=1 is the
+; independent witness: the DB bytes pin $22-$27 stores, $2A-$2F loads,
+; $28/$29 hub loads and $61/$69 DI/EI without trusting the assembler.
 ;
 ; Three register-discipline traps shaped this file, all of them the
 ; machine being right and the program being wrong:
@@ -63,7 +59,7 @@ StepLoad:	MACRO	;reg,idx
 ; The hub-byte loads: the two accesses that cannot step.
 LoadF:	MACRO
 		IF	_FTSTEP_FINAL
-		DB	$08			; post-swap: LD F,(FT) lives at $08
+		DB	$28			; LD F,(FT) lives at $28
 		ELSE
 		ld	f,(ft)		; assembler spelling: same native byte
 		ENDC
@@ -71,7 +67,7 @@ LoadF:	MACRO
 
 LoadT:	MACRO
 		IF	_FTSTEP_FINAL
-		DB	$09			; post-swap: LD T,(FT) lives at $09
+		DB	$29			; LD T,(FT) lives at $29
 		ELSE
 		ld	t,(ft)		; assembler spelling: same native byte
 		ENDC
@@ -186,7 +182,7 @@ TestHubByteLoad:	MACRO
 Entry::
 		ld	hl,0		; failure counter: every failed check adds one here
 		IF	_FTSTEP_FINAL
-		DB	$61			; di - post-swap encoding, under RETI
+		DB	$61			; di - native encoding, under RETI
 		DB	$69			; ei - under DI
 		ELSE
 		di			; assembler spelling: same $61/$69 bytes

@@ -345,8 +345,8 @@ ComPrintRegisterOverview:
 		pusha
 		; FT':FT':FT  BC':BC':BC  DE':DE':DE  pc:pc:HL:HL'
 
-		; Park FT around the pick (kept for symmetry; the immediate pick
-		; no longer clobbers T)
+		; Park FT around the pick: vestigial - the native immediate pick
+		; touches no register - kept for symmetry
 		push	ft
 		pick	hl,3
 		pop	ft

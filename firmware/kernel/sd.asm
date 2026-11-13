@@ -429,8 +429,7 @@ SdReadSingleBlock:
 		; per instruction, so a byte is exactly four instructions. These five
 		; instructions are 40 bus clocks: one instruction of margin. The store
 		; steps DE itself; the load steps BC up off the data register and the
-		; sub steps it back, the pair standing in for the increment a stepped
-		; store used to save — the length of the body is the whole point of the
+		; sub steps it back — the length of the body is the whole point of the
 		; loop.
 		; Do not shorten this loop, and do not use it at the slow clock,
 		; where a byte is 64 instructions long.
