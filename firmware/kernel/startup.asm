@@ -51,7 +51,7 @@ Init::
 Interrupt:
 		ld	b,IO_ICTRL_BASE
 		ld	c,IO_ICTRL_HANDLE
-		lio	t,(bc)
+		lio	t,(bc+)
 		ld	d,t
 
 		and	t,IO_INT_VBLANK
@@ -62,7 +62,7 @@ Interrupt:
 
 		ld	c,IO_ICTRL_REQUEST
 		ld	t,d
-		lio	(bc),t
+		lio	(bc+),t
 
 		popa
 		reti		

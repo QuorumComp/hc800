@@ -31,7 +31,7 @@ MmuInitialize:
 		ld	b,IO_MMU_BASE
 		ld	c,IO_MMU_CHARGEN
 		ld	t,$08
-		lio	(bc),t	; chargen
+		lio	(bc+),t	; chargen
 
 		popa
 		j	(hl)
@@ -58,7 +58,7 @@ MmuActivateConfig:
 
 		ld	b,IO_MMU_BASE
 		ld	c,IO_MMU_ACTIVE_INDEX
-		lio	(bc),t
+		lio	(bc+),t
 
 		popa
 		j	(hl)
@@ -91,13 +91,11 @@ internalMmuSetConfigCode:
 .enter
 		ld	b,IO_MMU_BASE
 		ld	c,IO_MMU_UPDATE_INDEX
-		lio	(bc),t
+		lio	(bc+),t
 
 		ld	c,IO_MMU_CONFIGURATION
-.loop		lco	t,(de)
-		add	de,1
-		lio	(bc),t
-		add	c,1
+.loop		lco	t,(de+)
+		lio	(bc+),t
 		dj	f,.loop
 
 		popa
@@ -131,12 +129,11 @@ internalMmuSetConfigData:
 .enter
 		ld	b,IO_MMU_BASE
 		ld	c,IO_MMU_UPDATE_INDEX
-		lio	(bc),t
+		lio	(bc+),t
 
 		ld	c,IO_MMU_CONFIGURATION
 .loop		ld	t,(de+)
-		lio	(bc),t
-		add	c,1
+		lio	(bc+),t
 		dj	f,.loop
 
 		popa

@@ -121,7 +121,7 @@ FailEntry:
 		ld	b,IO_MMU_BASE
 		ld	c,IO_MMU_ACTIVE_INDEX
 		ld	t,MMU_INDEX_PUSH|MMU_CFG_KERNEL
-		lio	(bc),t
+		lio	(bc+),t
 		popa
 
 		; Screen in red on black.  The string pointer is parked
@@ -146,7 +146,7 @@ FailEntry:
 		; The cursor call takes its arguments in BC, so the string
 		; pointer rides on the register stack across it.
 		push	bc
-		lco	t,(bc)			; message length
+		lco	t,(bc+)			; message length
 		add	t,5+4
 		ld	f,t
 		ld	t,CHARS_PER_LINE
@@ -182,11 +182,9 @@ FailEntry:
 outString:
 		pusha
 		ld	bc,ft
-		lco	t,(bc)			; length
+		lco	t,(bc+)			; length
 		ld	e,t
-		add	bc,1
-.loop		lco	t,(bc)
-		add	bc,1
+.loop		lco	t,(bc+)
 		ld	f,0
 		jal	TextWideCharOut
 		dj	e,.loop

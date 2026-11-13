@@ -70,24 +70,25 @@ Main:
 		; empty key fifo
 		ld	b,IO_KEYBOARD_BASE
 .empty_loop	ld	c,IO_KEYBOARD_STATUS
-		lio	t,(bc)
+		lio	t,(bc+)
 		cmp	t,0
 		j/eq	.empty_done
 
 		ld	c,IO_KEYBOARD_DATA
-		lio	t,(bc)
+		lio	t,(bc+)
 		j	.empty_loop
 .empty_done
 
 		; read keys
 		ld	b,IO_KEYBOARD_BASE
 .next_key	ld	c,IO_KEYBOARD_STATUS
-.wait_key	lio	t,(bc)
+.wait_key	lio	t,(bc+)
+		sub	bc,1
 		cmp	t,0
 		j/eq	.wait_key
 
 		ld	c,IO_KEYBOARD_DATA
-		lio	t,(bc)
+		lio	t,(bc+)
 
 		cmp	t,0
 		j/ge	.next_key	; branch if bit 7 not set
@@ -250,7 +251,7 @@ VideoIsVBlankEdge:
 		ld	l,IO_ICTRL_REQUEST
 		lio	t,(hl)
 		and	t,IO_INT_VBLANK
-		lio	(hl),t
+		lio	(hl+),t
 		cmp	t,IO_INT_VBLANK
 
 		pop	hl

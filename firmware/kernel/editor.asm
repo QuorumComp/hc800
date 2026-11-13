@@ -211,14 +211,12 @@ ScreenStringOut:
 		pusha
 
 		ld	bc,ft
-		lco	t,(bc)
+		lco	t,(bc+)
 		ld	d,t
-		add	bc,1
 
 		add	d,1
 		j	.start
-.loop		lco	t,(bc)
-		add	bc,1
+.loop		lco	t,(bc+)
 		jal	ScreenCharacterOut
 .start		dj	d,.loop
 
@@ -308,10 +306,10 @@ commonCharacterOut:
 		ld	c,t
 		add	bc,.control_jump+1
 
-		lco	t,(bc)
-		sub	bc,1
+		lco	t,(bc+)
+		sub	bc,2
 		exg	f,t
-		lco	t,(bc)
+		lco	t,(bc+)
 		ld	bc,ft
 
 		tst	bc

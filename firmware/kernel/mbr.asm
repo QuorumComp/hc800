@@ -175,9 +175,8 @@ MakeMbrPartitionDevice:
 		add	bc,bdev_Read-(mbrdev_Sectors+4)
 		ld	de,.template
 		ld	f,.templateEnd-.template
-.template_loop	lco	t,(de)
+.template_loop	lco	t,(de+)
 		ld	(bc+),t
-		add	de,1
 		dj	f,.template_loop
 
 		sub	bc,bdev_Read+.templateEnd-.template

@@ -127,9 +127,8 @@ fillFsStruct:
 		add	de,fs_Open
 		ld	hl,.template
 		ld	f,fs_PRIVATE-fs_Open
-.copy_template	lco	t,(hl)
+.copy_template	lco	t,(hl+)
 		ld	(de+),t
-		add	hl,1
 		dj	f,.copy_template
 
 		; copy volume label (length-prefixed string)
@@ -771,12 +770,11 @@ checkFat32:	push	bc/de/hl
 		add	de,BS_FSTYPE32-BS_BOOT_SIG32-1
 		ld	bc,.signature
 		ld	l,8
-.sigloop	lco	t,(bc)
+.sigloop	lco	t,(bc+)
 		ld	h,t
 		ld	t,(de+)	; stepped load replaces the old add de,1
 		cmp	t,h
 		j/ne	.exit
-		add	bc,1
 		dj	l,.sigloop
 
 .exit		pop	bc/de/hl

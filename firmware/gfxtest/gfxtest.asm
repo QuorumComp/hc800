@@ -16,11 +16,11 @@ Entry::
 
 		ld	c,IO_VIDEO_CONTROL
 		ld	t,IO_VID_CTRL_P0EN
-		lio	(bc),t
+		lio	(bc+),t
 
 		ld	c,IO_VID_PLANE0_CONTROL
 		ld	t,IO_PLANE_CTRL_LORES|IO_PLANE_CTRL_TEXT|IO_PLANE_CTRL_PAL0
-		lio	(bc),t
+		lio	(bc+),t
 
 		; handle keypress
 
@@ -58,7 +58,7 @@ Entry::
 .set_control
 		ld	b,IO_VIDEO_BASE
 		ld	c,IO_VID_PLANE0_CONTROL
-		lio	(bc),t
+		lio	(bc+),t
 		j	.wait_char
 
 .key_escape
@@ -86,11 +86,11 @@ Entry::
 		ld	b,IO_VIDEO_BASE
 
 		ld	c,IO_VID_PLANE0_HSCROLLL
-		lio	(bc),t
+		lio	(bc+),t
 
 		exg	f,t
 		ld	c,IO_VID_PLANE0_HSCROLLH
-		lio	(bc),t
+		lio	(bc+),t
 
 		J	.wait_char
 
@@ -115,11 +115,11 @@ Entry::
 		ld	b,IO_VIDEO_BASE
 
 		ld	c,IO_VID_PLANE0_VSCROLLL
-		lio	(bc),t
+		lio	(bc+),t
 
 		exg	f,t
 		ld	c,IO_VID_PLANE0_VSCROLLH
-		lio	(bc),t
+		lio	(bc+),t
 
 		ld	ft,.wait_char
 		j	(ft)

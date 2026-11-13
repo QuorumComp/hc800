@@ -109,8 +109,7 @@ ComPrintDigit:
 ComPrintCodeChars:
 		pusha
 		ld	d,t
-.next		lco	t,(bc)
-		add	bc,1
+.next		lco	t,(bc+)
 		jal	ComPrintChar
 		j/ne	.error
 		dj	d,.next
@@ -512,9 +511,8 @@ comSendLoadFile:
 		jal	UartWordOutSync		; filename length
 
 		ld	f,t
-.write_string	lco	t,(bc)
+.write_string	lco	t,(bc+)
 		jal	UartByteOutSync
-		add	bc,1
 		dj	f,.write_string
 
 		ld	ft,0

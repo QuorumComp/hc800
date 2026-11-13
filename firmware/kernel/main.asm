@@ -168,9 +168,9 @@ initializeMemory:
 		ld	b,IO_MMU_BASE
 		ld	c,IO_MMU_UPDATE_INDEX
 		ld	t,MMU_CFG_KERNEL
-		lio	(bc),t
+		lio	(bc+),t
 		ld	c,IO_MMU_ACTIVE_INDEX
-		lio	(bc),t
+		lio	(bc+),t
 
 		; To determine the amount of free RAM:
 		; 1. Write zeroes to four bytes of each possible 16 KiB bank
@@ -187,7 +187,8 @@ initializeMemory:
 
 		ld	h,$80
 .clear_loop	ld	t,h
-		lio	(bc),t
+		lio	(bc+),t
+		sub	bc,1
 
 		ld	t,0
 		ld	(de+),t
@@ -207,7 +208,7 @@ initializeMemory:
 		ld	b,IO_MMU_BASE
 		ld	c,IO_MMU_DATA_BANK1
 		ld	t,h
-		lio	(bc),t
+		lio	(bc+),t
 
 		; Step 2.1 - 2.4
 		ld	bc,.pattern
@@ -220,8 +221,7 @@ initializeMemory:
 		j/ne	.found_end
 
 		; Step 2.2, store pattern byte
-		lco	t,(bc)
-		add	bc,1
+		lco	t,(bc+)
 		ld	(de),t
 
 		; Step 2.3, read back pattern byte
@@ -261,7 +261,8 @@ printBoard:
 		ld	b,IO_BOARD_ID_BASE
 		ld	c,IO_BID_DESCRIPTION
 		ld	d,128
-.find_length	lio	t,(bc)
+.find_length	lio	t,(bc+)
+		sub	bc,1
 		cmp	t,0
 		j/lt	.found_string
 		dj	d,.find_length
@@ -270,7 +271,8 @@ printBoard:
 .found_string	and	t,$7F
 		ld	d,t
 .next_char	ld	f,0
-		lio	t,(bc)
+		lio	t,(bc+)
+		sub	bc,1
 		sys	KCharacterOut
 		dj	d,.next_char
 		j	.done

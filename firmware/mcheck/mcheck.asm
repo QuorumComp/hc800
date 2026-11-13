@@ -308,7 +308,7 @@ Entry::
 		ld	hl,Fails
 		ld	t,(hl+)
 		ld	de,$FF01
-		lio	(de),t
+		lio	(de+),t
 .halt		j	.halt
 
 
@@ -442,7 +442,7 @@ Putdigit:
 Putch:
 		push	de
 		ld	de,$FF00
-		lio	(de),t
+		lio	(de+),t
 		pop	de
 		j	(hl)
 

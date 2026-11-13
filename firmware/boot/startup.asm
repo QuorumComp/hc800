@@ -80,9 +80,9 @@ clearIrq:
 		ld	b,IO_ICTRL_BASE
 		ld	c,IO_ICTRL_ENABLE
 		ld	t,$7F
-		lio	(bc),t
+		lio	(bc+),t
 		ld	c,IO_ICTRL_REQUEST
-		lio	(bc),t
+		lio	(bc+),t
 
 		j	(hl)
 
@@ -96,10 +96,8 @@ InitializeMMU:
 		ld	f,.mmuDataEnd-.mmuData
 
 .copy
-		lco	t,(de)
-		add	de,1
-		lio	(bc),t
-		add	c,1
+		lco	t,(de+)
+		lio	(bc+),t
 		dj	f,.copy
 
 		j	(hl)

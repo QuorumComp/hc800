@@ -39,10 +39,10 @@ ErrorPrintDescription:
 		add	ft,descriptions+1
 		ld	hl,ft
 
-		lco	t,(hl)
+		lco	t,(hl+)
 		ld	f,t
-		sub	hl,1
-		lco	t,(hl)
+		sub	hl,2
+		lco	t,(hl+)
 
 		jal	ScreenStringOut
 

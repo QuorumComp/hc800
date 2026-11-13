@@ -39,9 +39,8 @@ UartInitialize:
 		ld	bc,UartVolume
 		ld	de,.fs
 		ld	f,.fs_end-.fs
-.copy		lco	t,(de)
+.copy		lco	t,(de+)
 		ld	(bc+),t
-		add	de,1
 		dj	f,.copy
 
 		ld	f,FLAGS_EQ

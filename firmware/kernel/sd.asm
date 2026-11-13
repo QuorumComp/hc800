@@ -98,7 +98,7 @@ SELECT:		MACRO
 		or	t,IO_SEL_FAST_CLOCK
 		ld	b,IO_SDCARD_BASE
 		ld	c,IO_SD_SELECT
-		lio	(bc),t
+		lio	(bc+),t
 		ENDM
 
 ; -- Select the current card and the slow SPI clock (211 kHz).
@@ -108,7 +108,7 @@ SELECT_SLOW:	MACRO
 		or	t,IO_SEL_SLOW_CLOCK
 		ld	b,IO_SDCARD_BASE
 		ld	c,IO_SD_SELECT
-		lio	(bc),t
+		lio	(bc+),t
 		ENDM
 
 ; -- Wait for the controller to finish shifting the current byte.
@@ -116,7 +116,8 @@ SELECT_SLOW:	MACRO
 WAIT_READY:	MACRO
 		ASSERTF	IO_STAT_ACTIVE==FLAGS_CARRY,"IO_STAT_ACTIVE and FLAGS_CARRY must be equal"
 		ld	c,IO_SD_STATUS
-.wait\@		lio	t,(bc)
+.wait\@		lio	t,(bc+)
+		sub	bc,1
 		ld	f,t
 		j/cs	.wait\@		; IO_STAT_ACTIVE set?
 		ENDM
@@ -133,7 +134,7 @@ WAIT_READY_KEEP_FT:	MACRO
 SD_READ:	MACRO
 		WAIT_READY
 		ld	c,IO_SD_DATA
-		lio	t,(bc)
+		lio	t,(bc+)
 		ENDM
 
 ; -- Check an R1 reply byte in D; leave it in T and set EQ if no error bits.
@@ -209,7 +210,7 @@ SdGetTotalBlocks:
 		WAIT_READY
 		ld	c,IO_SD_DATA
 		ld	t,9|$40		;CMD9
-		lio	(bc),t
+		lio	(bc+),t
 
 		jal	sdFinalBits5	;arg, CRC
 
@@ -400,7 +401,7 @@ SdReadSingleBlock:
 		WAIT_READY
 		ld	c,IO_SD_DATA
 		ld	t,17|$40	;CMD17
-		lio	(bc),t
+		lio	(bc+),t
 
 		ld	ft,SdType
 		push	de
@@ -427,16 +428,18 @@ SdReadSingleBlock:
 		; clocks/bit = 32 bus clocks/byte. CPU: 4 CPU clocks (8 bus clocks)
 		; per instruction, so a byte is exactly four instructions. These five
 		; instructions are 40 bus clocks: one instruction of margin. The store
-		; steps DE itself; a nop stands in for the increment it saves, because
-		; the length of the body is the whole point of the loop.
+		; steps DE itself; the load steps BC up off the data register and the
+		; sub steps it back, the pair standing in for the increment a stepped
+		; store used to save — the length of the body is the whole point of the
+		; loop.
 		; Do not shorten this loop, and do not use it at the slow clock,
 		; where a byte is 64 instructions long.
 		
  		MLDLoop	hl,BLOCKLEN
 .read_loop
-		lio	t,(bc)
+		lio	t,(bc+)
+		sub	bc,1
 		ld	(de+),t
-		nop
 		nop
 		dj	l,.read_loop
 		dj	h,.read_loop
@@ -553,7 +556,7 @@ sdResetCard:
 .next_byte
 		ld	c,IO_SD_DATA
 		ld	t,$FF
-		lio	(bc),t
+		lio	(bc+),t
 
 		WAIT_READY
 
@@ -581,7 +584,7 @@ sdDeselect:
 
 		ld	c,IO_SD_DATA
 		ld	t,$FF
-		lio	(bc),t
+		lio	(bc+),t
 
 		WAIT_READY
 
@@ -589,7 +592,7 @@ sdDeselect:
 		; is active, so clearing the clock-select bits cannot stall one.
 		ld	t,0
 		ld	c,IO_SD_SELECT
-		lio	(bc),t
+		lio	(bc+),t
 
 		popa
 		j	(hl)
@@ -641,7 +644,7 @@ sdSendBlockNumber:
 		WAIT_READY
 		ld	c,IO_SD_DATA
 		ld	t,$01	; CRC
-		lio	(bc),t
+		lio	(bc+),t
 
 		pop	bc/de/hl
 		j	(hl)
@@ -695,23 +698,23 @@ sdSendInt32:
 		WAIT_READY_KEEP_FT
 		ld	c,IO_SD_DATA
 		exg	f,t
-		lio	(bc),t
+		lio	(bc+),t
 
 		WAIT_READY_KEEP_FT
 		ld	c,IO_SD_DATA
 		exg	f,t
-		lio	(bc),t
+		lio	(bc+),t
 
 		WAIT_READY_KEEP_FT
 		ld	c,IO_SD_DATA
 		pop	ft
 		exg	f,t
-		lio	(bc),t
+		lio	(bc+),t
 
 		WAIT_READY_KEEP_FT
 		ld	c,IO_SD_DATA
 		exg	f,t
-		lio	(bc),t
+		lio	(bc+),t
 
 		pop	bc
 		j	(hl)
@@ -736,7 +739,7 @@ sdSendBytes6_Slow:
 
 		ld	c,IO_SD_DATA
 		lco	t,(de+)
-		lio	(bc),t
+		lio	(bc+),t
 
 		dj	l,.loop
 
@@ -888,7 +891,7 @@ sdReadOcr:
 		WAIT_READY
 		ld	c,IO_SD_DATA
 		ld	t,58|$40	;CMD58
-		lio	(bc),t
+		lio	(bc+),t
 
 		jal	sdFinalBits5
 
@@ -941,12 +944,12 @@ sdSendOpCond:
 		WAIT_READY
 		ld	c,IO_SD_DATA
 		ld	t,41|$40	;ACMD41
-		lio	(bc),t
+		lio	(bc+),t
 
 		WAIT_READY
 		ld	c,IO_SD_DATA
 		ld	t,d
-		lio	(bc),t
+		lio	(bc+),t
 
 		jal	sdFinalBits4
 
@@ -983,7 +986,7 @@ sdAppCommand:
 		WAIT_READY
 		ld	c,IO_SD_DATA
 		ld	t,55|$40	;CMD55
-		lio	(bc),t
+		lio	(bc+),t
 
 		; argument
 		jal	sdFinalBits5
@@ -1183,12 +1186,12 @@ sdFinalBits4:
 .arg		WAIT_READY
 		ld	c,IO_SD_DATA
 		ld	t,$00
-		lio	(bc),t
+		lio	(bc+),t
 		dj	l,.arg
 		WAIT_READY
 		ld	c,IO_SD_DATA
 		ld	t,$01
-		lio	(bc),t
+		lio	(bc+),t
 
 		pop	hl
 		j	(hl)

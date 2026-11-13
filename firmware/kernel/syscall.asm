@@ -27,7 +27,7 @@ SET_MMU_KERNEL	MACRO
 		ld	c,IO_MMU_ACTIVE_INDEX
 
 		ld	t,MMU_INDEX_PUSH|MMU_CFG_KERNEL
-		lio	(bc),t
+		lio	(bc+),t
 		ENDM
 
 RESTORE_MMU_CFG	MACRO
@@ -35,7 +35,7 @@ RESTORE_MMU_CFG	MACRO
 		ld	c,IO_MMU_ACTIVE_INDEX
 
 		ld	t,MMU_INDEX_POP
-		lio	(bc),t
+		lio	(bc+),t
 		ENDM
 
 
@@ -195,19 +195,19 @@ reset:
 		ld	b,IO_MMU_BASE
 		ld	c,IO_MMU_UPDATE_INDEX
 		ld	t,MMU_CFG_KERNEL
-		lio	(bc),t
+		lio	(bc+),t
 
 		ld	t,$00
 		ld	c,IO_MMU_CONFIGURATION
-		lio	(bc),t
+		lio	(bc+),t
 		ld	c,IO_MMU_CODE_BANK0
-		lio	(bc),t
+		lio	(bc+),t
 		ld	c,IO_MMU_DATA_BANK0
-		lio	(bc),t
+		lio	(bc+),t
 
 		ld	c,IO_MMU_ACTIVE_INDEX
 		ld	t,MMU_CFG_KERNEL
-		lio	(bc),t
+		lio	(bc+),t
 
 		pop	hl
 		ld	hl,0

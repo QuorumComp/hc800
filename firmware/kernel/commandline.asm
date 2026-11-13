@@ -91,29 +91,29 @@ SysExit:
 		ld	b,IO_ICTRL_BASE
 		ld	c,IO_ICTRL_ENABLE
 		ld	t,$7F
-		lio	(bc),t
+		lio	(bc+),t
 		ld	c,IO_ICTRL_ENABLE
 		ld	t,IO_INT_VBLANK|IO_INT_SET
-		lio	(bc),t
+		lio	(bc+),t
 
 		ld	b,IO_VIDEO_BASE
 		ld	c,IO_VIDEO_CONTROL
 		ld	t,IO_VID_CTRL_P0EN
-		lio	(bc),t
+		lio	(bc+),t
 
 		ld	c,IO_VID_PLANE0_CONTROL
 		ld	t,IO_PLANE_CTRL_HIRES|IO_PLANE_CTRL_TEXT
-		lio	(bc),t
+		lio	(bc+),t
 
 		ld	t,0
 		ld	c,IO_VID_PLANE0_HSCROLLL
-		lio	(bc),t
+		lio	(bc+),t
 		ld	c,IO_VID_PLANE0_HSCROLLH
-		lio	(bc),t
+		lio	(bc+),t
 		ld	c,IO_VID_PLANE0_VSCROLLL
-		lio	(bc),t
+		lio	(bc+),t
 		ld	c,IO_VID_PLANE0_VSCROLLH
-		lio	(bc),t
+		lio	(bc+),t
 
 		ld	t,MMU_CFG_KERNEL
 		jal	MmuActivateConfig
@@ -264,10 +264,10 @@ readHunkData:
 		ld	h,IO_MMU_BASE
 		ld	l,IO_MMU_UPDATE_INDEX
 		ld	t,MMU_CFG_LOAD
-		lio	(hl),t
+		lio	(hl+),t
 		pop	ft
-		add	l,IO_MMU_DATA_BANK3-IO_MMU_UPDATE_INDEX
-		lio	(hl),t
+		add	l,IO_MMU_DATA_BANK3-IO_MMU_UPDATE_INDEX-1
+		lio	(hl+),t
 
 		MDebugMemory exeFileHandle,file_SIZEOF
 

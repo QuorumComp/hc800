@@ -60,13 +60,13 @@ EnableVBlank:
 		ld	b,IO_ICTRL_BASE
 		ld	c,IO_ICTRL_ENABLE
 		ld	t,$7F
-		lio	(bc),t
+		lio	(bc+),t
 		ld	c,IO_ICTRL_REQUEST
-		lio	(bc),t
+		lio	(bc+),t
 
 		ld	c,IO_ICTRL_ENABLE
 		ld	t,IO_INT_SET|IO_INT_VBLANK
-		lio	(bc),t
+		lio	(bc+),t
 
 		popa
 		j	(hl)

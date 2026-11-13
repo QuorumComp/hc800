@@ -60,12 +60,12 @@ KeyboardRead:
 		ld	b,IO_KEYBOARD_BASE
 		ld	c,IO_KEYBOARD_STATUS
 
-		lio	t,(bc)
+		lio	t,(bc+)
 		cmp	t,0
 		j/z	.repeat
 
-		add	c,IO_KEYBOARD_DATA-IO_KEYBOARD_STATUS
-		lio	t,(bc)
+		add	c,IO_KEYBOARD_DATA-IO_KEYBOARD_STATUS-1
+		lio	t,(bc+)
 
 ;		jal	StreamHexByteOut
 
@@ -248,8 +248,7 @@ isAsciiRepeating:
 		ld	b,t
 		ld	c,.keys_end-.keys
 
-.check		lco	t,(de)
-		add	de,1
+.check		lco	t,(de+)
 		cmp	t,b
 		j/eq	.done
 		dj	c,.check

@@ -64,9 +64,8 @@ SysGetBlockDevice::
 		add	bc,bdinf_Name-bdinf_Size
 
 		ld	f,5
-.copy_name	lco	t,(de)
+.copy_name	lco	t,(de+)
 		ld	(bc+),t
-		add	de,1
 		dj	f,.copy_name
 
 		popa
